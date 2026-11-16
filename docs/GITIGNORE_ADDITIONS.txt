@@ -1,0 +1,14 @@
+# Suggested additions to existing root .gitignore (append only after review)
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+node_modules/
+dist/
+.angular/
+*.log
+*.zip
+v18-task-suite-results/
+v18-*-trace.json
+v18-*-paired.json
+v18-*-results/
+*.checkpoint.json

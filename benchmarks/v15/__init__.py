@@ -1,0 +1,1 @@
+"""Controlled structural retrieval benchmark."""

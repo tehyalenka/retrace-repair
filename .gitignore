@@ -1,0 +1,74 @@
+.venv/
+.env
+.env.*
+__pycache__/
+*.py[cod]
+*.egg-info/
+.DS_Store
+codepilot-result.json
+benchmark-*.json
+.pytest_cache/
+
+# Local agent-generated artifacts
+.codepilot-runs/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+*.egg-info/
+
+# Node / Angular
+node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local agent runs and generated results
+.codepilot-runs/
+v18-task-suite-results/
+*.sqlite
+*.sqlite3
+
+# macOS and editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Historical source backups
+*.backup
+*.before-*
+
+# Generated experiment results and traces
+*-live*.json
+*-offline*.json
+*-trace.json
+*-capture.json
+*-results.json
+*-summary.json
+checkpointed-three-arm.json
+generated-verification-result.json
+paired-capture.json
+paired-results.json
+public-capture.json
+live-three-arm.json
+
+# Generated benchmark output directories
+benchmark-v13-json/
+benchmark-v14-retrieval/
+benchmark-v141-retrieval/
+*-traces/
+evaluation/reports/
+
+# Nested directory accidentally created during patch extraction
+/CodePilot-X/
+
+*.pre-github-merge

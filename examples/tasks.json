@@ -1,0 +1,4 @@
+[
+  {"id": "auth-case", "task": "Make username matching case-insensitive without changing password matching.", "repository": "examples/sample_repo"},
+  {"id": "auth-blank", "task": "Reject empty usernames and passwords explicitly.", "repository": "examples/sample_repo"}
+]

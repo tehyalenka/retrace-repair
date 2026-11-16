@@ -1,0 +1,224 @@
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">✳</div><div><strong>CodePilot<span>-X</span></strong><small>AGENT CONSOLE</small></div></div>
+    <div class="side-label">WORKSPACE</div>
+    <nav><button *ngFor="let item of pages;let i=index" [class.active]="page===item" (click)="selectPage(item)"><span class="navicon">{{icons[i]}}</span>{{item}}<span class="navarrow" *ngIf="page===item">›</span></button></nav>
+    <div class="sidebar-bottom"><div class="connection"><span class="dot" [class.off]="!health"></span>{{health?'Local API connected':'API disconnected'}}</div><small>v1.0 · Local development</small></div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong>{{page}}</strong></div><div class="top-actions"><span class="pill">{{health?.provider||'Groq'}} · {{health?.model||'Offline'}}</span><span class="avatar">CX</span></div></header>
+    <div class="content">
+      <div *ngIf="error" class="alert"><strong>Attention</strong> {{error}} <button (click)="error=''">×</button></div>
+      <div *ngIf="notice" class="alert success">{{notice}} <button (click)="notice=''">×</button></div>
+      <ng-container *ngIf="page==='Overview'">
+        <div class="eyebrow">MISSION CONTROL / OVERVIEW</div><h1>Build with intelligence<span class="accent">.</span></h1><p class="lede">Your autonomous software engineering workspace. Analyze repositories, orchestrate code changes, and measure real outcomes.</p>
+        <div class="metrics"><div class="metric"><small>REGRESSION SUITE</small><strong>108 <span class="metric-unit">tests*</span></strong><span>Last confirmed local run</span></div><div class="metric"><small>RETRIEVAL BENCHMARK</small><strong>12 <span class="metric-unit">cases*</span></strong><span>Initial synthetic evaluation</span></div><div class="metric"><small>DEPENDENCY RECALL&#64;3</small><strong>100<span class="metric-unit">%*</span></strong><span>Structurally repeated cases</span></div><div class="metric"><small>COMMERCE LIVE</small><strong class="pending">Pending</strong><span>Rate-limited; not validated</span></div></div>
+        <div class="two-col"><section class="panel"><div class="panel-head"><h2>Quick actions</h2><span class="muted">Start here</span></div><div class="action" (click)="selectPage('Agent Workspace')"><span class="action-icon">✧</span><div><strong>Launch agent task</strong><small>Generate, test and review code changes</small></div><b>↗</b></div><div class="action" (click)="selectPage('Retrieval Lab')"><span class="action-icon">◎</span><div><strong>Explore retrieval</strong><small>Inspect the files selected for context</small></div><b>↗</b></div><div class="action" (click)="selectPage('Benchmarks')"><span class="action-icon">▥</span><div><strong>Inspect evaluations</strong><small>Browse saved experiment reports</small></div><b>↗</b></div></section>
+        <section class="panel"><div class="panel-head"><h2>System health</h2><span class="status" [class.warning]="!health">{{health?'ONLINE':'OFFLINE'}}</span></div><div class="healthrow"><span>Backend API</span><strong>{{health?'Connected':'Disconnected'}}</strong></div><div class="healthrow"><span>Provider</span><strong>{{health?.provider||'—'}}</strong></div><div class="healthrow"><span>API credentials</span><strong>{{health?.api_key_configured?'Configured':'Not configured'}}</strong></div><div class="healthrow"><span>Recorded runs this session</span><strong>{{runs.length}}</strong></div><p class="fineprint">*Historical results from the development session, not automatically verified by this dashboard. Live reports appear under Benchmarks.</p></section></div>
+      </ng-container>
+      <ng-container *ngIf="page==='Repository'"><div class="eyebrow">SOURCE INTELLIGENCE</div><h1>Repository explorer<span class="accent">.</span></h1><p class="lede">Inspect source files, symbols and module structure without modifying your project.</p><div class="toolbar"><label>Repository <select [(ngModel)]="repo"><option *ngFor="let r of repos" [value]="r">{{r}}</option></select></label><button class="primary" (click)="loadRepo()">Scan repository</button><span class="muted">{{inventory?.count||0}} Python files</span></div><div class="explorer"><section class="panel filelist"><h2>Files</h2><button *ngFor="let file of inventory?.files" [class.selected]="selectedFile===file.path" (click)="openFile(file.path)"><span>◇</span> {{file.path}} <small>{{file.lines}} lines</small></button><p *ngIf="!inventory" class="muted">Scan a repository to see files.</p></section><section class="panel codeview"><div class="panel-head"><h2>{{selectedFile||'Source preview'}}</h2><span class="muted">Read only</span></div><pre>{{source||'Select a Python file to inspect its source.'}}</pre></section></div></ng-container>
+      <ng-container *ngIf="page==='Agent Workspace'"><div class="eyebrow">AUTONOMOUS EXECUTION</div><h1>Agent workspace<span class="accent">.</span></h1><p class="lede">Describe a task. CodePilot-X will work in a temporary repository copy, run tests, and return a reviewable result.</p><section class="panel form-panel"><label>Repository<select [(ngModel)]="repo"><option *ngFor="let r of repos" [value]="r">{{r}}</option></select></label><label>Task instruction<textarea rows="6" [(ngModel)]="task" placeholder="Describe the coding task..."></textarea></label><div class="form-grid"><label>Retrieval strategy<select [(ngModel)]="strategy"><option value="lexical">Lexical</option><option value="dependency">Dependency-aware</option></select></label><label>Maximum attempts<input type="number" min="1" max="5" [(ngModel)]="attempts"></label><label>Context files<input type="number" min="1" max="30" [(ngModel)]="maxFiles"></label></div><label class="checkbox"><input type="checkbox" [(ngModel)]="generateTests"> Generate additional task tests (extra API calls)</label><div class="form-footer"><span class="muted">Runs execute repository tests. Use trusted code only.</span><button class="primary" [disabled]="busy||!task.trim()" (click)="startRun()">✧ &nbsp; Run autonomous agent</button></div></section></ng-container>
+      <ng-container *ngIf="page==='Runs & Diffs'"><div class="eyebrow">EXECUTION TRACE</div><h1>Runs & changes<span class="accent">.</span></h1><p class="lede">Trace attempts, test outcomes, repair feedback, and review the generated diff.</p><div class="two-col runlayout"><section class="panel"><div class="panel-head"><h2>Recent runs</h2><span class="muted">In-memory session</span></div><button class="runitem" *ngFor="let run of runs" (click)="selectRun(run.id)"><strong>{{run.task}}</strong><small>{{run.started_at | date:'short'}} · {{run.status}}</small></button><p class="muted" *ngIf="!runs.length">No agent runs yet. Start one from Agent Workspace.</p></section><section class="panel"><div class="panel-head"><h2>Run details</h2><span class="status" *ngIf="activeRun">{{activeRun.status}}</span></div><ng-container *ngIf="activeRun"><p><strong>{{activeRun.task}}</strong></p><div class="healthrow"><span>Run ID</span><code>{{activeRun.id}}</code></div><div class="healthrow"><span>Success</span><strong>{{activeRun.result?.success===true?'Passed':activeRun.status==='running'?'Running':activeRun.result?.success===false?'Failed':'—'}}</strong></div><p class="error-text" *ngIf="activeRun.error">{{activeRun.error}}</p><div *ngFor="let attempt of activeRun.result?.history" class="attempt"><strong>Attempt {{attempt.attempt}}</strong><span [class.good]="attempt.passed">{{attempt.passed?'PASS':'FAIL'}}</span><p>{{attempt.reasoning_summary||attempt.failure_stage||'Execution attempt'}}</p><small>Files: {{attempt.changed_files?.join(', ')||'none'}}</small><pre>{{attempt.output||attempt.verification_output||''}}</pre></div><button *ngIf="activeRun.status==='completed'" (click)="loadDiff(activeRun.id)">Refresh diffs</button></ng-container><p class="muted" *ngIf="!activeRun">Select a run to inspect.</p></section></div><section class="panel" *ngIf="keys(diffs).length"><div class="panel-head"><h2>Unified code diffs</h2><span class="muted">Original vs temporary workspace</span></div><div *ngFor="let key of keys(diffs)"><h3>{{key}}</h3><pre class="diff">{{diffs[key]||'No text changes'}}</pre></div></section></ng-container>
+
+      <section class="panel"
+               *ngIf="page==='Runs & Diffs' && activeRun?.status==='completed'">
+
+        <div class="panel-head">
+          <h2>Generated artifacts & independent verification</h2>
+          <span class="muted">Saved agent output</span>
+        </div>
+
+        <p class="muted" *ngIf="artifactChecking">
+          Checking saved artifacts...
+        </p>
+
+        <p class="muted" *ngIf="!artifactChecking">
+          {{artifactMessage || 'Select a completed run to inspect its artifacts.'}}
+        </p>
+
+        <div class="toolbar">
+          <button
+            class="primary"
+            [disabled]="!artifactAvailable || downloadBusy"
+            (click)="downloadGeneratedCode(activeRun.id)">
+            {{downloadBusy ? 'Downloading...' : 'Download Generated Code'}}
+          </button>
+
+          <button
+            [disabled]="!artifactAvailable || verificationBusy"
+            (click)="verifySavedRun(activeRun.id)">
+            {{verificationBusy ? 'Verifying...' : 'Run Independent Verification'}}
+          </button>
+        </div>
+
+        <div *ngIf="verificationResult" class="attempt">
+          <div class="panel-head">
+            <h3>Independent test results</h3>
+            <span
+              class="status"
+              [class.good]="verificationResult.passed">
+              {{verificationResult.passed ? 'PASS' : 'FAIL'}}
+            </span>
+          </div>
+
+          <div class="healthrow">
+            <span>Result</span>
+            <strong>
+              {{verificationResult.passed ? 'Passed' : 'Failed'}}
+            </strong>
+          </div>
+
+          <div class="healthrow">
+            <span>Timed out</span>
+            <strong>{{verificationResult.timed_out ? 'Yes' : 'No'}}</strong>
+          </div>
+
+          <div class="healthrow">
+            <span>Applied files</span>
+            <strong>{{verificationResult.applied_files?.join(', ') || 'None'}}</strong>
+          </div>
+
+          <h3>Test output</h3>
+          <pre>{{verificationResult.output}}</pre>
+        </div>
+
+        <p class="fineprint">
+          Independent verification executes local repository tests.
+          Use trusted code only. No additional LLM call is required.
+        </p>
+      </section>
+
+      <ng-container *ngIf="page==='Retrieval Lab'"><div class="eyebrow">CONTEXT ENGINE</div><h1>Retrieval laboratory<span class="accent">.</span></h1><p class="lede">See which source files the agent chooses before sending context to the language model.</p><section class="panel form-panel"><label>Task description<textarea [(ngModel)]="task" rows="3"></textarea></label><div class="form-grid"><label>Repository<select [(ngModel)]="repo"><option *ngFor="let r of repos" [value]="r">{{r}}</option></select></label><label>Strategy<select [(ngModel)]="strategy"><option value="lexical">Lexical</option><option value="dependency">Dependency-aware</option></select></label><label>Top K<input type="number" [(ngModel)]="maxFiles" min="1" max="30"></label></div><button class="primary" [disabled]="busy" (click)="analyze()">Analyze context →</button></section><section class="panel" *ngIf="retrieval"><div class="panel-head"><h2>Ranked files</h2><span class="muted">{{retrieval.total_files}} indexed</span></div><div *ngFor="let f of retrieval.ranking;let i=index" class="rank"><span>{{(i+1).toString().padStart(2,'0')}}</span><strong>{{f}}</strong></div><h3>Selected context</h3><pre>{{retrieval.context}}</pre></section></ng-container>
+
+<ng-container *ngIf="page==='Benchmarks'">
+  <div class="eyebrow">EVALUATION &amp; EVIDENCE</div>
+  <h1>Benchmark reports<span class="accent">.</span></h1>
+
+  <p class="lede">
+    Explore saved evaluation results. Reference implementations,
+    offline demonstrations, and autonomous agent runs are reported separately.
+  </p>
+
+  <div class="toolbar">
+    <button class="primary" (click)="refresh()">Refresh reports</button>
+    <span class="muted">{{reports.length}} reports discovered</span>
+  </div>
+
+  <section class="panel" *ngFor="let report of reports">
+
+    <div class="panel-head">
+      <div>
+        <h2>{{report.name}}</h2>
+        <small class="muted">{{report.path}}</small>
+      </div>
+      <span class="status">Saved report</span>
+    </div>
+
+    <ng-container *ngIf="isRunReport(report)">
+      <div class="healthrow">
+        <span>Evaluation outcome</span>
+        <strong>{{benchmarkOutcome(report)}}</strong>
+      </div>
+
+      <div class="healthrow">
+        <span>Execution provenance</span>
+        <strong>{{benchmarkProvenance(report)}}</strong>
+      </div>
+
+      <div class="healthrow">
+        <span>Run ID</span>
+        <code>{{report.data.run_id}}</code>
+      </div>
+
+      <div class="healthrow">
+        <span>Attempts recorded</span>
+        <strong>{{report.data.attempts_used ?? 'Not recorded'}}</strong>
+      </div>
+
+      <div class="healthrow">
+        <span>Modified files</span>
+        <strong>
+          {{report.data.files_modified?.join(', ') || 'None recorded'}}
+        </strong>
+      </div>
+
+      <div class="healthrow">
+        <span>Independent verification</span>
+        <strong>
+          {{report.data.independent_verification?.passed === true
+            ? 'Passed'
+            : report.data.independent_verification?.passed === false
+              ? 'Failed'
+              : 'Not recorded'}}
+        </strong>
+      </div>
+
+      <div class="healthrow">
+        <span>Independent test count</span>
+        <strong>
+          {{benchmarkTestCount(report.data.independent_verification?.output)}}
+        </strong>
+      </div>
+
+      <p class="fineprint"
+         *ngIf="benchmarkProvenance(report)==='Not established'">
+        Autonomous execution provenance is not established for this saved run.
+        Verification success does not independently establish agent authorship.
+      </p>
+    </ng-container>
+
+    <ng-container *ngIf="isBaselineReport(report)">
+      <div class="healthrow">
+        <span>Benchmark</span>
+        <strong>{{report.data.benchmark}}</strong>
+      </div>
+
+      <div class="healthrow">
+        <span>Reference visible tests</span>
+        <strong>
+          {{report.data.reference_solution.visible_tests_passed}} /
+          {{report.data.reference_solution.visible_tests_total}}
+        </strong>
+      </div>
+
+      <div class="healthrow">
+        <span>Reference independent tests</span>
+        <strong>
+          {{report.data.reference_solution.independent_tests_passed}} /
+          {{report.data.reference_solution.independent_tests_total}}
+        </strong>
+      </div>
+
+      <div class="healthrow">
+        <span>Autonomous agent evaluation</span>
+        <strong>
+          {{report.data.codepilot_agent?.status || 'Not recorded'}}
+        </strong>
+      </div>
+
+      <p class="fineprint">
+        Reference solution results validate the benchmark.
+        They are not autonomous CodePilot-X performance results.
+      </p>
+    </ng-container>
+
+    <details>
+      <summary>View complete JSON report</summary>
+      <pre>{{pretty(report.data)}}</pre>
+    </details>
+
+  </section>
+
+  <section class="panel" *ngIf="!reports.length">
+    <p class="muted">
+      No benchmark reports found. Check the backend connection
+      or add JSON reports under evaluation/reports/.
+    </p>
+  </section>
+</ng-container>
+
+      <ng-container *ngIf="page==='Settings'"><div class="eyebrow">LOCAL CONFIGURATION</div><h1>Environment settings<span class="accent">.</span></h1><p class="lede">Read-only configuration. Provider keys are never sent to the frontend.</p><section class="panel"><div class="healthrow"><span>Project root</span><code>{{health?.root||'—'}}</code></div><div class="healthrow"><span>Provider</span><strong>{{health?.provider||'—'}}</strong></div><div class="healthrow"><span>Model</span><strong>{{health?.model||'—'}}</strong></div><div class="healthrow"><span>API key configured</span><strong>{{health?.api_key_configured?'Yes':'No'}}</strong></div><div class="healthrow"><span>Backend status</span><strong>{{health?.status||'Offline'}}</strong></div><p class="fineprint">Configure GROQ_API_KEY or OPENAI_API_KEY in the terminal running FastAPI. Never expose this dashboard publicly: the agent executes repository tests, which are not sandboxed.</p></section></ng-container>
+      <footer>CODEPILOT-X <span>·</span> AUTONOMOUS ENGINEERING SYSTEM <span>·</span> LOCAL CONSOLE</footer>
+    </div>
+  </main>
+</div>

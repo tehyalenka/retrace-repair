@@ -1,0 +1,485 @@
+{
+  "case_count": 12,
+  "summary": {
+    "lexical": {
+      "recall_at_3": 0.5,
+      "recall_at_5": 0.5,
+      "recall_at_10": 0.5
+    },
+    "dependency": {
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0
+    }
+  },
+  "cases": [
+    {
+      "name": "case_0",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_1",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_2",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_3",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_4",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_5",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_6",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_7",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_8",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_9",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_10",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    },
+    {
+      "name": "case_11",
+      "results": {
+        "lexical": {
+          "top_10": [
+            "service.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py",
+            "aaa_noise_6.py"
+          ],
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "recall_at_10": 0.5
+        },
+        "dependency": {
+          "top_10": [
+            "service.py",
+            "dependency.py",
+            "aaa_noise_0.py",
+            "aaa_noise_1.py",
+            "aaa_noise_10.py",
+            "aaa_noise_11.py",
+            "aaa_noise_2.py",
+            "aaa_noise_3.py",
+            "aaa_noise_4.py",
+            "aaa_noise_5.py"
+          ],
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "recall_at_10": 1.0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "tasks": [
+    {
+      "id": "clamp_bounds",
+      "category": "bugfix",
+      "task": "Clamp numeric inputs to inclusive lower and upper bounds.",
+      "repo": "clamp_bounds/repo",
+      "solution": "clamp_bounds/solution",
+      "public_verifier": "clamp_bounds/public.py",
+      "heldout_verifier": "clamp_bounds/heldout.py"
+    },
+    {
+      "id": "deduplicate",
+      "category": "bugfix",
+      "task": "Return unique elements while preserving input order.",
+      "repo": "deduplicate/repo",
+      "solution": "deduplicate/solution",
+      "public_verifier": "deduplicate/public.py",
+      "heldout_verifier": "deduplicate/heldout.py"
+    },
+    {
+      "id": "average_empty",
+      "category": "bugfix",
+      "task": "Compute arithmetic mean; return zero for empty input.",
+      "repo": "average_empty/repo",
+      "solution": "average_empty/solution",
+      "public_verifier": "average_empty/public.py",
+      "heldout_verifier": "average_empty/heldout.py"
+    },
+    {
+      "id": "normalize_whitespace",
+      "category": "bugfix",
+      "task": "Normalize repeated whitespace into single spaces and strip edges.",
+      "repo": "normalize_whitespace/repo",
+      "solution": "normalize_whitespace/solution",
+      "public_verifier": "normalize_whitespace/public.py",
+      "heldout_verifier": "normalize_whitespace/heldout.py"
+    },
+    {
+      "id": "slugify",
+      "category": "feature",
+      "task": "Create lowercase hyphen-separated slugs from whitespace-separated words.",
+      "repo": "slugify/repo",
+      "solution": "slugify/solution",
+      "public_verifier": "slugify/public.py",
+      "heldout_verifier": "slugify/heldout.py"
+    },
+    {
+      "id": "running_total",
+      "category": "feature",
+      "task": "Return a list of cumulative sums.",
+      "repo": "running_total/repo",
+      "solution": "running_total/solution",
+      "public_verifier": "running_total/public.py",
+      "heldout_verifier": "running_total/heldout.py"
+    },
+    {
+      "id": "group_counts",
+      "category": "feature",
+      "task": "Return a mapping from each item to its frequency.",
+      "repo": "group_counts/repo",
+      "solution": "group_counts/solution",
+      "public_verifier": "group_counts/public.py",
+      "heldout_verifier": "group_counts/heldout.py"
+    },
+    {
+      "id": "refactor_sort",
+      "category": "refactor",
+      "task": "Return sorted values without mutating caller input.",
+      "repo": "refactor_sort/repo",
+      "solution": "refactor_sort/solution",
+      "public_verifier": "refactor_sort/public.py",
+      "heldout_verifier": "refactor_sort/heldout.py"
+    },
+    {
+      "id": "refactor_default",
+      "category": "refactor",
+      "task": "Collect items into a new list on each call.",
+      "repo": "refactor_default/repo",
+      "solution": "refactor_default/solution",
+      "public_verifier": "refactor_default/public.py",
+      "heldout_verifier": "refactor_default/heldout.py"
+    },
+    {
+      "id": "refactor_copy",
+      "category": "refactor",
+      "task": "Return a shallow independent copy of the input mapping.",
+      "repo": "refactor_copy/repo",
+      "solution": "refactor_copy/solution",
+      "public_verifier": "refactor_copy/public.py",
+      "heldout_verifier": "refactor_copy/heldout.py"
+    },
+    {
+      "id": "multifile_discount",
+      "category": "multifile",
+      "task": "Apply a percentage discount in the pricing facade.",
+      "repo": "multifile_discount/repo",
+      "solution": "multifile_discount/solution",
+      "public_verifier": "multifile_discount/public.py",
+      "heldout_verifier": "multifile_discount/heldout.py"
+    },
+    {
+      "id": "multifile_tax",
+      "category": "multifile",
+      "task": "Calculate tax-inclusive totals through the order facade.",
+      "repo": "multifile_tax/repo",
+      "solution": "multifile_tax/solution",
+      "public_verifier": "multifile_tax/public.py",
+      "heldout_verifier": "multifile_tax/heldout.py"
+    },
+    {
+      "id": "multifile_inventory",
+      "category": "multifile",
+      "task": "Compute remaining stock after a sale through the inventory facade.",
+      "repo": "multifile_inventory/repo",
+      "solution": "multifile_inventory/solution",
+      "public_verifier": "multifile_inventory/public.py",
+      "heldout_verifier": "multifile_inventory/heldout.py"
+    },
+    {
+      "id": "regression_negative",
+      "category": "regression",
+      "task": "Compute absolute difference for any operand order.",
+      "repo": "regression_negative/repo",
+      "solution": "regression_negative/solution",
+      "public_verifier": "regression_negative/public.py",
+      "heldout_verifier": "regression_negative/heldout.py"
+    },
+    {
+      "id": "regression_case",
+      "category": "regression",
+      "task": "Perform case-insensitive exact string matching without substring matches.",
+      "repo": "regression_case/repo",
+      "solution": "regression_case/solution",
+      "public_verifier": "regression_case/public.py",
+      "heldout_verifier": "regression_case/heldout.py"
+    }
+  ]
+}
