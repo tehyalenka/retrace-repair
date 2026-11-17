@@ -13,28 +13,104 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, List, Optional, Set
 
 from benchmarks.v18 import task_suite_runner
 from benchmarks.v18.task_suite_runner import summarize
 
 
-def get_completed_tasks_count(output_dir: Path, total_tasks: int = 22) -> int:
-    completed = 0
-    for f in output_dir.glob("*-live.json"):
+def check_benchmark_matrix(
+    output_dir: Path,
+    target_tasks: Optional[List[Dict[str, Any]]] = None,
+    repetitions: int = 1,
+    required_policies: Optional[Set[str]] = None,
+) -> Dict[str, Any]:
+    """Strictly evaluates progress across the task-policy-repetition experiment matrix."""
+    policies = required_policies or {"resample", "feedback", "counterfactual"}
+
+    if target_tasks is not None:
+        target_task_ids = [t["id"] for t in target_tasks]
+    else:
+        # Discover task IDs from *-live.json files present in output directory
+        discovered = [f.stem.replace("-live", "") for f in sorted(output_dir.glob("*-live.json"))]
+        target_task_ids = discovered if discovered else []
+
+    total_expected_cells = len(target_task_ids) * len(policies) * repetitions
+    completed_cells = 0
+    fully_completed_tasks = []
+    incomplete_tasks = []
+
+    for task_id in target_task_ids:
+        live_file = output_dir / f"{task_id}-live.json"
+        if not live_file.exists():
+            incomplete_tasks.append(task_id)
+            continue
         try:
-            data = json.loads(f.read_text(encoding="utf-8"))
-            rows = data.get("rows", [])
-            pending = data.get("pending", {})
-            if len(rows) >= 3 and not pending:
-                completed += 1
+            data = json.loads(live_file.read_text(encoding="utf-8"))
         except Exception:
-            pass
-    return completed
+            incomplete_tasks.append(task_id)
+            continue
+
+        if data.get("pending"):
+            incomplete_tasks.append(task_id)
+            continue
+
+        rows = data.get("rows", [])
+        completed_for_task = set()
+        for r in rows:
+            cond = r.get("condition")
+            if not cond and "key" in r:
+                parts = r["key"].split(":")
+                if len(parts) == 2:
+                    cond = parts[1]
+            rep = int(r.get("repetition", 1))
+            if not r.get("repetition") and "key" in r:
+                parts = r["key"].split(":")
+                if len(parts) == 2 and parts[0].isdigit():
+                    rep = int(parts[0])
+            if cond in policies and 1 <= rep <= repetitions:
+                completed_for_task.add((cond, rep))
+
+        completed_cells += len(completed_for_task)
+        if len(completed_for_task) >= len(policies) * repetitions:
+            fully_completed_tasks.append(task_id)
+        else:
+            incomplete_tasks.append(task_id)
+
+    is_complete = bool(target_task_ids) and (len(fully_completed_tasks) == len(target_task_ids)) and (completed_cells >= total_expected_cells)
+    return {
+        "is_complete": is_complete,
+        "completed_tasks_count": len(fully_completed_tasks),
+        "total_tasks_count": len(target_task_ids),
+        "completed_matrix_cells": completed_cells,
+        "total_matrix_cells": total_expected_cells,
+        "completed_task_ids": fully_completed_tasks,
+        "incomplete_task_ids": incomplete_tasks,
+    }
 
 
-def is_benchmark_complete(output_dir: Path, total_tasks: int = 22) -> bool:
-    return get_completed_tasks_count(output_dir, total_tasks) >= total_tasks
+def get_completed_tasks_count(
+    output_dir: Path,
+    total_tasks: int = 22,
+    target_tasks: Optional[List[Dict[str, Any]]] = None,
+    repetitions: int = 1,
+) -> int:
+    """Backward-compatible helper returning fully completed tasks satisfying matrix criteria."""
+    res = check_benchmark_matrix(output_dir, target_tasks=target_tasks, repetitions=repetitions)
+    return res["completed_tasks_count"]
+
+
+def is_benchmark_complete(
+    output_dir: Path,
+    total_tasks: int = 22,
+    target_tasks: Optional[List[Dict[str, Any]]] = None,
+    repetitions: int = 1,
+) -> bool:
+    """Verify whether all target tasks have satisfied all matrix policy-repetition combinations."""
+    res = check_benchmark_matrix(output_dir, target_tasks=target_tasks, repetitions=repetitions)
+    if total_tasks and res["completed_tasks_count"] < total_tasks:
+        return False
+    return res["is_complete"]
 
 
 def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22, run_manifest_path: Optional[Path] = None):
@@ -42,9 +118,14 @@ def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22, run_ma
     print(f"ALL {target_total} TARGET TASKS COMPLETED! Running post-benchmark pipeline...", flush=True)
     print("=" * 70, flush=True)
 
+    errors = []
+
     # 1. Summarize and generate benchmark-proof.json
     print("\n[1/5] Generating final summary and cryptographic proof...", flush=True)
-    summarize(str(output_dir))
+    try:
+        summarize(str(output_dir))
+    except Exception as exc:
+        errors.append(f"Summary generation failed: {exc}")
 
     # 2. Run research gate
     print("\n[2/5] Auditing evidence with Research Gate...", flush=True)
@@ -55,7 +136,7 @@ def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22, run_ma
         gate_path.write_text(json.dumps(gate_report, indent=2), encoding="utf-8")
         print(f"Research Gate report saved to {gate_path}", flush=True)
     except Exception as exc:
-        print(f"Warning: Research gate error: {exc}", flush=True)
+        errors.append(f"Research Gate audit failed: {exc}")
 
     # 3. Generate research report and metrics
     print("\n[3/5] Generating research report and metrics...", flush=True)
@@ -66,7 +147,7 @@ def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22, run_ma
         research_report.generate(str(output_dir), str(report_dir))
         print(f"Research report compiled in {report_dir}", flush=True)
     except Exception as exc:
-        print(f"Warning: Research report generation error: {exc}", flush=True)
+        errors.append(f"Research Report generation failed: {exc}")
 
     # 4. Run statistical analysis and paired McNemar tests
     print("\n[4/5] Computing statistical significance (McNemar) & token accounting...", flush=True)
@@ -77,22 +158,31 @@ def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22, run_ma
         stats_path.write_text(json.dumps(stats_report, indent=2), encoding="utf-8")
         print(f"Statistical analysis report saved to {stats_path}", flush=True)
     except Exception as exc:
-        print(f"Warning: Statistical analysis error: {exc}", flush=True)
+        errors.append(f"Statistical Analysis failed: {exc}")
 
     # 5. Seal post-execution evidence manifest
     print("\n[5/5] Cryptographically sealing output evidence manifest...", flush=True)
     try:
         from benchmarks.v18.experiment_manifest import seal_evidence_manifest
         manifest_p = run_manifest_path or (output_dir / "run-manifest.json")
-        if manifest_p.exists():
-            evidence = seal_evidence_manifest(output_dir, manifest_p)
-            print(
-                f"Evidence sealed in {output_dir / 'evidence-manifest.json'} "
-                f"({evidence['total_artifacts_sealed']} artifacts)",
-                flush=True,
-            )
+        if not manifest_p.exists():
+            raise FileNotFoundError(f"Required run manifest {manifest_p} not found; cannot seal evidence.")
+        evidence = seal_evidence_manifest(output_dir, manifest_p)
+        print(
+            f"Evidence sealed in {output_dir / 'evidence-manifest.json'} "
+            f"({evidence['total_artifacts_sealed']} artifacts)",
+            flush=True,
+        )
     except Exception as exc:
-        print(f"Warning: Could not seal evidence manifest: {exc}", flush=True)
+        errors.append(f"Evidence manifest seal failed: {exc}")
+
+    if errors:
+        print("\n" + "!" * 70, flush=True)
+        print("FAIL-CLOSED ALERT: Post-benchmark pipeline encountered critical error(s):", flush=True)
+        for e in errors:
+            print(f"  - {e}", flush=True)
+        print("!" * 70 + "\n", flush=True)
+        raise RuntimeError(f"Post-benchmark evidence pipeline failed: {'; '.join(errors)}")
 
     print("\n" + "=" * 70, flush=True)
     print("AUTONOMOUS BENCHMARK RUNNER FINISHED SUCCESSFULLY.", flush=True)
@@ -125,7 +215,30 @@ def main():
         default=24.0,
         help="Maximum hours to wait before giving up (default: 24h)",
     )
+    parser.add_argument(
+        "--temperature-resample",
+        type=float,
+        default=0.7,
+        help="Resample baseline temperature (default: 0.7)",
+    )
+    parser.add_argument(
+        "--temperature-repair",
+        type=float,
+        default=0.0,
+        help="Repair agent temperature (default: 0.0)",
+    )
+    parser.add_argument(
+        "--seed-base",
+        type=int,
+        default=42,
+        help="Seed base for reproducible resample (default: 42)",
+    )
     args = parser.parse_args()
+
+    # Synchronize runner configuration with environment variables consumed by model request handlers
+    os.environ["CODEPILOT_TEMPERATURE_RESAMPLE"] = str(args.temperature_resample)
+    os.environ["CODEPILOT_TEMPERATURE_REPAIR"] = str(args.temperature_repair)
+    os.environ["CODEPILOT_SEED_BASE"] = str(args.seed_base)
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -145,7 +258,7 @@ def main():
 
     task_ids_set = {t["id"] for t in target_tasks} if (args.category or args.tasks) else None
 
-    # Assemble effective runtime configuration (removing assumed fixed defaults)
+    # Assemble effective runtime configuration (strictly reflecting actual model call settings)
     effective_config = {
         "output_dir": str(out_dir),
         "category": args.category,
@@ -157,12 +270,12 @@ def main():
         "max_hours": args.max_hours,
         "primary_provider": os.environ.get("CODEPILOT_PROVIDER", "groq"),
         "model_id": os.environ.get("CODEPILOT_MODEL", "openai/gpt-oss-120b"),
-        "temperature_resample": 0.7,
-        "temperature_repair": 0.0,
-        "seed_base": 42,
+        "temperature_resample": args.temperature_resample,
+        "temperature_repair": args.temperature_repair,
+        "seed_base": args.seed_base,
     }
 
-    # Lifecycle Stage 1: Pre-run manifest initialization and resume validation
+    # Lifecycle Stage 1: Pre-run manifest initialization and fail-closed resume validation
     run_manifest_path = out_dir / "run-manifest.json"
     from benchmarks.v18.experiment_manifest import generate_run_manifest, verify_run_manifest
 
@@ -171,13 +284,21 @@ def main():
             verify_run_manifest(run_manifest_path, current_config=effective_config, task_list=target_tasks)
             print(f"Verified existing run-manifest on resume: {run_manifest_path}", flush=True)
         except Exception as exc:
-            print(f"WARNING: Manifest validation alert on resume: {exc}", flush=True)
+            print("\n" + "!" * 70, flush=True)
+            print(f"CRITICAL INTEGRITY ERROR: Manifest validation failed on resume: {exc}", flush=True)
+            print("Aborting autonomous execution to preserve experiment provenance (fail-closed).", flush=True)
+            print("!" * 70 + "\n", flush=True)
+            sys.exit(1)
     else:
         try:
             generate_run_manifest(run_manifest_path, config=effective_config, task_list=target_tasks)
             print(f"Pre-run manifest initialized at: {run_manifest_path}", flush=True)
         except Exception as exc:
-            print(f"Warning: Could not initialize run-manifest: {exc}", flush=True)
+            print("\n" + "!" * 70, flush=True)
+            print(f"CRITICAL INTEGRITY ERROR: Failed to initialize pre-run manifest: {exc}", flush=True)
+            print("Aborting autonomous execution: pre-run provenance snapshot is required (fail-closed).", flush=True)
+            print("!" * 70 + "\n", flush=True)
+            sys.exit(1)
 
     start_time = time.time()
     max_wait_seconds = args.max_hours * 3600
@@ -199,14 +320,20 @@ def main():
             print(f"Max wait time ({args.max_hours}h) exceeded. Exiting.", flush=True)
             sys.exit(1)
 
-        completed_tasks = get_completed_tasks_count(out_dir, total_tasks=total_target_count)
+        matrix_status = check_benchmark_matrix(
+            out_dir,
+            target_tasks=target_tasks,
+            repetitions=args.repetitions,
+        )
+        completed_tasks = matrix_status["completed_tasks_count"]
         print(
             f"\n[Cycle {cycle} | {datetime.datetime.now().strftime('%H:%M:%S')}] "
-            f"Progress: {completed_tasks}/{total_target_count} tasks complete.",
+            f"Progress: {completed_tasks}/{total_target_count} tasks complete "
+            f"({matrix_status['completed_matrix_cells']}/{matrix_status['total_matrix_cells']} matrix evaluations).",
             flush=True,
         )
 
-        if completed_tasks >= total_target_count:
+        if matrix_status["is_complete"]:
             run_post_benchmark_pipeline(out_dir, target_total=total_target_count, run_manifest_path=run_manifest_path)
             sys.exit(0)
 
@@ -223,14 +350,20 @@ def main():
         except Exception as exc:
             print(f"Error during run_live: {exc}", flush=True)
 
-        # Check again if complete
-        completed_tasks = get_completed_tasks_count(out_dir, total_tasks=total_target_count)
-        if completed_tasks >= total_target_count:
+        # Check matrix again if complete
+        matrix_status = check_benchmark_matrix(
+            out_dir,
+            target_tasks=target_tasks,
+            repetitions=args.repetitions,
+        )
+        if matrix_status["is_complete"]:
             run_post_benchmark_pipeline(out_dir, target_total=total_target_count, run_manifest_path=run_manifest_path)
             sys.exit(0)
 
         print(
-            f"Provider quota or rate limit currently active ({completed_tasks}/{total_target_count} tasks finished). "
+            f"Provider quota or rate limit currently active "
+            f"({matrix_status['completed_tasks_count']}/{total_target_count} tasks finished, "
+            f"{matrix_status['completed_matrix_cells']}/{matrix_status['total_matrix_cells']} evaluations). "
             f"Sleeping for {args.retry_interval_seconds}s before next autonomous retry...",
             flush=True,
         )

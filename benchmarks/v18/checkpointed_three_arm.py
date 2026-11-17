@@ -177,8 +177,12 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                     report["request_reservations"][key] = next_count
                     _write(output, report)
 
-                arm_temperature = 0.7 if condition == "resample" else (0.0 if not offline else None)
-                arm_seed = (42 + repetition * 100) if condition == "resample" else None
+                resample_temp = float(os.environ.get("CODEPILOT_TEMPERATURE_RESAMPLE", "0.7"))
+                repair_temp = float(os.environ.get("CODEPILOT_TEMPERATURE_REPAIR", "0.0"))
+                seed_base = int(os.environ.get("CODEPILOT_SEED_BASE", "42"))
+
+                arm_temperature = resample_temp if condition == "resample" else (repair_temp if not offline else None)
+                arm_seed = (seed_base + repetition * 100) if condition == "resample" else None
                 with ModelRequestAccounting(
                     max_http_requests=max_http_requests_per_arm,
                     on_request_reserved=(
