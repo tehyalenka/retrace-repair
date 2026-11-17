@@ -13,6 +13,7 @@ import tempfile
 from unittest.mock import patch
 
 from benchmarks.v18 import record_replay as base
+from benchmarks.v18.provenance import experiment_provenance
 from codepilot.agent import ModelRequestAccounting, ModelRequestBudgetExceeded
 from benchmarks.v16.repair_experiment import _edit
 
@@ -87,6 +88,8 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
         settings["heldout_sha256"] = hashlib.sha256(heldout_verification.encode("utf-8")).hexdigest()
     if max_http_requests_per_arm is not None:
         settings["max_http_requests_per_arm"] = max_http_requests_per_arm
+    if not offline:
+        settings["model_provenance"] = experiment_provenance(offline=False)
     if output.exists():
         report = json.loads(output.read_text(encoding="utf-8"))
         if report.get("settings") != settings:
