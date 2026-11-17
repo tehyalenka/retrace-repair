@@ -98,11 +98,27 @@ def _retry_delay(response, retry_number):
     return max(wait, 0.0) + 0.25
 
 
-def ask_model(messages, model=None, base_url=None, json_mode=None):
+def ask_model(messages, model=None, base_url=None, json_mode=None, temperature=None):
     key, default_model, default_base_url = provider_config()
     model = model or default_model
     base_url = (base_url or default_base_url).rstrip("/")
-    payload = {"model": model, "messages": messages, "temperature": 0}
+
+    if temperature is None:
+        temperature = os.environ.get("CODEPILOT_TEMPERATURE", "0")
+
+    try:
+        temperature = float(temperature)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Temperature must be a number") from exc
+
+    if not 0 <= temperature <= 2:
+        raise ValueError("Temperature must be between 0 and 2")
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+    }
     # Explicit override enables controlled A/B experiments without mutating the environment.
     if json_mode is None:
         json_mode = os.environ.get("CODEPILOT_JSON_MODE", "0") == "1"
