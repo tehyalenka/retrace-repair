@@ -86,8 +86,17 @@ def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_re
             with patch.object(record_replay.agent_module,'ask_model',return_value=first):
                 trace=(json.loads(trace_path.read_text()) if trace_path.exists()
                        else record_replay.capture('live',item['id'],trace_path))
-            if trace['first_attempt']['failure_category']!='test_failure':
-                raise ValueError('Expected public failure for '+item['id'])
+            first_attempt = trace['first_attempt']
+            if (
+                first_attempt.get('failure_category') != 'test_failure'
+                or first_attempt.get('tests_run', 0) < 1
+                or 'No tests discovered' in str(first_attempt.get('output', ''))
+                or 'Start directory is not importable' in str(first_attempt.get('output', ''))
+            ):
+                raise ValueError(
+                    'Expected a genuine public-test failure with discovered tests for '
+                    + item['id']
+                )
             try:
                 report=checkpointed_three_arm.evaluate(trace_path,report_path,offline=False,
                            repetitions=repetitions,attempts=attempts,heldout_verification=heldout,

@@ -27,7 +27,11 @@ class SuiteBudgetTests(unittest.TestCase):
                  patch.object(runner, "tasks", return_value=[item]), \
                  patch.object(runner, "fixture", return_value=root), \
                  patch.object(runner.record_replay, "capture", return_value={
-                     "first_attempt": {"failure_category": "test_failure"}
+                     "first_attempt": {
+                        "failure_category": "test_failure",
+                        "tests_run": 1,
+                        "output": "Ran 1 test in 0.001s\nFAILED (failures=1)",
+                    }
                  }), \
                  patch.object(runner.checkpointed_three_arm, "evaluate",
                               return_value={"rows": []}) as evaluate:
@@ -63,7 +67,11 @@ class SuiteBudgetTests(unittest.TestCase):
                  patch.object(runner, "tasks", return_value=[item]), \
                  patch.object(runner, "fixture", return_value=root), \
                  patch.object(runner.record_replay, "capture", return_value={
-                     "first_attempt": {"failure_category": "test_failure"}
+                     "first_attempt": {
+                        "failure_category": "test_failure",
+                        "tests_run": 1,
+                        "output": "Ran 1 test in 0.001s\nFAILED (failures=1)",
+                    }
                  }), \
                  patch.object(
                      runner.checkpointed_three_arm,
