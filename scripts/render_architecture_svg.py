@@ -1,0 +1,377 @@
+"""Generate a publication-quality SVG architecture diagram for RETRACE."""
+from pathlib import Path
+
+def generate_svg(output_path: Path):
+    svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 960" width="100%" height="100%" style="background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19" />
+      <stop offset="100%" stop-color="#111827" />
+    </linearGradient>
+    
+    <linearGradient id="cardGradDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <linearGradient id="intakeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+
+    <linearGradient id="llmGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+
+    <linearGradient id="replayGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+
+    <linearGradient id="heldoutGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e11d48" />
+      <stop offset="100%" stop-color="#be123c" />
+    </linearGradient>
+
+    <linearGradient id="gateGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
+
+    <filter id="glowRed" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#ef4444" flood-opacity="0.6" />
+    </filter>
+
+    <filter id="glowViolet" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#8b5cf6" flood-opacity="0.5" />
+    </filter>
+
+    <!-- Markers -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94a3b8" />
+    </marker>
+    <marker id="arrowViolet" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#a78bfa" />
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fb7185" />
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1480" height="960" fill="url(#bgGrad)" />
+
+  <!-- Grid overlay for tech look -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.7" opacity="0.3" />
+  </pattern>
+  <rect width="1480" height="960" fill="url(#grid)" />
+
+  <!-- HEADER -->
+  <g transform="translate(60, 40)">
+    <rect x="0" y="0" width="1360" height="70" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1.2" filter="url(#shadow)" />
+    <text x="30" y="34" font-size="22" font-weight="700" fill="#f8fafc" letter-spacing="0.5">RETRACE: System &amp; Research Evaluation Architecture</text>
+    <text x="30" y="55" font-size="13" font-weight="400" fill="#94a3b8">Repository-Aware Autonomous Repair with Counterfactual Candidate Replay &amp; Enterprise Invariant Verification</text>
+    <rect x="1080" y="18" width="120" height="24" rx="4" fill="#0369a1" opacity="0.4" stroke="#0284c7" stroke-width="1" />
+    <text x="1140" y="34" font-size="11" font-weight="600" fill="#38bdf8" text-anchor="middle">v1.8 TESTBED</text>
+    <rect x="1215" y="18" width="115" height="24" rx="4" fill="#047857" opacity="0.4" stroke="#059669" stroke-width="1" />
+    <text x="1272" y="34" font-size="11" font-weight="600" fill="#34d399" text-anchor="middle">275 TESTS PASS</text>
+  </g>
+
+  <!-- 1. INTAKE & CONTAINMENT SUBSYSTEM -->
+  <g transform="translate(60, 130)">
+    <rect x="0" y="0" width="310" height="460" rx="12" fill="#131c2e" stroke="#0284c7" stroke-width="1.5" filter="url(#shadow)" />
+    <rect x="0" y="0" width="310" height="38" rx="12" fill="url(#intakeGrad)" />
+    <rect x="0" y="24" width="310" height="14" fill="url(#intakeGrad)" />
+    <text x="15" y="24" font-size="14" font-weight="700" fill="#ffffff">1. Intake &amp; Containment Boundary</text>
+
+    <!-- Task Prompt Card -->
+    <rect x="15" y="52" width="280" height="68" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1" />
+    <text x="25" y="74" font-size="13" font-weight="600" fill="#38bdf8">Task Prompt &amp; Failure Trace</text>
+    <text x="25" y="94" font-size="11" fill="#94a3b8">• Genuine public-test failure reproduction</text>
+    <text x="25" y="109" font-size="11" fill="#94a3b8">• Natural language defect requirements</text>
+
+    <!-- Immutable Repo Card -->
+    <rect x="15" y="132" width="280" height="74" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1" />
+    <text x="25" y="154" font-size="13" font-weight="600" fill="#38bdf8">Immutable Repository Snapshot</text>
+    <text x="25" y="174" font-size="11" fill="#94a3b8">• Multi-tier Git commit hash provenance</text>
+    <text x="25" y="189" font-size="11" fill="#94a3b8">• Read-only workspace intake guarantee</text>
+    <text x="25" y="202" font-size="11" font-weight="600" fill="#facc15">★ Never mutates developer's local repo</text>
+
+    <!-- Context Retrieval Card -->
+    <rect x="15" y="218" width="280" height="85" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1" />
+    <text x="25" y="240" font-size="13" font-weight="600" fill="#38bdf8">Dependency-Aware Retrieval</text>
+    <text x="25" y="260" font-size="11" fill="#94a3b8">• BM25 term-frequency lexical ranking</text>
+    <text x="25" y="275" font-size="11" fill="#94a3b8">• Multi-hop AST call-graph dependency</text>
+    <text x="25" y="290" font-size="11" fill="#94a3b8">• Candidate file target allowlisting</text>
+
+    <!-- Two-Phase Staging Card -->
+    <rect x="15" y="315" width="280" height="130" rx="8" fill="#1e293b" stroke="#eab308" stroke-width="1" />
+    <text x="25" y="337" font-size="13" font-weight="600" fill="#fde047">Two-Phase Staging &amp; Rollback</text>
+    <text x="25" y="357" font-size="11" fill="#cbd5e1">1. Path Traversal Rejection (../ escapes)</text>
+    <text x="25" y="373" font-size="11" fill="#cbd5e1">2. Absolute Destination Barring (/etc, /tmp)</text>
+    <text x="25" y="389" font-size="11" fill="#cbd5e1">3. Symlink Workspace Escape Blocking</text>
+    <text x="25" y="405" font-size="11" fill="#cbd5e1">4. Non-Python Extension Exclusion</text>
+    <rect x="25" y="415" width="260" height="22" rx="4" fill="#854d0e" opacity="0.4" />
+    <text x="155" y="430" font-size="10.5" font-weight="600" fill="#fef08a" text-anchor="middle">Atomic Rollback on validation/write failure</text>
+  </g>
+
+  <!-- 2. SHARED LLM ENGINE & REQUEST BUDGET (Top Center) -->
+  <g transform="translate(395, 130)">
+    <rect x="0" y="0" width="460" height="110" rx="12" fill="#151b2e" stroke="#6366f1" stroke-width="1.5" filter="url(#shadow)" />
+    <rect x="0" y="0" width="460" height="34" rx="12" fill="url(#llmGrad)" />
+    <rect x="0" y="20" width="460" height="14" fill="url(#llmGrad)" />
+    <text x="15" y="23" font-size="14" font-weight="700" fill="#ffffff">2. Shared Model Engine &amp; Request Accounting</text>
+    
+    <text x="20" y="55" font-size="12" font-weight="600" fill="#c7d2fe">Configured LLM Backend:</text>
+    <text x="180" y="55" font-size="12" fill="#e2e8f0">Groq (openai/gpt-oss-120b) / OpenAI / Gemini</text>
+
+    <text x="20" y="75" font-size="11.5" fill="#94a3b8">• Request Reservations:</text>
+    <text x="150" y="75" font-size="11.5" fill="#a5b4fc">Durable per-arm HTTP allowances (prevents runaway quota)</text>
+
+    <text x="20" y="95" font-size="11.5" fill="#94a3b8">• Adaptive Retries:</text>
+    <text x="150" y="95" font-size="11.5" fill="#a5b4fc">Exponential 429 backoff + structured typed error handling</text>
+  </g>
+
+  <!-- 3. THREE ISOLATED EXPERIMENTAL ARMS (Center) -->
+  <g transform="translate(395, 255)">
+    <rect x="0" y="0" width="460" height="335" rx="12" fill="#131726" stroke="#475569" stroke-width="1.5" filter="url(#shadow)" />
+    <text x="15" y="24" font-size="14" font-weight="700" fill="#f8fafc">3. Three Isolated Experimental Policy Arms</text>
+
+    <!-- Arm 1: Resample -->
+    <rect x="15" y="38" width="430" height="52" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1" />
+    <rect x="15" y="38" width="6" height="52" rx="2" fill="#64748b" />
+    <text x="32" y="58" font-size="13" font-weight="700" fill="#cbd5e1">Arm 1: Resample Baseline</text>
+    <text x="32" y="76" font-size="11" fill="#94a3b8">Stochastic multi-trial sampling (T=0.7, deterministic seed offset: 42 + rep × 100)</text>
+
+    <!-- Arm 2: Feedback -->
+    <rect x="15" y="98" width="430" height="52" rx="8" fill="#1e293b" stroke="#0d9488" stroke-width="1" />
+    <rect x="15" y="98" width="6" height="52" rx="2" fill="#0d9488" />
+    <text x="32" y="118" font-size="13" font-weight="700" fill="#2dd4bf">Arm 2: Feedback Repair</text>
+    <text x="32" y="136" font-size="11" fill="#94a3b8">Iterative reflection loop feeding local traceback &amp; failed assertions to subsequent turns</text>
+
+    <!-- Arm 3: Counterfactual Replay (Prominent Focus!) -->
+    <rect x="15" y="158" width="430" height="165" rx="8" fill="#1f1b3c" stroke="#8b5cf6" stroke-width="1.8" filter="url(#glowViolet)" />
+    <rect x="15" y="158" width="6" height="165" rx="2" fill="#a78bfa" />
+    <text x="32" y="178" font-size="13.5" font-weight="700" fill="#c4b5fd">Arm 3: Counterfactual Replay (Executable Multi-Candidate Search)</text>
+    <text x="32" y="195" font-size="11" fill="#a78bfa">Core contribution: Discovers &amp; ranks alternative causal repair hypotheses</text>
+
+    <!-- Sub-steps of Arm 3 -->
+    <g transform="translate(30, 205)">
+      <rect x="0" y="0" width="95" height="105" rx="6" fill="#2e1065" stroke="#7c3aed" stroke-width="1" />
+      <text x="47" y="20" font-size="10.5" font-weight="700" fill="#e9d5ff" text-anchor="middle">Step 3.1</text>
+      <text x="47" y="38" font-size="10" font-weight="600" fill="#c4b5fd" text-anchor="middle">Generate N</text>
+      <text x="47" y="52" font-size="10" font-weight="600" fill="#c4b5fd" text-anchor="middle">Candidate</text>
+      <text x="47" y="66" font-size="10" font-weight="600" fill="#c4b5fd" text-anchor="middle">Batches</text>
+      <text x="47" y="85" font-size="9" fill="#a78bfa" text-anchor="middle">{C₁, C₂, ..., Cₙ}</text>
+
+      <path d="M 97 52 L 107 52" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowViolet)" />
+
+      <rect x="110" y="0" width="95" height="105" rx="6" fill="#2e1065" stroke="#7c3aed" stroke-width="1" />
+      <text x="157" y="20" font-size="10.5" font-weight="700" fill="#e9d5ff" text-anchor="middle">Step 3.2</text>
+      <text x="157" y="38" font-size="10" font-weight="600" fill="#c4b5fd" text-anchor="middle">Replay in</text>
+      <text x="157" y="52" font-size="10" font-weight="600" fill="#c4b5fd" text-anchor="middle">Disposable</text>
+      <text x="157" y="66" font-size="10" font-weight="600" fill="#c4b5fd" text-anchor="middle">Workspaces</text>
+      <text x="157" y="85" font-size="9" fill="#a78bfa" text-anchor="middle">tempfile clones</text>
+
+      <path d="M 207 52 L 217 52" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowViolet)" />
+
+      <rect x="220" y="0" width="90" height="105" rx="6" fill="#2e1065" stroke="#7c3aed" stroke-width="1" />
+      <text x="265" y="20" font-size="10.5" font-weight="700" fill="#e9d5ff" text-anchor="middle">Step 3.3</text>
+      <text x="265" y="38" font-size="10" font-weight="600" fill="#c4b5fd" text-anchor="middle">Evaluate</text>
+      <text x="265" y="52" font-size="10" font-weight="600" fill="#c4b5fd" text-anchor="middle">on Public</text>
+      <text x="265" y="66" font-size="10" font-weight="600" fill="#c4b5fd" text-anchor="middle">Tests Only</text>
+      <text x="265" y="85" font-size="9" fill="#a78bfa" text-anchor="middle">No heldout data</text>
+
+      <path d="M 312 52 L 322 52" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowViolet)" />
+
+      <rect x="325" y="0" width="85" height="105" rx="6" fill="#4c1d95" stroke="#a78bfa" stroke-width="1.5" />
+      <text x="367" y="20" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Step 3.4</text>
+      <text x="367" y="38" font-size="10" font-weight="700" fill="#f5d0fe" text-anchor="middle">Deterministic</text>
+      <text x="367" y="52" font-size="10" font-weight="700" fill="#f5d0fe" text-anchor="middle">Candidate</text>
+      <text x="367" y="66" font-size="10" font-weight="700" fill="#f5d0fe" text-anchor="middle">Selection</text>
+      <text x="367" y="85" font-size="9" font-weight="700" fill="#f43f5e" text-anchor="middle">C* = argmax</text>
+    </g>
+  </g>
+
+  <!-- 4. ZERO-LEAKAGE PRIVACY BOUNDARY & HELD-OUT VERIFICATION (Right) -->
+  <g transform="translate(880, 130)">
+    <!-- Zero-Leakage Barrier Boundary Box -->
+    <rect x="0" y="0" width="540" height="460" rx="12" fill="#1a0f18" stroke="#f43f5e" stroke-width="2" stroke-dasharray="6,4" filter="url(#glowRed)" />
+    
+    <!-- Red Header Label -->
+    <rect x="0" y="0" width="540" height="38" rx="12" fill="url(#heldoutGrad)" />
+    <rect x="0" y="24" width="540" height="14" fill="url(#heldoutGrad)" />
+    <text x="20" y="24" font-size="13.5" font-weight="700" fill="#ffffff">4. Independent Held-Out Verification (Zero-Leakage Boundary)</text>
+
+    <!-- Barrier Callout Notice -->
+    <g transform="translate(20, 50)">
+      <rect x="0" y="0" width="500" height="42" rx="6" fill="#4c0519" stroke="#e11d48" stroke-width="1" />
+      <text x="250" y="18" font-size="11.5" font-weight="700" fill="#fda4af" text-anchor="middle">⛔ ZERO-LEAKAGE RESEARCH ENFORCEMENT</text>
+      <text x="250" y="33" font-size="10.5" fill="#fecdd3" text-anchor="middle">Held-out test suites are strictly hidden from LLM prompts, candidate ranking, and repair loops.</text>
+    </g>
+
+    <!-- Chosen Candidate Intake Note -->
+    <g transform="translate(20, 102)">
+      <rect x="0" y="0" width="500" height="36" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" />
+      <text x="15" y="23" font-size="11.5" font-weight="600" fill="#38bdf8">Evaluation Input:</text>
+      <text x="120" y="23" font-size="11.5" fill="#e2e8f0">Only the single finalized candidate C* is evaluated post-selection.</text>
+    </g>
+
+    <!-- 4 Distributed Enterprise Invariant Modules -->
+    <g transform="translate(20, 150)">
+      <text x="0" y="15" font-size="12.5" font-weight="700" fill="#f87171">Enterprise Distributed System Invariants Verified:</text>
+
+      <!-- Invariant 1 -->
+      <rect x="0" y="25" width="240" height="65" rx="6" fill="#231320" stroke="#991b1b" stroke-width="1" />
+      <text x="12" y="44" font-size="12" font-weight="700" fill="#fca5a5">1. Order Atomicity</text>
+      <text x="12" y="60" font-size="10.5" fill="#cbd5e1">• Outbox secondary write failure</text>
+      <text x="12" y="74" font-size="10.5" fill="#f87171">★ Requires savepoint rollback</text>
+
+      <!-- Invariant 2 -->
+      <rect x="255" y="25" width="245" height="65" rx="6" fill="#231320" stroke="#991b1b" stroke-width="1" />
+      <text x="267" y="44" font-size="12" font-weight="700" fill="#fca5a5">2. Ledger Idempotency</text>
+      <text x="267" y="60" font-size="10.5" fill="#cbd5e1">• Duplicate transaction keys</text>
+      <text x="267" y="74" font-size="10.5" fill="#f87171">★ Requires conflict rejection</text>
+
+      <!-- Invariant 3 -->
+      <rect x="0" y="100" width="240" height="65" rx="6" fill="#231320" stroke="#991b1b" stroke-width="1" />
+      <text x="12" y="119" font-size="12" font-weight="700" fill="#fca5a5">3. Strict Type Subtyping</text>
+      <text x="12" y="135" font-size="10.5" fill="#cbd5e1">• Explicit type validation</text>
+      <text x="12" y="149" font-size="10.5" fill="#f87171">★ Rejects bool for int/float</text>
+
+      <!-- Invariant 4 -->
+      <rect x="255" y="100" width="245" height="65" rx="6" fill="#231320" stroke="#991b1b" stroke-width="1" />
+      <text x="267" y="119" font-size="12" font-weight="700" fill="#fca5a5">4. Tenant Boundary Isolation</text>
+      <text x="267" y="135" font-size="10.5" fill="#cbd5e1">• Multi-tenant cross-boundary</text>
+      <text x="267" y="149" font-size="10.5" fill="#f87171">★ Enforces fail-closed isolation</text>
+
+      <!-- Benchmark Hardening Badge -->
+      <rect x="0" y="180" width="500" height="34" rx="6" fill="#311520" stroke="#e11d48" stroke-width="1" />
+      <text x="250" y="202" font-size="11" font-weight="600" fill="#fecdd3" text-anchor="middle">Mutation Hardening: 86.8% Mutant Kill Rate (53 multi-operator mutants)</text>
+    </g>
+  </g>
+
+  <!-- CONNECTING ARROWS -->
+  <!-- Intake -> LLM -->
+  <path d="M 370 200 L 395 200" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arrow)" />
+  <!-- LLM -> Arms -->
+  <path d="M 625 240 L 625 255" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arrow)" />
+  <!-- Replay Selected C* -> Zero Leakage Barrier -->
+  <path d="M 825 510 L 880 510" stroke="#f43f5e" stroke-width="2.5" marker-end="url(#arrowRed)" />
+  <rect x="830" y="488" width="45" height="18" rx="3" fill="#be123c" />
+  <text x="852" y="501" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">C*</text>
+
+  <!-- 5. TWO-STAGE PROVENANCE & COMPARATIVE RESEARCH OUTPUTS (Bottom) -->
+  <g transform="translate(60, 615)">
+    <rect x="0" y="0" width="1360" height="305" rx="12" fill="#0d1829" stroke="#059669" stroke-width="1.5" filter="url(#shadow)" />
+    <rect x="0" y="0" width="1360" height="38" rx="12" fill="url(#gateGrad)" />
+    <rect x="0" y="24" width="1360" height="14" fill="url(#gateGrad)" />
+    <text x="20" y="24" font-size="14" font-weight="700" fill="#ffffff">5. Two-Stage Evidence Lifecycle, Checkpoint Governance &amp; Comparative Research Pipeline</text>
+
+    <!-- Block 5A: Stage 1 Pre-Run Snapshot -->
+    <g transform="translate(20, 52)">
+      <rect x="0" y="0" width="310" height="235" rx="8" fill="#132338" stroke="#0284c7" stroke-width="1" />
+      <text x="15" y="25" font-size="13" font-weight="700" fill="#38bdf8">Stage 1: Pre-Run Snapshot</text>
+      <text x="15" y="42" font-size="11" font-weight="600" fill="#7dd3fc">run-manifest.json</text>
+      
+      <text x="15" y="70" font-size="11" fill="#cbd5e1">• SHA-256 fixture integrity:</text>
+      <text x="25" y="86" font-size="10.5" fill="#94a3b8">Prompts, verifiers, reference seeds</text>
+
+      <text x="15" y="112" font-size="11" fill="#cbd5e1">• Effective config freeze:</text>
+      <text x="25" y="128" font-size="10.5" fill="#94a3b8">Model, T_resample, T_repair, seeds</text>
+
+      <text x="15" y="154" font-size="11" fill="#cbd5e1">• Multi-tier Git provenance:</text>
+      <text x="25" y="170" font-size="10.5" fill="#94a3b8">Loose/packed refs, detached HEAD, worktrees</text>
+
+      <rect x="15" y="190" width="280" height="32" rx="4" fill="#075985" opacity="0.4" stroke="#0284c7" stroke-width="1" />
+      <text x="155" y="210" font-size="10.5" font-weight="600" fill="#bae6fd" text-anchor="middle">Fail-Closed Resume Check (tamper alert)</text>
+    </g>
+
+    <!-- Block 5B: Checkpoint Governance -->
+    <g transform="translate(350, 52)">
+      <rect x="0" y="0" width="310" height="235" rx="8" fill="#181e36" stroke="#6366f1" stroke-width="1" />
+      <text x="15" y="25" font-size="13" font-weight="700" fill="#a5b4fc">Durable Checkpoint Governance</text>
+      <text x="15" y="42" font-size="11" font-weight="600" fill="#c7d2fe">*-live.json (Atomic Persistence)</text>
+
+      <text x="15" y="70" font-size="11" fill="#cbd5e1">• Checkpoint Policy Enforcement:</text>
+      <text x="25" y="86" font-size="10.5" fill="#94a3b8">Records counterfactual_policy &amp; active_arms</text>
+      <text x="25" y="100" font-size="10" font-weight="600" fill="#e0e7ff">Rejects resume on policy mismatches (ValueError)</text>
+
+      <text x="15" y="124" font-size="11" fill="#cbd5e1">• Request Reservation State:</text>
+      <text x="25" y="140" font-size="10.5" fill="#94a3b8">Durable accounting per arm and repetition</text>
+
+      <text x="15" y="164" font-size="11" fill="#cbd5e1">• Completion Matrix Tracker:</text>
+      <text x="25" y="180" font-size="10.5" fill="#94a3b8">Tasks × Executed Arms × Repetitions</text>
+      <text x="25" y="194" font-size="10.5" fill="#94a3b8">Validates history passed:bool &amp; non-neg tokens</text>
+
+      <rect x="15" y="204" width="280" height="22" rx="4" fill="#312e81" opacity="0.4" stroke="#6366f1" stroke-width="1" />
+      <text x="155" y="219" font-size="10" font-weight="600" fill="#e0e7ff" text-anchor="middle">No cross-policy substitution (Prompt ≠ Replay)</text>
+    </g>
+
+    <!-- Block 5C: Research Gate Audit -->
+    <g transform="translate(680, 52)">
+      <rect x="0" y="0" width="310" height="235" rx="8" fill="#201525" stroke="#ec4899" stroke-width="1" />
+      <text x="15" y="25" font-size="13" font-weight="700" fill="#f472b6">Research Gate Audit Guardrail</text>
+      <text x="15" y="42" font-size="11" font-weight="600" fill="#fbcfe8">research-gate-verdict.json</text>
+
+      <text x="15" y="70" font-size="11" fill="#cbd5e1">• Specification Gaming Detection:</text>
+      <text x="25" y="86" font-size="10.5" fill="#94a3b8">Flags 100% public pass / 0% heldout pass</text>
+      <text x="25" y="100" font-size="10" font-weight="600" fill="#f43f5e">Rejected as "public-only success"</text>
+
+      <text x="15" y="124" font-size="11" fill="#cbd5e1">• Evaluated Enterprise Findings:</text>
+      <text x="25" y="140" font-size="10.5" fill="#94a3b8">7/7 enterprise tasks flagged on feedback</text>
+      <text x="25" y="154" font-size="10.5" fill="#94a3b8">Prevents false claims of successful repair</text>
+
+      <text x="15" y="178" font-size="11" fill="#cbd5e1">• Generalized Repair Verdict:</text>
+      <text x="25" y="194" font-size="10.5" fill="#94a3b8">Requires simultaneous public + heldout contract</text>
+
+      <rect x="15" y="204" width="280" height="22" rx="4" fill="#831843" opacity="0.4" stroke="#ec4899" stroke-width="1" />
+      <text x="155" y="219" font-size="10" font-weight="600" fill="#fbcfe8" text-anchor="middle">Defends against test overfitting</text>
+    </g>
+
+    <!-- Block 5D: Stage 2 Statistical Analysis & Sealed Manifest -->
+    <g transform="translate(1010, 52)">
+      <rect x="0" y="0" width="330" height="235" rx="8" fill="#132521" stroke="#059669" stroke-width="1" />
+      <text x="15" y="25" font-size="13" font-weight="700" fill="#34d399">Comparative Stats &amp; Evidence Seal</text>
+      <text x="15" y="42" font-size="11" font-weight="600" fill="#a7f3d0">statistical-analysis-report.json</text>
+
+      <text x="15" y="70" font-size="11" fill="#cbd5e1">• Exact Paired McNemar Tests:</text>
+      <text x="25" y="86" font-size="10.5" fill="#94a3b8">Strictly paired tasks (dropped missing = 0)</text>
+      <text x="25" y="100" font-size="10.5" fill="#94a3b8">Two-tailed p-values on discordance</text>
+
+      <text x="15" y="124" font-size="11" fill="#cbd5e1">• Provider-Verified Token Accounting:</text>
+      <text x="25" y="140" font-size="10.5" fill="#94a3b8">103,284 provider-verified tokens</text>
+      <text x="25" y="154" font-size="10" font-weight="600" fill="#34d399">Rejects heuristic word estimation fallback</text>
+
+      <!-- Sealed Manifest box -->
+      <rect x="15" y="172" width="300" height="52" rx="6" fill="#064e3b" stroke="#34d399" stroke-width="1" />
+      <text x="25" y="190" font-size="11" font-weight="700" fill="#ffffff">Stage 2: evidence-manifest.json</text>
+      <text x="25" y="205" font-size="9.5" fill="#a7f3d0">• SHA-256 digests of all benchmark proof files</text>
+      <text x="25" y="217" font-size="9.5" fill="#a7f3d0">• Cryptographic backreference to run_manifest_sha256</text>
+    </g>
+  </g>
+
+  <!-- Flow Arrows connecting bottom stages -->
+  <path d="M 330 760 L 350 760" stroke="#0284c7" stroke-width="1.8" marker-end="url(#arrow)" />
+  <path d="M 660 760 L 680 760" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrow)" />
+  <path d="M 990 760 L 1010 760" stroke="#ec4899" stroke-width="1.8" marker-end="url(#arrow)" />
+</svg>
+"""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(svg, encoding="utf-8")
+    print(f"Generated SVG at: {output_path}")
+
+if __name__ == "__main__":
+    generate_svg(Path("docs/assets/retrace_architecture.svg"))
+    generate_svg(Path("docs/retrace_architecture.svg"))

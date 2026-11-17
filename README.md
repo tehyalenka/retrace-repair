@@ -4,6 +4,10 @@
 
 RETRACE is an automated Python program repair evaluation testbed and research benchmark. It retrieves relevant repository context, requests structured multi-file edits from language models, validates syntax and operations, executes tests in isolated disposable workspaces, and evaluates repair policies under controlled, leakage-resistant conditions. **It does not mutate the original repository.**
 
+<p align="center">
+  <img src="docs/retrace_architecture.svg" alt="RETRACE Research & System Architecture" width="100%">
+</p>
+
 ---
 
 ## Capabilities & Key Features
