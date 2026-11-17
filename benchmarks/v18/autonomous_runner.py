@@ -13,20 +13,63 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Collection, Dict, List, Optional, Set
 
 from benchmarks.v18 import task_suite_runner
 from benchmarks.v18.task_suite_runner import summarize
+
+
+def is_valid_evaluation_row(row: Dict[str, Any], condition: str, repetition: int) -> bool:
+    """Validate that a benchmark row represents a legitimate terminal evaluation result.
+
+    Checks:
+    1. Condition and repetition consistency (including agreement with row['key'] if present).
+    2. Terminal public-test outcome ('success' present and is a boolean).
+    3. Terminal held-out outcome ('heldout' present, is a dict, with boolean 'passed').
+    4. Terminal execution evidence (presence of non-empty 'history', 'calls', or 'request_accounting').
+    """
+    if not isinstance(row, dict):
+        return False
+
+    key = row.get("key")
+    if key and isinstance(key, str):
+        # Allow exact match or key formats like '1:resample'
+        parts = key.split(":")
+        if len(parts) == 2:
+            key_rep, key_cond = parts
+            if key_rep.isdigit() and int(key_rep) != repetition:
+                return False
+            # Check condition match
+            if key_cond != condition and not (
+                (key_cond == "counterfactual" and condition == "counterfactual_replay")
+                or (key_cond == "counterfactual_replay" and condition == "counterfactual")
+            ):
+                return False
+
+    if "success" not in row or not isinstance(row["success"], bool):
+        return False
+
+    heldout = row.get("heldout")
+    if not isinstance(heldout, dict) or "passed" not in heldout or not isinstance(heldout["passed"], bool):
+        return False
+
+    has_history = "history" in row and isinstance(row["history"], list)
+    has_calls = "calls" in row and isinstance(row["calls"], list)
+    has_accounting = "request_accounting" in row and isinstance(row["request_accounting"], dict)
+    if not (has_history or has_calls or has_accounting):
+        return False
+
+    return True
 
 
 def check_benchmark_matrix(
     output_dir: Path,
     target_tasks: Optional[List[Dict[str, Any]]] = None,
     repetitions: int = 1,
-    required_policies: Optional[Set[str]] = None,
+    required_policies: Optional[Collection[str]] = None,
 ) -> Dict[str, Any]:
     """Strictly evaluates progress across the task-policy-repetition experiment matrix."""
-    policies = required_policies or {"resample", "feedback", "counterfactual"}
+    policies = set(required_policies) if required_policies else {"resample", "feedback", "counterfactual"}
 
     if target_tasks is not None:
         target_task_ids = [t["id"] for t in target_tasks]
@@ -68,8 +111,20 @@ def check_benchmark_matrix(
                 parts = r["key"].split(":")
                 if len(parts) == 2 and parts[0].isdigit():
                     rep = int(parts[0])
-            if cond in policies and 1 <= rep <= repetitions:
-                completed_for_task.add((cond, rep))
+
+            # Check matching policy in required policies
+            target_policy = None
+            if cond in policies:
+                target_policy = cond
+            elif "counterfactual_replay" in policies and cond == "counterfactual":
+                target_policy = "counterfactual_replay"
+            elif "counterfactual" in policies and cond == "counterfactual_replay":
+                target_policy = "counterfactual"
+
+            if target_policy and 1 <= rep <= repetitions:
+                # Schema and terminal outcome verification (Finding 1)
+                if is_valid_evaluation_row(r, cond, rep):
+                    completed_for_task.add((target_policy, rep))
 
         completed_cells += len(completed_for_task)
         if len(completed_for_task) >= len(policies) * repetitions:
@@ -233,12 +288,30 @@ def main():
         default=42,
         help="Seed base for reproducible resample (default: 42)",
     )
+    parser.add_argument(
+        "--counterfactual-policy",
+        choices=["counterfactual", "counterfactual_replay"],
+        default="counterfactual",
+        help="Counterfactual arm policy: 'counterfactual' (prompt guidance) or 'counterfactual_replay' (executable search)",
+    )
+    parser.add_argument(
+        "--policies",
+        default=None,
+        help="Comma-separated required policies for matrix completion (default: derived dynamically from arms)",
+    )
     args = parser.parse_args()
 
     # Synchronize runner configuration with environment variables consumed by model request handlers
     os.environ["CODEPILOT_TEMPERATURE_RESAMPLE"] = str(args.temperature_resample)
     os.environ["CODEPILOT_TEMPERATURE_REPAIR"] = str(args.temperature_repair)
     os.environ["CODEPILOT_SEED_BASE"] = str(args.seed_base)
+    os.environ["CODEPILOT_COUNTERFACTUAL_POLICY"] = args.counterfactual_policy
+
+    # Derive the required policy set dynamically from configuration (Finding 2)
+    if args.policies:
+        required_policies = [p.strip() for p in args.policies.split(",") if p.strip()]
+    else:
+        required_policies = ["resample", "feedback", args.counterfactual_policy]
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -273,6 +346,8 @@ def main():
         "temperature_resample": args.temperature_resample,
         "temperature_repair": args.temperature_repair,
         "seed_base": args.seed_base,
+        "counterfactual_policy": args.counterfactual_policy,
+        "required_policies": list(required_policies),
     }
 
     # Lifecycle Stage 1: Pre-run manifest initialization and fail-closed resume validation
@@ -324,6 +399,7 @@ def main():
             out_dir,
             target_tasks=target_tasks,
             repetitions=args.repetitions,
+            required_policies=required_policies,
         )
         completed_tasks = matrix_status["completed_tasks_count"]
         print(
@@ -348,13 +424,43 @@ def main():
                 task_ids=task_ids_set,
             )
         except Exception as exc:
-            print(f"Error during run_live: {exc}", flush=True)
+            # Distinguish recognized transient provider quota/rate limits from fatal programming / integrity errors (Finding 3)
+            exc_str = str(exc).lower()
+            is_transient_provider_error = any(
+                token in exc_str
+                for token in [
+                    "429",
+                    "rate limit",
+                    "quota",
+                    "provider blocked",
+                    "temporarily unavailable",
+                    "resource exhausted",
+                    "too many requests",
+                    "service unavailable",
+                    "gateway timeout",
+                    "503",
+                    "504",
+                ]
+            )
+            if is_transient_provider_error:
+                print(
+                    f"\n[Cycle {cycle}] Transient provider quota/rate limit encountered: {exc}. "
+                    f"Will back off and retry.",
+                    flush=True,
+                )
+            else:
+                print("\n" + "!" * 70, flush=True)
+                print(f"FATAL NON-TRANSIENT BENCHMARK ERROR: {exc}", flush=True)
+                print("Aborting autonomous execution immediately (fail-closed).", flush=True)
+                print("!" * 70 + "\n", flush=True)
+                raise exc
 
         # Check matrix again if complete
         matrix_status = check_benchmark_matrix(
             out_dir,
             target_tasks=target_tasks,
             repetitions=args.repetitions,
+            required_policies=required_policies,
         )
         if matrix_status["is_complete"]:
             run_post_benchmark_pipeline(out_dir, target_total=total_target_count, run_manifest_path=run_manifest_path)

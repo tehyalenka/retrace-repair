@@ -267,18 +267,20 @@ def verify_run_manifest(
             if saved_t.get("task_prompt_sha256") != cur_t.get("task_prompt_sha256"):
                 raise ValueError(f"Task input mismatch on resume: prompt text changed for task '{tid}'")
 
-    # Validate effective model configuration if provided
+    # Validate effective model configuration and policy sets if provided (fail-closed on drift)
     if current_config:
         saved_config = data.get("effective_configuration", {})
         for key in ["model_id", "primary_provider", "temperature_resample", "temperature_repair"]:
             if key in current_config and key in saved_config:
                 if str(current_config[key]) != str(saved_config[key]):
-                    logger.warning(
-                        "Configuration drift detected on resume: %s changed from %s to %s",
-                        key,
-                        saved_config[key],
-                        current_config[key],
+                    raise ValueError(
+                        f"Configuration drift detected on resume: {key} changed from {saved_config[key]} to {current_config[key]}"
                     )
+        if "required_policies" in current_config and "required_policies" in saved_config:
+            if set(current_config["required_policies"]) != set(saved_config["required_policies"]):
+                raise ValueError(
+                    f"Policy set drift on resume: expected {saved_config['required_policies']} but got {current_config['required_policies']}"
+                )
 
     return True
 
