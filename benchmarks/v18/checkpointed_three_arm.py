@@ -13,6 +13,7 @@ import tempfile
 from unittest.mock import patch
 
 from benchmarks.v18 import record_replay as base
+from codepilot.agent import ModelRequestAccounting
 from benchmarks.v16.repair_experiment import _edit
 
 class ProviderBlocked(RuntimeError):
@@ -129,10 +130,11 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                         _write(output, report)  # persist before agent receives response
                     return response
 
-                with patch.object(base.agent_module, "ask_model", side_effect=ask):
-                    result = base.agent_module.run_agent(
-                        repo, task, attempts=attempts, verification=verifier,
-                        repair_feedback=feedback, repair_policy=policy)
+                with ModelRequestAccounting() as accounting:
+                    with patch.object(base.agent_module, "ask_model", side_effect=ask):
+                        result = base.agent_module.run_agent(
+                            repo, task, attempts=attempts, verification=verifier,
+                            repair_feedback=feedback, repair_policy=policy)
                 provider_errors = [h for h in result.get("history", [])
                                    if h.get("failure_stage") == "model_request"
                                    and h.get("failure_category") == "provider_error"]
@@ -147,7 +149,17 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                 report["rows"].append({"key": key, "repetition": repetition,
                                        "condition": condition, "success": bool(result["success"]),
                                        "history": result["history"], "heldout": heldout, "calls": calls,
-                                       "live_calls": sum(c["origin"] == "live" for c in calls)})
+                                       "live_calls": sum(c["origin"] == "live" for c in calls),
+                                      "completion_origins": {
+                                          origin: sum(c["origin"] == origin for c in calls)
+                                          for origin in (
+                                              "captured_initial",
+                                              "checkpoint_replay",
+                                              "scripted",
+                                              "live",
+                                          )
+                                      },
+                                      "request_accounting": accounting.snapshot()})
                 report["pending"].pop(key, None)
                 _write(output, report)
     return report
