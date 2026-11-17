@@ -70,8 +70,17 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
             raise ValueError("max_http_requests_per_arm must be a nonnegative integer")
     trace_path = Path(trace_path)
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
-    if trace.get("schema") != 1 or trace.get("first_attempt", {}).get("failure_category") != "test_failure":
-        raise ValueError("A genuine failed first-attempt trace is required")
+    first_attempt = trace.get("first_attempt", {})
+    if (
+        trace.get("schema") != 1
+        or first_attempt.get("failure_category") != "test_failure"
+        or first_attempt.get("tests_run", 0) < 1
+        or "No tests discovered" in str(first_attempt.get("output", ""))
+        or "Start directory is not importable" in str(first_attempt.get("output", ""))
+    ):
+        raise ValueError(
+            "A genuine public-test failure with discovered tests is required"
+        )
     if not trace.get("calls") or not isinstance(trace["calls"][0].get("response"), str):
         raise ValueError("Missing captured initial completion")
     if offline and trace.get("mode") != "offline":
