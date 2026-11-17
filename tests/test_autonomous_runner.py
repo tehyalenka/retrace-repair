@@ -199,6 +199,100 @@ class TestAutonomousRunner(unittest.TestCase):
         }
         self.assertFalse(is_valid_evaluation_row(bad_rep_row, "resample", 1))
 
+    def test_rejects_malformed_history_entries(self):
+        """Finding 3 (Seventh Audit): Reject rows where history entries are not valid execution records."""
+        # Non-dict entry in history
+        row_str_history = {
+            "condition": "resample",
+            "repetition": 1,
+            "success": True,
+            "heldout": {"passed": True},
+            "history": ["malformed_string_entry"],
+        }
+        self.assertFalse(is_valid_evaluation_row(row_str_history, "resample", 1))
+
+        # Dict entry missing 'passed' or non-boolean 'passed'
+        row_missing_passed = {
+            "condition": "resample",
+            "repetition": 1,
+            "success": True,
+            "heldout": {"passed": True},
+            "history": [{"attempt": 1}],
+        }
+        self.assertFalse(is_valid_evaluation_row(row_missing_passed, "resample", 1))
+
+        row_nonbool_passed = {
+            "condition": "resample",
+            "repetition": 1,
+            "success": True,
+            "heldout": {"passed": True},
+            "history": [{"passed": "not_a_bool"}],
+        }
+        self.assertFalse(is_valid_evaluation_row(row_nonbool_passed, "resample", 1))
+
+    def test_rejects_malformed_request_accounting_types(self):
+        """Finding 3 (Seventh Audit): Reject rows with malformed request_accounting types."""
+        # prompt_tokens is string
+        row_str_tokens = {
+            "condition": "resample",
+            "repetition": 1,
+            "success": True,
+            "heldout": {"passed": True},
+            "request_accounting": {"prompt_tokens": "100"},
+        }
+        self.assertFalse(is_valid_evaluation_row(row_str_tokens, "resample", 1))
+
+        # prompt_tokens is boolean True (subclass of int)
+        row_bool_tokens = {
+            "condition": "resample",
+            "repetition": 1,
+            "success": True,
+            "heldout": {"passed": True},
+            "request_accounting": {"prompt_tokens": True},
+        }
+        self.assertFalse(is_valid_evaluation_row(row_bool_tokens, "resample", 1))
+
+        # negative tokens
+        row_neg_tokens = {
+            "condition": "resample",
+            "repetition": 1,
+            "success": True,
+            "heldout": {"passed": True},
+            "request_accounting": {"prompt_tokens": -5},
+        }
+        self.assertFalse(is_valid_evaluation_row(row_neg_tokens, "resample", 1))
+
+    def test_typed_provider_error_transient_classification(self):
+        """Finding 2 (Seventh Audit): ProviderBlocked and LLMAPIError distinguish transient from fatal errors."""
+        from benchmarks.v18.checkpointed_three_arm import ProviderBlocked
+        from codepilot.agent import LLMAPIError
+
+        # 429 is transient
+        pb_429 = ProviderBlocked("LLM API HTTP 429; provider requested wait", status_code=429)
+        self.assertTrue(pb_429.is_transient)
+        self.assertEqual(pb_429.status_code, 429)
+
+        # 503 is transient
+        pb_503 = ProviderBlocked("LLM API HTTP 503 service unavailable")
+        self.assertTrue(pb_503.is_transient)
+        self.assertEqual(pb_503.status_code, 503)
+
+        # 401 Unauthorized is NOT transient
+        pb_401 = ProviderBlocked("LLM API HTTP 401 unauthorized: invalid api key")
+        self.assertFalse(pb_401.is_transient)
+        self.assertEqual(pb_401.status_code, 401)
+
+        # 400 Bad Request is NOT transient
+        pb_400 = ProviderBlocked("LLM API HTTP 400 bad request", status_code=400)
+        self.assertFalse(pb_400.is_transient)
+
+        # LLMAPIError status code parsing
+        api_err_429 = LLMAPIError("LLM API HTTP 429; wait 60s")
+        self.assertEqual(api_err_429.status_code, 429)
+
+        api_err_401 = LLMAPIError("LLM API HTTP 401 unauthorized")
+        self.assertEqual(api_err_401.status_code, 401)
+
     def test_post_benchmark_pipeline_fails_closed_on_error(self):
         """Verify that run_post_benchmark_pipeline raises RuntimeError when a step fails."""
         with tempfile.TemporaryDirectory() as td:

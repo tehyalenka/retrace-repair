@@ -144,6 +144,14 @@ class ModelRequestAccounting:
 
 class LLMAPIError(RuntimeError):
     """Non-secret, user-readable provider error."""
+    def __init__(self, message, status_code=None):
+        super().__init__(str(message))
+        self.message = str(message)
+        if status_code is None:
+            m = re.search(r"HTTP\s+(\d{3})", self.message)
+            if m:
+                status_code = int(m.group(1))
+        self.status_code = status_code
 
 
 def _retry_delay(response, retry_number):
@@ -238,14 +246,16 @@ def ask_model(messages, model=None, base_url=None, json_mode=None, temperature=N
                 # experiment's checkpoint and let the caller resume later.
                 raise LLMAPIError(
                     "LLM API HTTP 429; provider requested a wait longer than "
-                    "60 seconds; resume later")
+                    "60 seconds; resume later",
+                    status_code=429,
+                )
             if retry < max_retries:
                 time.sleep(min(delay, max_retry_wait))
                 continue
-            raise LLMAPIError("LLM API HTTP {} after {} retries; retry later".format(response.status_code, max_retries))
+            raise LLMAPIError("LLM API HTTP {} after {} retries; retry later".format(response.status_code, max_retries), status_code=response.status_code)
         if response.status_code != 200:
             # Never echo provider response bodies: they can contain sensitive data.
-            raise LLMAPIError("LLM API HTTP {} (provider rejected request; check model and response format compatibility)".format(response.status_code))
+            raise LLMAPIError("LLM API HTTP {} (provider rejected request; check model and response format compatibility)".format(response.status_code), status_code=response.status_code)
         try:
             result = response.json()
             content = result["choices"][0]["message"]["content"]
@@ -857,6 +867,7 @@ def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verific
             except (ValueError, SyntaxError, KeyError, json.JSONDecodeError, OSError, LLMAPIError) as exc:
                 record = {"attempt": attempt, "changed_files": [], "passed": False, "output": str(exc),
                           "failure_stage": stage,
+                          "status_code": getattr(exc, "status_code", None),
                           "failure_category": ("provider_error" if isinstance(exc, LLMAPIError)
                                                else "malformed_edit_json" if stage == "edit_json"
                                                else "provider_error" if stage == "model_request"

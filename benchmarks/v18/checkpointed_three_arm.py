@@ -4,11 +4,12 @@ A saved model completion is persisted before it is returned to the agent.
 Do not publish checkpoint files without reviewing embedded prompts/source.
 """
 import argparse
-import shutil
 import hashlib
 import json
 import os
 from pathlib import Path
+import re
+import shutil
 import tempfile
 from unittest.mock import patch
 
@@ -19,6 +20,28 @@ from benchmarks.v18.record_replay import _edit
 
 class ProviderBlocked(RuntimeError):
     """Provider rejected a live request; current arm remains resumable."""
+    def __init__(self, message, status_code=None, is_transient=None):
+        super().__init__(str(message))
+        self.message = str(message)
+        if status_code is None:
+            m = re.search(r"HTTP\s+(\d{3})", self.message)
+            if m:
+                status_code = int(m.group(1))
+        self.status_code = status_code
+        if is_transient is not None:
+            self.is_transient = bool(is_transient)
+        elif self.status_code in (429, 502, 503, 504):
+            self.is_transient = True
+        elif self.status_code in (400, 401, 403, 404, 422):
+            self.is_transient = False
+        else:
+            lowered = self.message.lower()
+            if any(p in lowered for p in ["429", "rate limit", "quota", "too many requests", "503", "504", "resume later", "connection failed", "temporarily unavailable"]):
+                self.is_transient = True
+            elif any(p in lowered for p in ["401", "403", "unauthorized", "forbidden", "invalid api key", "not found"]):
+                self.is_transient = False
+            else:
+                self.is_transient = False
 
 
 class BenchmarkBudgetExceeded(RuntimeError):
@@ -99,7 +122,9 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
     output = Path(output)
     settings = {"trace_sha256": digest, "offline": offline, "repetitions": repetitions,
                 "attempts": attempts, "repo_sha256": trace["repo_sha256"],
-                "verifier_sha256": trace["verifier_sha256"]}
+                "verifier_sha256": trace["verifier_sha256"],
+                "counterfactual_policy": counterfactual_policy,
+                "active_arms": [list(arm) for arm in active_arms]}
     if heldout_verification is not None:
         settings["heldout_sha256"] = hashlib.sha256(heldout_verification.encode("utf-8")).hexdigest()
     if max_http_requests_per_arm is not None:
@@ -207,7 +232,10 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                     # Keep the captured initial and any successful responses in pending.
                     # Never count a provider outage as a failed repair.
                     _write(output, report)
-                    raise ProviderBlocked(str(provider_errors[-1].get("output", "Provider unavailable")))
+                    last_err = provider_errors[-1]
+                    err_output = str(last_err.get("output", "Provider unavailable"))
+                    err_status = last_err.get("status_code")
+                    raise ProviderBlocked(err_output, status_code=err_status)
                 history = result.get("history") or []
                 first_replayed = history[0] if history else {}
                 if (

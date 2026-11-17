@@ -73,7 +73,7 @@ def validate():
     with ThreadPoolExecutor(max_workers=8) as pool:
         return list(pool.map(check,tasks()))
 
-def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_requests_per_arm=None, task_id=None, category=None, task_ids=None, counterfactual_policy=None):
+def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_requests_per_arm=None, task_id=None, category=None, task_ids=None, counterfactual_policy=None, raise_on_blocked=False):
     if counterfactual_policy is None:
         counterfactual_policy = os.environ.get("CODEPILOT_COUNTERFACTUAL_POLICY", "counterfactual")
     output_dir=Path(output_dir);output_dir.mkdir(parents=True,exist_ok=True)
@@ -122,11 +122,15 @@ def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_re
                 print('PROVIDER BLOCKED on {}: {}'.format(item['id'], exc), flush=True)
                 print('Existing completed results retained; rerun after quota reset.', flush=True)
                 summarize(output_dir)
+                if raise_on_blocked:
+                    raise
                 return all_rows
             except checkpointed_three_arm.BenchmarkBudgetExceeded as exc:
                 print('HTTP BUDGET EXHAUSTED on {}: {}'.format(item['id'], exc), flush=True)
                 print('Checkpoint preserved. Inspect the budget before resuming.', flush=True)
                 summarize(output_dir)
+                if raise_on_blocked:
+                    raise
                 return all_rows
         all_rows.append({'task':item['id'],'category':item['category'],
                          'arms':[{'condition':r['condition'],'public_pass':r['success'],

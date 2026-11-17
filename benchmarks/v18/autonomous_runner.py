@@ -68,20 +68,43 @@ def is_valid_evaluation_row(row: Dict[str, Any], condition: str, repetition: int
     if not isinstance(heldout, dict) or "passed" not in heldout or not isinstance(heldout["passed"], bool):
         return False
 
-    # Non-empty execution evidence (must not be empty containers)
+    # Non-empty, structurally valid execution evidence
     history = row.get("history")
-    has_history = isinstance(history, list) and len(history) > 0
+    has_history = (
+        isinstance(history, list)
+        and len(history) > 0
+        and all(
+            isinstance(h, dict)
+            and "passed" in h
+            and isinstance(h["passed"], bool)
+            for h in history
+        )
+    )
 
     calls = row.get("calls")
-    has_calls = isinstance(calls, list) and len(calls) > 0
+    has_calls = (
+        isinstance(calls, list)
+        and len(calls) > 0
+        and all(isinstance(c, dict) for c in calls)
+    )
 
     req_acc = row.get("request_accounting")
-    has_accounting = isinstance(req_acc, dict) and len(req_acc) > 0 and (
-        req_acc.get("http_requests", 0) > 0
-        or req_acc.get("logical_calls", 0) > 0
-        or req_acc.get("usage_reports", 0) > 0
-        or req_acc.get("prompt_tokens") is not None
-    )
+    has_accounting = False
+    if isinstance(req_acc, dict) and len(req_acc) > 0:
+        valid_numeric_fields = True
+        has_positive_metric = False
+        for field in ("http_requests", "logical_calls", "usage_reports", "prompt_tokens", "completion_tokens"):
+            val = req_acc.get(field)
+            if val is not None:
+                if not isinstance(val, int) or isinstance(val, bool) or val < 0:
+                    valid_numeric_fields = False
+                    break
+                if val > 0:
+                    has_positive_metric = True
+                elif field in ("prompt_tokens", "completion_tokens") and val == 0:
+                    has_positive_metric = True
+        if valid_numeric_fields and has_positive_metric:
+            has_accounting = True
 
     if not (has_history or has_calls or has_accounting):
         return False
@@ -333,11 +356,34 @@ def main():
     os.environ["CODEPILOT_SEED_BASE"] = str(args.seed_base)
     os.environ["CODEPILOT_COUNTERFACTUAL_POLICY"] = args.counterfactual_policy
 
-    # Derive the required policy set dynamically from configuration (Finding 2)
+    # Derive and validate the required policy set (Finding 4)
+    executed_arms = ["resample", "feedback", args.counterfactual_policy]
     if args.policies:
-        required_policies = [p.strip() for p in args.policies.split(",") if p.strip()]
+        raw_policies = [p.strip() for p in args.policies.split(",") if p.strip()]
+        if len(raw_policies) != len(set(raw_policies)):
+            print("\n" + "!" * 70, flush=True)
+            print("ERROR: --policies contains duplicate policy names.", flush=True)
+            print("!" * 70 + "\n", flush=True)
+            sys.exit(1)
+        supported_policies = {"standard", "resample", "feedback", "counterfactual", "counterfactual_replay"}
+        unsupported = set(raw_policies) - supported_policies
+        if unsupported:
+            print("\n" + "!" * 70, flush=True)
+            print(f"ERROR: --policies contains unsupported policy names: {unsupported}", flush=True)
+            print("!" * 70 + "\n", flush=True)
+            sys.exit(1)
+        if set(raw_policies) != set(executed_arms):
+            print("\n" + "!" * 70, flush=True)
+            print(
+                f"ERROR: Configured --policies {raw_policies} does not match the executed arms {executed_arms}. "
+                f"Evaluation executes arms: {executed_arms}.",
+                flush=True,
+            )
+            print("!" * 70 + "\n", flush=True)
+            sys.exit(1)
+        required_policies = raw_policies
     else:
-        required_policies = ["resample", "feedback", args.counterfactual_policy]
+        required_policies = executed_arms
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -439,7 +485,10 @@ def main():
             run_post_benchmark_pipeline(out_dir, target_total=total_target_count, run_manifest_path=run_manifest_path)
             sys.exit(0)
 
-        # Run live suite
+        prev_cells = matrix_status["completed_matrix_cells"]
+        interruption_encountered = False
+
+        # Run live suite with typed interruption propagation (Finding 2)
         try:
             task_suite_runner.run_live(
                 output_dir=str(out_dir),
@@ -449,18 +498,30 @@ def main():
                 category=args.category,
                 task_ids=task_ids_set,
                 counterfactual_policy=args.counterfactual_policy,
+                raise_on_blocked=True,
             )
         except Exception as exc:
-            # Typed provider-error classification (Finding 3)
-            is_typed_provider_error = isinstance(exc, (LLMAPIError, ProviderBlocked))
-            http_status = getattr(exc, "status_code", None)
-            is_transient_status = http_status in (429, 503, 504)
-            is_transient_os_network = isinstance(exc, (IOError, OSError)) and any(
-                phrase in str(exc).lower() for phrase in ["429", "too many requests", "rate limit"]
-            )
-            is_transient = is_typed_provider_error or is_transient_status or is_transient_os_network
+            # Typed provider-error classification (Finding 2)
+            is_transient = False
+            if isinstance(exc, ProviderBlocked):
+                is_transient = getattr(exc, "is_transient", False)
+            elif isinstance(exc, LLMAPIError):
+                status_code = getattr(exc, "status_code", None)
+                if status_code in (429, 502, 503, 504):
+                    is_transient = True
+                elif status_code in (400, 401, 403, 404, 422):
+                    is_transient = False
+                else:
+                    msg = str(exc).lower()
+                    if any(p in msg for p in ["429", "rate limit", "quota", "too many requests", "503", "504", "resume later"]):
+                        is_transient = True
+            elif isinstance(exc, (IOError, OSError)):
+                msg = str(exc).lower()
+                if any(p in msg for p in ["429", "rate limit", "too many requests", "connection reset", "connection refused"]):
+                    is_transient = True
 
             if is_transient:
+                interruption_encountered = True
                 print(
                     f"\n[Cycle {cycle}] Transient provider quota/rate limit encountered ({type(exc).__name__}): {exc}. "
                     f"Will back off and retry.",
@@ -483,6 +544,19 @@ def main():
         if matrix_status["is_complete"]:
             run_post_benchmark_pipeline(out_dir, target_total=total_target_count, run_manifest_path=run_manifest_path)
             sys.exit(0)
+
+        if not interruption_encountered:
+            # If no new evaluations completed and no transient provider blockage occurred, halt to prevent infinite stalling
+            if matrix_status["completed_matrix_cells"] <= prev_cells:
+                print("\n" + "!" * 70, flush=True)
+                print(
+                    "FATAL BENCHMARK STALL: Runner completed execution cycle without satisfying matrix completion, "
+                    "no new progress was recorded, and no transient provider interruption was reported.",
+                    flush=True,
+                )
+                print("Aborting autonomous execution immediately (fail-closed).", flush=True)
+                print("!" * 70 + "\n", flush=True)
+                sys.exit(1)
 
         print(
             f"Provider quota or rate limit currently active "

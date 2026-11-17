@@ -30,6 +30,17 @@ class CheckpointedThreeArmTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 evaluate(trace, output, offline=True, attempts=4)
 
+    def test_changed_counterfactual_policy_rejected(self):
+        """Finding 1 (Seventh Audit): Checkpoint rejects resume if counterfactual_policy changes."""
+        with tempfile.TemporaryDirectory() as tmp:
+            trace = Path(tmp) / "trace.json"
+            output = Path(tmp) / "results.json"
+            record_replay.capture("offline", "bugfix", trace)
+            evaluate(trace, output, offline=True, counterfactual_policy="counterfactual")
+            with self.assertRaises(ValueError) as ctx:
+                evaluate(trace, output, offline=True, counterfactual_policy="counterfactual_replay")
+            self.assertIn("Checkpoint settings or captured trace changed", str(ctx.exception))
+
     def test_checkpointed_completion_replayed(self):
         with tempfile.TemporaryDirectory() as tmp:
             trace = Path(tmp) / "trace.json"
