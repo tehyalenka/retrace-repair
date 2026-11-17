@@ -1,8 +1,8 @@
 # RETRACE
 
-**Repository-aware program repair with test feedback, counterfactual replay evaluations, and enterprise invariant verification.**
+**Repository-aware program repair testbed with local test feedback, multi-candidate replay evaluations, and enterprise invariant verification.**
 
-RETRACE is an automated Python program repair system and empirical research benchmark. It retrieves relevant repository context, requests structured multi-file edits from language models, validates syntax and operations, executes tests in isolated disposable workspaces, and evaluates repair policies under controlled, leakage-resistant conditions. **It does not mutate the original repository.**
+RETRACE is an automated Python program repair evaluation testbed and research benchmark. It retrieves relevant repository context, requests structured multi-file edits from language models, validates syntax and operations, executes tests in isolated disposable workspaces, and evaluates repair policies under controlled, leakage-resistant conditions. **It does not mutate the original repository.**
 
 ---
 
@@ -11,7 +11,7 @@ RETRACE is an automated Python program repair system and empirical research benc
 * **Multi-Arm Repair Policies:**
   * `standard`: Bounded multi-turn failure feedback restart.
   * `counterfactual`: Prompt-guided falsifiable alternative hypothesis reasoning.
-  * `counterfactual_replay`: Executable multi-candidate generation with local test verification and deterministic ranking.
+  * `counterfactual_replay`: Best-of-N candidate patch exploration evaluated against local test suites and ranked deterministically without touching held-out tests.
 * **Defensive Enterprise Invariants:**
   * Strict type validation (explicit rejection of `bool` subtypes for integers and numbers).
   * Transactional atomicity and savepoint rollbacks on secondary write failures.
@@ -21,7 +21,7 @@ RETRACE is an automated Python program repair system and empirical research benc
   * Headless daemon with automatic HTTP 429 exponential backoff, sliding-window rate limit handling, and durable checkpoint resumption.
 * **Cryptographic Evidence & Mutation Hardening:**
   * Built-in Research Evidence Gate verifying 100% SHA-256 fixture integrity.
-  * Automated mutation hardening suite achieving 100% mutant kill rates across public and held-out verifiers.
+  * Multi-operator mutation hardening suite evaluating comparison inversions, return alterations, off-by-one errors, and statement deletions across public and held-out verifiers.
 
 ---
 
@@ -33,14 +33,14 @@ Requires Python 3.9+ and, for live model evaluations, an API key for Groq, OpenA
 # 1. Setup virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[dashboard,test]"
 
-# 2. Run the full unit regression suite (240 tests)
+# 2. Run the full unit regression suite (248 tests)
 python3 -m unittest discover -s tests -p 'test_*.py'
 
 # 3. Explore repository mapping and semantic search
-python3 -m codepilot.cli map examples/sample_repo
-python3 -m codepilot.cli search examples/sample_repo 'fix authentication'
+retrace map examples/sample_repo
+retrace search examples/sample_repo 'fix authentication'
 ```
 
 ### Running the Repair Agent
@@ -54,12 +54,12 @@ GROQ_API_KEY=gsk_...
 # OPENAI_API_KEY=sk-...
 # GEMINI_API_KEY=AIza...
 
-# Execute repair with Counterfactual Replay
-python3 -m codepilot.cli agent examples/sample_repo \
+# Execute repair with candidate replay
+retrace agent examples/sample_repo \
   "Make username matching case-insensitive while preserving password validation" \
   --repair-policy counterfactual_replay \
   --attempts 2 \
-  --output codepilot-result.json
+  --output retrace-result.json
 ```
 
 ---
@@ -113,14 +113,17 @@ Evaluated live on Groq (`openai/gpt-oss-120b`) across all 22 tasks and 66 policy
 
 ## Repository Layout
 
-| Directory | Purpose |
+| Directory / File | Purpose |
 | :--- | :--- |
-| `src/codepilot/` | Core agent engine, retrieval analyzer, replay strategies, CLI |
-| `benchmarks/v18/` | v1.8 benchmark suite runner, autonomous runner, research gate, task suite fixtures |
-| `backend/` | FastAPI local dashboard API with multi-policy support |
+| `src/retrace/` | Primary package namespace providing forward-compatibility and public API |
+| `src/codepilot/` | Core agent engine, retrieval analyzer, replay candidate strategies, and CLI |
+| `benchmarks/v18/` | Active v1.8 benchmark suite runner, autonomous runner, research gate, and task fixtures |
+| `benchmarks/archive/` | Historical benchmark iterations (`v09` through `v30`) preserved with version index |
+| `backend/` | Optional FastAPI local dashboard API with multi-policy support |
 | `frontend/` | Angular local research dashboard |
-| `tests/` | 240+ unit and regression tests |
+| `tests/` | 248 unit and regression tests (edit safety, provenance, replay, hardening) |
 | `research-full-suite-22/` | Cryptographic evidence, metrics, SVG coverage charts, and proof JSON |
+| `LICENSE` | Official MIT License |
 
 ---
 
