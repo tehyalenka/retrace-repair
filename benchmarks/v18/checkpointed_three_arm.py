@@ -13,11 +13,15 @@ import tempfile
 from unittest.mock import patch
 
 from benchmarks.v18 import record_replay as base
-from codepilot.agent import ModelRequestAccounting
+from codepilot.agent import ModelRequestAccounting, ModelRequestBudgetExceeded
 from benchmarks.v16.repair_experiment import _edit
 
 class ProviderBlocked(RuntimeError):
     """Provider rejected a live request; current arm remains resumable."""
+
+
+class BenchmarkBudgetExceeded(RuntimeError):
+    """An arm exhausted its durable HTTP request allowance."""
 
 
 ARMS = (("resample", False, "standard"),
@@ -57,9 +61,12 @@ def _heldout_check(repo, result, heldout_source):
                 "output": check["output"]}
 
 
-def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldout_verification=None):
+def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldout_verification=None, max_http_requests_per_arm=None):
     if repetitions < 1 or attempts < 2:
         raise ValueError("repetitions must be >=1 and attempts >=2")
+    if max_http_requests_per_arm is not None:
+        if type(max_http_requests_per_arm) is not int or max_http_requests_per_arm < 0:
+            raise ValueError("max_http_requests_per_arm must be a nonnegative integer")
     trace_path = Path(trace_path)
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
     if trace.get("schema") != 1 or trace.get("first_attempt", {}).get("failure_category") != "test_failure":
@@ -78,13 +85,20 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                 "verifier_sha256": trace["verifier_sha256"]}
     if heldout_verification is not None:
         settings["heldout_sha256"] = hashlib.sha256(heldout_verification.encode("utf-8")).hexdigest()
+    if max_http_requests_per_arm is not None:
+        settings["max_http_requests_per_arm"] = max_http_requests_per_arm
     if output.exists():
         report = json.loads(output.read_text(encoding="utf-8"))
         if report.get("settings") != settings:
             raise ValueError("Checkpoint settings or captured trace changed")
+        if max_http_requests_per_arm is not None and "request_reservations" not in report:
+            if report.get("rows") or report.get("pending"):
+                raise ValueError("Existing checkpoint lacks durable request reservations")
     else:
         report = {"schema": 1, "settings": settings, "rows": [], "pending": {},
                   "notice": "Contains prompts and model-generated code; review before sharing."}
+    if max_http_requests_per_arm is not None:
+        report.setdefault("request_reservations", {})
     with tempfile.TemporaryDirectory() as temp:
         repo, task, verifier = base.task_setup(trace["mode"], trace["case"], temp)
         if base.fingerprint(repo) != trace["repo_sha256"] or task != trace["task"]:
@@ -101,6 +115,12 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                 if any(r["key"] == key for r in report["rows"]):
                     continue
                 saved = report["pending"].get(key, [])
+                previous_requests = report.get("request_reservations", {}).get(key, 0)
+                if type(previous_requests) is not int or previous_requests < 0:
+                    raise ValueError("Invalid checkpoint request reservation count")
+                if (max_http_requests_per_arm is not None
+                        and previous_requests > max_http_requests_per_arm):
+                    raise ValueError("Checkpoint exceeds configured request budget")
                 index = [0]
                 calls = []
 
@@ -130,11 +150,27 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                         _write(output, report)  # persist before agent receives response
                     return response
 
-                with ModelRequestAccounting() as accounting:
-                    with patch.object(base.agent_module, "ask_model", side_effect=ask):
-                        result = base.agent_module.run_agent(
-                            repo, task, attempts=attempts, verification=verifier,
-                            repair_feedback=feedback, repair_policy=policy)
+                def reserve_request(next_count):
+                    # Persist a conservative reservation before sending HTTP.
+                    report["request_reservations"][key] = next_count
+                    _write(output, report)
+
+                with ModelRequestAccounting(
+                    max_http_requests=max_http_requests_per_arm,
+                    on_request_reserved=(
+                        reserve_request if max_http_requests_per_arm is not None else None
+                    ),
+                ) as accounting:
+                    accounting.http_requests = previous_requests
+                    try:
+                        with patch.object(base.agent_module, "ask_model", side_effect=ask):
+                            result = base.agent_module.run_agent(
+                                repo, task, attempts=attempts, verification=verifier,
+                                repair_feedback=feedback, repair_policy=policy)
+                    except ModelRequestBudgetExceeded as exc:
+                        raise BenchmarkBudgetExceeded(
+                            "HTTP request budget exhausted for arm {}".format(key)
+                        ) from exc
                 provider_errors = [h for h in result.get("history", [])
                                    if h.get("failure_stage") == "model_request"
                                    and h.get("failure_category") == "provider_error"]
@@ -172,8 +208,12 @@ def main():
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--repetitions", type=int, default=1)
     parser.add_argument("--attempts", type=int, default=3)
+    parser.add_argument("--max-http-requests-per-arm", type=int, default=None)
     args = parser.parse_args()
-    result = evaluate(args.trace, args.output, args.offline, args.repetitions, args.attempts)
+    result = evaluate(
+        args.trace, args.output, args.offline, args.repetitions, args.attempts,
+        max_http_requests_per_arm=args.max_http_requests_per_arm,
+    )
     print("Completed {} arms; saved {}".format(len(result["rows"]), args.output))
 
 

@@ -80,10 +80,21 @@ _ACTIVE_MODEL_ACCOUNTING = ContextVar(
 )
 
 
+class ModelRequestBudgetExceeded(RuntimeError):
+    """Scoped HTTP request budget was exhausted."""
+
+
 class ModelRequestAccounting:
     """Scoped model request accounting."""
 
-    def __init__(self):
+    def __init__(self, max_http_requests=None, on_request_reserved=None):
+        if max_http_requests is not None:
+            if type(max_http_requests) is not int or max_http_requests < 0:
+                raise ValueError("max_http_requests must be a nonnegative integer")
+        if on_request_reserved is not None and not callable(on_request_reserved):
+            raise ValueError("on_request_reserved must be callable")
+        self.max_http_requests = max_http_requests
+        self.on_request_reserved = on_request_reserved
         self.logical_calls = 0
         self.http_requests = 0
         self.http_failures = 0
@@ -170,7 +181,17 @@ def ask_model(messages, model=None, base_url=None, json_mode=None, temperature=N
     for retry in range(max_retries + 1):
         try:
             if accounting is not None:
-                accounting.http_requests += 1
+                if (
+                    accounting.max_http_requests is not None
+                    and accounting.http_requests >= accounting.max_http_requests
+                ):
+                    raise ModelRequestBudgetExceeded(
+                        "Model HTTP request budget exhausted"
+                    )
+                next_count = accounting.http_requests + 1
+                if accounting.on_request_reserved is not None:
+                    accounting.on_request_reserved(next_count)
+                accounting.http_requests = next_count
             response = requests.post(
                 base_url + "/chat/completions",
                 headers={"Authorization": "Bearer " + key,
