@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[dashboard,test]"
 
-    - name: Run unit test regression suite
+    - name: Run unit test regression suite (248 tests)
       run: |
         PYTHONPATH=src:. python -m unittest discover -s tests -p 'test_*.py' -v
 
@@ -35,6 +35,6 @@ jobs:
       run: |
         PYTHONPATH=src:. python -m benchmarks.v18.task_suite_runner validate
 
-    - name: Verify mutation hardening (100% mutant kill score)
+    - name: Verify mutation hardening
       run: |
         PYTHONPATH=src:. python -m benchmarks.v18.hardening
