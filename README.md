@@ -35,7 +35,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dashboard,test]"
 
-# 2. Run the full unit regression suite (258 tests)
+# 2. Run the full unit regression suite (261 tests)
 python3 -m unittest discover -s tests -p 'test_*.py'
 
 # 3. Explore repository mapping and semantic search
@@ -131,9 +131,11 @@ Evaluated live on Groq (`openai/gpt-oss-120b`) across all 22 tasks and 66 policy
 | `benchmarks/archive/` | Historical benchmark iterations (`v09` through `v30`) preserved with version index |
 | `backend/` | Optional FastAPI local dashboard API with multi-policy support |
 | `frontend/` | Angular local research dashboard |
-| `tests/` | 258 unit and regression tests (edit safety, provenance, replay, hardening, statistical analysis) |
+| `tests/` | 261 unit and regression tests (edit safety, provenance, replay, hardening, statistical analysis, manifest lifecycle) |
 | `research-full-suite-22/` | Cryptographic evidence, metrics, SVG coverage charts, and proof JSON |
-| `EXPERIMENT_MANIFEST.json` | Complete cryptographic provenance manifest (commit SHA, input hashes, artifact digests) |
+| `research-full-suite-22/run-manifest.json` | Pre-run execution snapshot (effective configuration, Git provenance, input fixture digests) |
+| `research-full-suite-22/evidence-manifest.json` | Post-run sealed evidence (artifact SHA-256 digests referencing pre-run manifest) |
+| `EXPERIMENT_MANIFEST.json` | Root cryptographic provenance manifest (commit SHA, input hashes, artifact digests) |
 | `LICENSE` | Official MIT License |
 
 ---
@@ -152,5 +154,5 @@ RETRACE enforces rigorous boundaries separating patch application safety from ex
 
 2. **Runtime Execution & Sandbox Boundary:**
    - **Disposable Workspaces:** Candidate evaluations run inside isolated temporary working directories (`tempfile.TemporaryDirectory`).
-   - **No Network Egress During Replay:** Local test runners execute strictly offline test fixtures.
+   - **Offline Fixture Execution:** Replay evaluations use offline test fixtures in disposable working directories. Network isolation is not enforced at the operating-system level, and untrusted code execution requires additional sandboxing.
    - *Kernel-Level Sandboxing Distinction:* Current execution containment operates at the filesystem workspace and process boundary. Production environments requiring defense against untrusted arbitrary code execution should wrap test runs in containerized OS sandboxes (e.g. gVisor, Docker, or seccomp).

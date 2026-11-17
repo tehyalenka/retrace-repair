@@ -1,11 +1,15 @@
 {
-  "manifest_schema": 2,
-  "run_id": "f1f03ed7-e146-4462-a540-8b2cd4e90901",
-  "generated_at": "2026-11-17T20:10:49.298363+00:00",
+  "manifest_schema": 3,
+  "lifecycle_stage": "post_run_evidence_seal",
+  "run_id": "b922afa4-be1c-4fb9-ad8e-b84058e0bdfe",
+  "run_manifest_sha256": "a1a4fb7291c7d8c1b65774274d0bb8a8f25b85296fb32237d65012f48c2dd3d1",
+  "sealed_at": "2026-11-17T20:23:45.454381+00:00",
   "git_provenance": {
-    "evaluation_commit_sha": "8d66da5c4c8f21085a7702fe061cb4f1f3691bd0",
-    "reporting_commit_sha": "8d66da5c4c8f21085a7702fe061cb4f1f3691bd0",
-    "working_tree_dirty": null
+    "execution_commit_sha": "118e27e468db6a87e08815b134ac8daa0b10fdfc",
+    "reporting_commit_sha": "118e27e468db6a87e08815b134ac8daa0b10fdfc",
+    "working_tree_dirty": null,
+    "resolution_method": "loose_ref_file",
+    "publication_grade": false
   },
   "environment": {
     "python_version": "3.11.9",
@@ -14,7 +18,7 @@
     "system": "Darwin",
     "architecture": "x86_64"
   },
-  "model_configuration": {
+  "effective_configuration": {
     "primary_provider": "groq",
     "model_id": "openai/gpt-oss-120b",
     "temperature_resample": 0.7,
@@ -26,8 +30,6 @@
   "benchmark_metadata": {
     "suite_version": "v1.8",
     "total_tasks": 22,
-    "synthetic_algorithmic_tasks": 15,
-    "enterprise_distributed_tasks": 7,
     "task_inputs": {
       "clamp_bounds": {
         "category": "bugfix",
@@ -347,7 +349,7 @@
       }
     }
   },
-  "artifact_hashes": {
+  "output_artifacts": {
     "average_empty-capture.json": "7ee859ebaab0b2c70a2f07b3979ee48d515740ee0d26c5338152483303fe027d",
     "average_empty-live.json": "d8530a8c5e1ec0c859fe7d6afe9b0e086ebc7ef099e68f619fa15774ed66f10a",
     "benchmark-proof.json": "d7c0e6d8d3648fdbd2ee7e26eeba3e2e77ed1bb2cb06f235186c9f44a8ef2700",
@@ -398,10 +400,6 @@
     "suite-summary.json": "69ec217c5c590d925e853403b161ee352620d9f0c1f80d1b40f06bea880a1808",
     "suite-totals.json": "d7e1131347d3f99f1fee5d1d74cea5b18897d77f337036fcadc250ca8f19b5a7"
   },
-  "provenance_definitions": {
-    "controlled_reproducible_failure": "The initial attempt is replayed from a deterministic known failed edit so that all arms evaluate on an identical, leakage-free failure snapshot.",
-    "live_recovery_attempts": "Subsequent repair attempts make fresh live model completions through the provider API.",
-    "counterfactual_replay_policy": "Executable multi-candidate patch generation evaluated against local test suites and ranked deterministically without leakage to held-out tests.",
-    "security_execution_boundary": "Workspace edit containment and atomic rollback safety. Runtime execution occurs in disposable temporary directories without network access during replay, but kernel-level OS sandboxing (seccomp/containers) is not yet active."
-  }
+  "total_artifacts_sealed": 49,
+  "evidence_seal_sha256": "3babd8b41a3802c0fb564c6930b5638d063e1126fff3f6d09d30e7d800b37a50"
 }

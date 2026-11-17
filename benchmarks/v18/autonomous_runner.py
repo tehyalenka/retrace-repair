@@ -13,6 +13,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 from benchmarks.v18 import task_suite_runner
 from benchmarks.v18.task_suite_runner import summarize
@@ -36,17 +37,17 @@ def is_benchmark_complete(output_dir: Path, total_tasks: int = 22) -> bool:
     return get_completed_tasks_count(output_dir, total_tasks) >= total_tasks
 
 
-def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22):
+def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22, run_manifest_path: Optional[Path] = None):
     print("\n" + "=" * 70, flush=True)
     print(f"ALL {target_total} TARGET TASKS COMPLETED! Running post-benchmark pipeline...", flush=True)
     print("=" * 70, flush=True)
 
     # 1. Summarize and generate benchmark-proof.json
-    print("\n[1/3] Generating final summary and cryptographic proof...", flush=True)
+    print("\n[1/5] Generating final summary and cryptographic proof...", flush=True)
     summarize(str(output_dir))
 
     # 2. Run research gate
-    print("\n[2/3] Auditing evidence with Research Gate...", flush=True)
+    print("\n[2/5] Auditing evidence with Research Gate...", flush=True)
     try:
         from benchmarks.v18 import research_gate
         gate_report = research_gate.evaluate_directory(str(output_dir))
@@ -57,7 +58,7 @@ def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22):
         print(f"Warning: Research gate error: {exc}", flush=True)
 
     # 3. Generate research report and metrics
-    print("\n[3/4] Generating research report and metrics...", flush=True)
+    print("\n[3/5] Generating research report and metrics...", flush=True)
     try:
         from benchmarks.v18 import research_report
         report_dir = output_dir / "research"
@@ -68,7 +69,7 @@ def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22):
         print(f"Warning: Research report generation error: {exc}", flush=True)
 
     # 4. Run statistical analysis and paired McNemar tests
-    print("\n[4/4] Computing statistical significance (McNemar) & token accounting...", flush=True)
+    print("\n[4/5] Computing statistical significance (McNemar) & token accounting...", flush=True)
     try:
         from benchmarks.v18 import statistical_analysis
         stats_report = statistical_analysis.analyze_directory(str(output_dir))
@@ -77,6 +78,21 @@ def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22):
         print(f"Statistical analysis report saved to {stats_path}", flush=True)
     except Exception as exc:
         print(f"Warning: Statistical analysis error: {exc}", flush=True)
+
+    # 5. Seal post-execution evidence manifest
+    print("\n[5/5] Cryptographically sealing output evidence manifest...", flush=True)
+    try:
+        from benchmarks.v18.experiment_manifest import seal_evidence_manifest
+        manifest_p = run_manifest_path or (output_dir / "run-manifest.json")
+        if manifest_p.exists():
+            evidence = seal_evidence_manifest(output_dir, manifest_p)
+            print(
+                f"Evidence sealed in {output_dir / 'evidence-manifest.json'} "
+                f"({evidence['total_artifacts_sealed']} artifacts)",
+                flush=True,
+            )
+    except Exception as exc:
+        print(f"Warning: Could not seal evidence manifest: {exc}", flush=True)
 
     print("\n" + "=" * 70, flush=True)
     print("AUTONOMOUS BENCHMARK RUNNER FINISHED SUCCESSFULLY.", flush=True)
@@ -114,16 +130,6 @@ def main():
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Initialize execution manifest at start of benchmark run
-    manifest_out = out_dir / "EXPERIMENT_MANIFEST.json"
-    if not manifest_out.exists():
-        try:
-            from benchmarks.v18.experiment_manifest import generate_manifest
-            generate_manifest(output_path=str(manifest_out), results_dir=str(out_dir))
-            print(f"Pre-run experiment manifest initialized at: {manifest_out}", flush=True)
-        except Exception as exc:
-            print(f"Warning: Could not initialize experiment manifest: {exc}", flush=True)
-
     manifest_file = Path("benchmarks/v18/task_suite/manifest.json")
     with open(manifest_file, "r", encoding="utf-8") as f:
         manifest_data = json.load(f)["tasks"]
@@ -138,6 +144,40 @@ def main():
     total_target_count = len(target_tasks)
 
     task_ids_set = {t["id"] for t in target_tasks} if (args.category or args.tasks) else None
+
+    # Assemble effective runtime configuration (removing assumed fixed defaults)
+    effective_config = {
+        "output_dir": str(out_dir),
+        "category": args.category,
+        "tasks": args.tasks,
+        "repetitions": args.repetitions,
+        "attempts": args.attempts,
+        "delay_seconds": args.delay_seconds,
+        "retry_interval_seconds": args.retry_interval_seconds,
+        "max_hours": args.max_hours,
+        "primary_provider": os.environ.get("CODEPILOT_PROVIDER", "groq"),
+        "model_id": os.environ.get("CODEPILOT_MODEL", "openai/gpt-oss-120b"),
+        "temperature_resample": 0.7,
+        "temperature_repair": 0.0,
+        "seed_base": 42,
+    }
+
+    # Lifecycle Stage 1: Pre-run manifest initialization and resume validation
+    run_manifest_path = out_dir / "run-manifest.json"
+    from benchmarks.v18.experiment_manifest import generate_run_manifest, verify_run_manifest
+
+    if run_manifest_path.exists():
+        try:
+            verify_run_manifest(run_manifest_path, current_config=effective_config, task_list=target_tasks)
+            print(f"Verified existing run-manifest on resume: {run_manifest_path}", flush=True)
+        except Exception as exc:
+            print(f"WARNING: Manifest validation alert on resume: {exc}", flush=True)
+    else:
+        try:
+            generate_run_manifest(run_manifest_path, config=effective_config, task_list=target_tasks)
+            print(f"Pre-run manifest initialized at: {run_manifest_path}", flush=True)
+        except Exception as exc:
+            print(f"Warning: Could not initialize run-manifest: {exc}", flush=True)
 
     start_time = time.time()
     max_wait_seconds = args.max_hours * 3600
@@ -167,7 +207,7 @@ def main():
         )
 
         if completed_tasks >= total_target_count:
-            run_post_benchmark_pipeline(out_dir, target_total=total_target_count)
+            run_post_benchmark_pipeline(out_dir, target_total=total_target_count, run_manifest_path=run_manifest_path)
             sys.exit(0)
 
         # Run live suite
@@ -186,7 +226,7 @@ def main():
         # Check again if complete
         completed_tasks = get_completed_tasks_count(out_dir, total_tasks=total_target_count)
         if completed_tasks >= total_target_count:
-            run_post_benchmark_pipeline(out_dir, target_total=total_target_count)
+            run_post_benchmark_pipeline(out_dir, target_total=total_target_count, run_manifest_path=run_manifest_path)
             sys.exit(0)
 
         print(
