@@ -3,10 +3,17 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from backend import app as app_module
-from backend.run_artifacts import save_run_artifacts
+try:
+    from backend import app as app_module
+    from backend.run_artifacts import save_run_artifacts
+    HAS_BACKEND = True
+except ImportError:
+    HAS_BACKEND = False
+    app_module = None
+    save_run_artifacts = None
 
 
+@unittest.skipUnless(HAS_BACKEND, "Backend dependencies not installed")
 class HistoricalDiffTests(unittest.TestCase):
 
     def test_diff_remains_stable_after_repository_changes(self):

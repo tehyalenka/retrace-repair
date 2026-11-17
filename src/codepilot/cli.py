@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 
 from .repository_analyzer import index_repository, retrieve_context, repository_map
@@ -8,7 +9,8 @@ from .agent import run_agent
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="codepilot", description="CodePilot-X repository-aware coding agent")
+    prog = os.path.basename(sys.argv[0]) if sys.argv and sys.argv[0] else "retrace"
+    parser = argparse.ArgumentParser(prog=prog, description="Retrace repository-aware coding agent with counterfactual replay")
     sub = parser.add_subparsers(dest="command", required=True)
     p_index = sub.add_parser("index", help="Inspect Python source structure")
     p_index.add_argument("repository")

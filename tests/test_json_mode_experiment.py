@@ -8,10 +8,11 @@ from unittest.mock import Mock, patch
 from codepilot.agent import ask_model, parse_edits_with_format_retry
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("json_mode_experiment", ROOT / "benchmarks/v11/json_mode_experiment.py")
+v11_dir = (ROOT / "benchmarks/archive/v11") if (ROOT / "benchmarks/archive/v11").exists() else (ROOT / "benchmarks/v11")
+SPEC = importlib.util.spec_from_file_location("json_mode_experiment", v11_dir / "json_mode_experiment.py")
 # Runner imports evaluate from its directory.
 import sys
-sys.path.insert(0, str(ROOT / "benchmarks/v11"))
+sys.path.insert(0, str(v11_dir))
 module = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(module)
 

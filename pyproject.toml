@@ -3,14 +3,34 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "codepilot-x"
-version = "0.8.1"
-description = "Repository-aware coding agent with test feedback"
+name = "retrace"
+version = "0.9.0"
+description = "Repository-aware coding agent with test feedback and counterfactual replay"
+readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.9"
-dependencies = ["requests>=2.28,<3", "urllib3>=1.26.18,<2; python_version < '3.10'"]
+dependencies = [
+    "requests>=2.28,<3",
+    "urllib3>=1.26.18,<2; python_version < '3.10'",
+]
+
+[project.optional-dependencies]
+dashboard = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "pydantic>=2.0.0",
+]
+test = [
+    "fastapi>=0.100.0",
+    "httpx>=0.24.0",
+    "uvicorn>=0.22.0",
+    "pydantic>=2.0.0",
+    "pytest>=7.0.0",
+]
 
 [project.scripts]
 codepilot = "codepilot.cli:main"
+retrace = "codepilot.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

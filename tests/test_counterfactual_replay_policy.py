@@ -13,7 +13,12 @@ from codepilot.counterfactual_replay import (
 )
 from codepilot.replay_generation import generate_replay_candidates
 from codepilot.replay_strategy import evaluate_replay_strategy
-from backend.app import RunRequest
+try:
+    from backend.app import RunRequest
+    HAS_BACKEND = True
+except ImportError:
+    HAS_BACKEND = False
+    RunRequest = None
 from src.codepilot.cli import main as cli_main
 
 
@@ -177,6 +182,7 @@ class CounterfactualReplayPolicyTests(unittest.TestCase):
         self.assertFalse(result["history"][0]["passed"])
         self.assertTrue(result["history"][1]["passed"])
 
+    @unittest.skipUnless(HAS_BACKEND, "Backend dependencies not installed")
     def test_backend_app_accepts_counterfactual_replay_policy(self):
         req = RunRequest(task="fix bug", repair_policy="counterfactual_replay")
         self.assertEqual(req.repair_policy, "counterfactual_replay")

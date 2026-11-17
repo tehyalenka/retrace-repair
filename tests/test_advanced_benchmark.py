@@ -4,7 +4,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location('advanced_eval', ROOT / 'benchmarks/v11/evaluate.py')
+eval_file = (ROOT / 'benchmarks/archive/v11/evaluate.py') if (ROOT / 'benchmarks/archive/v11/evaluate.py').exists() else (ROOT / 'benchmarks/v11/evaluate.py')
+SPEC = importlib.util.spec_from_file_location('advanced_eval', eval_file)
 MOD = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MOD)
 

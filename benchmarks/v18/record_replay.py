@@ -16,9 +16,26 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 import codepilot.agent as agent_module
-from benchmarks.v16.repair_experiment import offline_fixture, _edit
+def offline_fixture(path):
+    path.mkdir(parents=True, exist_ok=True)
+    (path / "calc.py").write_text("def double(x):\n    return x\n", encoding="utf-8")
+    tests = path / "tests"
+    tests.mkdir(parents=True, exist_ok=True)
+    (tests / "test_smoke.py").write_text(
+        "import unittest\nfrom calc import double\nclass Smoke(unittest.TestCase):\n"
+        "    def test_zero(self): self.assertEqual(double(0), 0)\n", encoding="utf-8")
+    verifier = ("import unittest\nfrom calc import double\nclass Verify(unittest.TestCase):\n"
+                "    def test_positive(self): self.assertEqual(double(3), 6)\n")
+    return verifier
 
-HERE = ROOT / "benchmarks" / "v11"
+
+def _edit(source):
+    return json.dumps({"edits": [{"path": "calc.py", "operation": "modify", "content": source}]})
+
+
+HERE = ROOT / "benchmarks" / "archive" / "v11"
+if not HERE.exists():
+    HERE = ROOT / "benchmarks" / "v11"
 
 
 def fingerprint(repo):
@@ -105,6 +122,8 @@ def paired(trace_path, output, offline=False, include_counterfactual=False):
             conditions.append(("counterfactual", True, "counterfactual"))
         for condition, feedback, policy in conditions:
             calls = []
+            arm_temperature = 0.7 if condition == "resample" else None
+            arm_seed = 42 if condition == "resample" else None
 
             def continuation(messages, **kwargs):
                 if not calls:
@@ -121,7 +140,8 @@ def paired(trace_path, output, offline=False, include_counterfactual=False):
 
             with patch.object(agent_module, "ask_model", side_effect=continuation):
                 result = agent_module.run_agent(repo, task, attempts=3, verification=verifier,
-                                                repair_feedback=feedback, repair_policy=policy)
+                                                repair_feedback=feedback, repair_policy=policy,
+                                                temperature=arm_temperature, seed=arm_seed)
             history = result["history"]
             if not history or history[0].get("failure_category") != "test_failure":
                 raise ValueError("Replay did not reproduce original test failure")

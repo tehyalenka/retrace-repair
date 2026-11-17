@@ -166,7 +166,7 @@ def _retry_delay(response, retry_number):
     return max(wait, 0.0) + 0.25
 
 
-def ask_model(messages, model=None, base_url=None, json_mode=None, temperature=None):
+def ask_model(messages, model=None, base_url=None, json_mode=None, temperature=None, seed=None):
     key, default_model, default_base_url = provider_config()
     model = model or default_model
     base_url = (base_url or default_base_url).rstrip("/")
@@ -187,6 +187,8 @@ def ask_model(messages, model=None, base_url=None, json_mode=None, temperature=N
         "messages": messages,
         "temperature": temperature,
     }
+    if seed is not None:
+        payload["seed"] = int(seed)
     # Explicit override enables controlled A/B experiments without mutating the environment.
     if json_mode is None:
         json_mode = os.environ.get("CODEPILOT_JSON_MODE", "0") == "1"
@@ -339,7 +341,7 @@ def parse_edits(answer):
     return data
 
 
-def parse_edits_with_format_retry(messages, answer, format_retries=2, diagnostics=None, json_mode=None):
+def parse_edits_with_format_retry(messages, answer, format_retries=2, diagnostics=None, json_mode=None, temperature=None, seed=None):
     """Ask for a clean re-serialization when the model emits invalid edit JSON.
 
     Keep the original response as context, but do not execute or partially apply it.
@@ -372,7 +374,7 @@ def parse_edits_with_format_retry(messages, answer, format_retries=2, diagnostic
             ]
             if diagnostics is not None:
                 diagnostics["format_retries_used"] += 1
-            current = ask_model(correction, json_mode=json_mode)
+            current = ask_model(correction, json_mode=json_mode, temperature=temperature, seed=seed)
     raise AssertionError("unreachable")
 
 
@@ -618,7 +620,7 @@ def _counterfactual_repair_prompt(record):
     ).format(feedback)
 
 
-def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verification=None, generate_tests=False, json_mode=None, retrieval_strategy="lexical", repair_feedback=True, repair_policy="standard" ):
+def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verification=None, generate_tests=False, json_mode=None, retrieval_strategy="lexical", repair_feedback=True, repair_policy="standard", temperature=None, seed=None):
     if repair_policy not in ("standard", "counterfactual", "counterfactual_replay"):
         raise ValueError(
             "repair_policy must be standard, counterfactual, or counterfactual_replay"
@@ -812,7 +814,7 @@ def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verific
                         ])
                     continue
 
-                answer = ask_model(messages, json_mode=json_mode)
+                answer = ask_model(messages, json_mode=json_mode, temperature=temperature, seed=seed)
                 # Repair malformed JSON without consuming an implementation attempt.
                 # This is a formatting retry, not a code/test retry.
                 stage = "edit_json"
@@ -822,6 +824,8 @@ def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verific
                     format_retries=int(os.environ.get("CODEPILOT_FORMAT_RETRIES", "2")),
                     diagnostics=formatting,
                     json_mode=json_mode,
+                    temperature=temperature,
+                    seed=seed,
                 )
                 answer = parsed.pop("_validated_raw_answer")
                 stage = "edit_validation"

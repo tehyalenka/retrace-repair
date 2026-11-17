@@ -4,10 +4,17 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from fastapi import HTTPException
-from backend import app as backend
+try:
+    from fastapi import HTTPException
+    from backend import app as backend
+    HAS_DASHBOARD = True
+except ImportError:
+    HAS_DASHBOARD = False
+    HTTPException = None
+    backend = None
 
 
+@unittest.skipUnless(HAS_DASHBOARD, "Dashboard dependencies (fastapi/uvicorn) not installed")
 class OfflineDashboardIntegrationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

@@ -5,7 +5,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 from codepilot.agent import run_agent
-from backend.app import RunRequest
+try:
+    from backend.app import RunRequest
+    HAS_BACKEND = True
+except ImportError:
+    HAS_BACKEND = False
+    RunRequest = None
 
 
 class CounterfactualRepairTests(unittest.TestCase):
@@ -42,6 +47,7 @@ class CounterfactualRepairTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'repair_policy'):
                 run_agent(tmp, 'task', repair_policy='unknown')
 
+    @unittest.skipUnless(HAS_BACKEND, "Backend dependencies not installed")
     def test_api_request_policy(self):
         self.assertEqual(RunRequest(task='fix bug', repair_policy='counterfactual').repair_policy,
                          'counterfactual')

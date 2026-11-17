@@ -9,8 +9,13 @@ from unittest.mock import patch
 
 
 class RepeatBenchmarkTests(unittest.TestCase):
+    def _v09_folder(self):
+        root = Path(__file__).resolve().parents[1]
+        archived = root / "benchmarks" / "archive" / "v09"
+        return archived if archived.exists() else (root / "benchmarks" / "v09")
+
     def test_repeat_summary_and_failure_handling(self):
-        folder = Path(__file__).resolve().parents[1] / "benchmarks" / "v09"
+        folder = self._v09_folder()
         sys.path.insert(0, str(folder))
         try:
             spec = importlib.util.spec_from_file_location("codepilot_repeat", folder / "repeat.py")
@@ -44,7 +49,7 @@ class RepeatBenchmarkTests(unittest.TestCase):
             sys.path.remove(str(folder))
 
     def test_reject_invalid_settings(self):
-        folder = Path(__file__).resolve().parents[1] / "benchmarks" / "v09"
+        folder = self._v09_folder()
         sys.path.insert(0, str(folder))
         try:
             spec = importlib.util.spec_from_file_location("codepilot_repeat_invalid", folder / "repeat.py")

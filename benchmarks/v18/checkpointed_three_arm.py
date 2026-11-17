@@ -15,7 +15,7 @@ from unittest.mock import patch
 from benchmarks.v18 import record_replay as base
 from benchmarks.v18.provenance import experiment_provenance
 from codepilot.agent import ModelRequestAccounting, ModelRequestBudgetExceeded
-from benchmarks.v16.repair_experiment import _edit
+from benchmarks.v18.record_replay import _edit
 
 class ProviderBlocked(RuntimeError):
     """Provider rejected a live request; current arm remains resumable."""
@@ -177,6 +177,8 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                     report["request_reservations"][key] = next_count
                     _write(output, report)
 
+                arm_temperature = 0.7 if condition == "resample" else (0.0 if not offline else None)
+                arm_seed = (42 + repetition * 100) if condition == "resample" else None
                 with ModelRequestAccounting(
                     max_http_requests=max_http_requests_per_arm,
                     on_request_reserved=(
@@ -188,7 +190,8 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                         with patch.object(base.agent_module, "ask_model", side_effect=ask):
                             result = base.agent_module.run_agent(
                                 repo, task, attempts=attempts, verification=verifier,
-                                repair_feedback=feedback, repair_policy=policy)
+                                repair_feedback=feedback, repair_policy=policy,
+                                temperature=arm_temperature, seed=arm_seed)
                     except ModelRequestBudgetExceeded as exc:
                         raise BenchmarkBudgetExceeded(
                             "HTTP request budget exhausted for arm {}".format(key)

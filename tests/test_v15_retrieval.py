@@ -4,7 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-MODULE = Path(__file__).resolve().parents[1] / "benchmarks" / "v15" / "evaluate.py"
+root = Path(__file__).resolve().parents[1]
+archived_path = root / "benchmarks" / "archive" / "v15" / "evaluate.py"
+MODULE = archived_path if archived_path.exists() else (root / "benchmarks" / "v15" / "evaluate.py")
 spec = importlib.util.spec_from_file_location("v15_evaluate", MODULE)
 v15 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(v15)

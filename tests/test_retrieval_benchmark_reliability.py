@@ -23,7 +23,9 @@ class RetrievalBenchmarkReliabilityTests(unittest.TestCase):
             self.assertIn('context_files', result['retrieval'])
 
     def test_infrastructure_exclusion_and_cooldown(self):
-        module_path = Path(__file__).resolve().parents[1] / 'benchmarks' / 'v11' / 'retrieval_experiment.py'
+        root = Path(__file__).resolve().parents[1]
+        archived = root / 'benchmarks' / 'archive' / 'v11' / 'retrieval_experiment.py'
+        module_path = archived if archived.exists() else (root / 'benchmarks' / 'v11' / 'retrieval_experiment.py')
         spec = importlib.util.spec_from_file_location('retrieval_experiment_v141', module_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
