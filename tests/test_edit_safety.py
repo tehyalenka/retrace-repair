@@ -53,9 +53,9 @@ class EditSafetyTests(unittest.TestCase):
         self.assertIn("Unsafe or duplicate file path", str(ctx.exception))
 
     def test_symlink_target_rejected(self):
-        target_outside = Path(tempfile.gettempdir()) / "outside_target.py"
-        target_outside.write_text("secret = 42\n", encoding="utf-8")
-        try:
+        with tempfile.TemporaryDirectory(prefix="outside-target-") as outside_dir:
+            target_outside = Path(outside_dir) / "secret_target.py"
+            target_outside.write_text("secret = 42\n", encoding="utf-8")
             symlink_file = self.workspace / "link.py"
             os.symlink(target_outside, symlink_file)
             edits = [
@@ -64,9 +64,6 @@ class EditSafetyTests(unittest.TestCase):
             with self.assertRaises(ValueError) as ctx:
                 apply_edits(self.workspace, edits, ["link.py"])
             self.assertIn("Symlink", str(ctx.exception))
-        finally:
-            if target_outside.exists():
-                target_outside.unlink()
 
     def test_unauthorized_existing_file_operation_rejected(self):
         unauthorized_edits = [

@@ -57,7 +57,7 @@ def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22):
         print(f"Warning: Research gate error: {exc}", flush=True)
 
     # 3. Generate research report and metrics
-    print("\n[3/3] Generating research report and metrics...", flush=True)
+    print("\n[3/4] Generating research report and metrics...", flush=True)
     try:
         from benchmarks.v18 import research_report
         report_dir = output_dir / "research"
@@ -66,6 +66,17 @@ def run_post_benchmark_pipeline(output_dir: Path, target_total: int = 22):
         print(f"Research report compiled in {report_dir}", flush=True)
     except Exception as exc:
         print(f"Warning: Research report generation error: {exc}", flush=True)
+
+    # 4. Run statistical analysis and paired McNemar tests
+    print("\n[4/4] Computing statistical significance (McNemar) & token accounting...", flush=True)
+    try:
+        from benchmarks.v18 import statistical_analysis
+        stats_report = statistical_analysis.analyze_directory(str(output_dir))
+        stats_path = output_dir / "statistical-analysis-report.json"
+        stats_path.write_text(json.dumps(stats_report, indent=2), encoding="utf-8")
+        print(f"Statistical analysis report saved to {stats_path}", flush=True)
+    except Exception as exc:
+        print(f"Warning: Statistical analysis error: {exc}", flush=True)
 
     print("\n" + "=" * 70, flush=True)
     print("AUTONOMOUS BENCHMARK RUNNER FINISHED SUCCESSFULLY.", flush=True)
@@ -102,6 +113,16 @@ def main():
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Initialize execution manifest at start of benchmark run
+    manifest_out = out_dir / "EXPERIMENT_MANIFEST.json"
+    if not manifest_out.exists():
+        try:
+            from benchmarks.v18.experiment_manifest import generate_manifest
+            generate_manifest(output_path=str(manifest_out), results_dir=str(out_dir))
+            print(f"Pre-run experiment manifest initialized at: {manifest_out}", flush=True)
+        except Exception as exc:
+            print(f"Warning: Could not initialize experiment manifest: {exc}", flush=True)
 
     manifest_file = Path("benchmarks/v18/task_suite/manifest.json")
     with open(manifest_file, "r", encoding="utf-8") as f:

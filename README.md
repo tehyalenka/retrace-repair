@@ -35,7 +35,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dashboard,test]"
 
-# 2. Run the full unit regression suite (248 tests)
+# 2. Run the full unit regression suite (258 tests)
 python3 -m unittest discover -s tests -p 'test_*.py'
 
 # 3. Explore repository mapping and semantic search
@@ -97,17 +97,27 @@ python3 -m benchmarks.v18.autonomous_runner \
 
 Evaluated live on Groq (`openai/gpt-oss-120b`) across all 22 tasks and 66 policy evaluations:
 
-| Repair Strategy | Evaluations | Live Calls | Public Pass | Held-Out Pass | Observed Tokens | Efficiency Delta |
+| Repair Strategy | Evaluations | Live Calls | Public Pass | Held-Out Pass | Provider-Reported Tokens | Efficiency Delta |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **`resample`** | 22 / 22 | 23 | 21/22 (95%) | 15/22 (68%) | 24,895 | Baseline |
 | **`feedback`** | 22 / 22 | 24 | **22/22 (100%)** | 15/22 (68%) | 44,940 | +34.3% tokens |
 | **`counterfactual`** | 22 / 22 | **22 (1.00/task)** | 21/22 (95%) | 15/22 (68%) | **33,449** | **-25.6% tokens vs feedback** |
 | **Grand Total** | **66 / 66** | **69** | **64/66 (97%)** | **45/66 (68%)** | **103,284** | Cryptographically verified |
 
-### Key Research Insight: The Public vs. Heldout Gap
-- **15/15 Synthetic Tasks:** Passed both public and hidden heldout tests across all conditions.
-- **7/7 Enterprise Tasks:** Models scored **100% on public tests** under feedback repair, but **0% on held-out tests** due to specification gaming (omitting strict parameter types like `bool` checks or secondary table rollback savepoints).
-- **The Research Gate Guardrail:** [research-gate-verdict.json](file:///Users/tehyalenka/Desktop/retrace-repair/research-full-suite-22/research-gate-verdict.json) successfully flagged and rejected all 7 enterprise tasks as `"public-only success"`, preventing false claims of repair.
+> [!NOTE]
+> **Token Accounting:** Metrics above represent provider-verified tokens reported in API response payloads (`request_accounting`). The statistical audit (`benchmarks/v18/statistical_analysis.py`) strictly segregates provider-reported tokens from heuristic word estimates, rejecting any silent fallback.
+
+### Key Research Insights
+
+1. **The Public vs. Held-Out Generalization Gap:**
+   - **15/15 Synthetic Tasks:** Passed both public and hidden held-out tests across all conditions (ceiling effect).
+   - **7/7 Enterprise Tasks:** Models scored **100% on public tests** under feedback repair, but **0% on held-out tests** due to specification gaming (omitting strict parameter types like `bool` checks or secondary table rollback savepoints).
+   - **The Research Gate Guardrail:** [research-gate-verdict.json](research-full-suite-22/research-gate-verdict.json) successfully flagged and rejected all 7 enterprise tasks as `"public-only success"`, preventing false claims of repair.
+
+2. **Statistical Significance & Paired Analysis:**
+   - Evaluated with exact two-tailed McNemar tests on strictly paired tasks (`paired_evaluable_tasks = 22`, dropped missing tasks = 0).
+   - Pairwise $p = 1.0$ across all conditions (`resample` vs `feedback`, `feedback` vs `counterfactual`, `resample` vs `counterfactual`). Because the 15 synthetic tasks passed and 7 enterprise tasks failed across all three arms, the current single-shot evaluation reveals **no statistically significant correctness advantage** for prompt-guided counterfactual reasoning over feedback or resample.
+   - **Prompting vs. Replay Delineation:** Prompt-guided `counterfactual` conditioning differs from executable multi-candidate `counterfactual_replay` (best-of-N candidate exploration ranked deterministically by local test execution without held-out leakage), which is currently under active multi-trial evaluation.
 
 ---
 
@@ -121,14 +131,26 @@ Evaluated live on Groq (`openai/gpt-oss-120b`) across all 22 tasks and 66 policy
 | `benchmarks/archive/` | Historical benchmark iterations (`v09` through `v30`) preserved with version index |
 | `backend/` | Optional FastAPI local dashboard API with multi-policy support |
 | `frontend/` | Angular local research dashboard |
-| `tests/` | 248 unit and regression tests (edit safety, provenance, replay, hardening) |
+| `tests/` | 258 unit and regression tests (edit safety, provenance, replay, hardening, statistical analysis) |
 | `research-full-suite-22/` | Cryptographic evidence, metrics, SVG coverage charts, and proof JSON |
+| `EXPERIMENT_MANIFEST.json` | Complete cryptographic provenance manifest (commit SHA, input hashes, artifact digests) |
 | `LICENSE` | Official MIT License |
 
 ---
 
-## Security & Execution Model
+## Security, Edit Safety & Execution Model
 
-- **Disposable Workspace:** Edits execute only in temporary working copies (`tempfile.TemporaryDirectory`).
-- **No Direct Network Access During Replay:** Local candidate evaluations run strictly offline in test sandboxes.
-- **Dual-Suite Verification:** Public tests guide the agent; held-out tests verify generalization and prevent specification gaming.
+RETRACE enforces rigorous boundaries separating patch application safety from execution containment:
+
+1. **Edit Containment & Rollback Safety:**
+   - **Path Traversal Rejection:** Patches referencing `../` or nested escape sequences are rejected before modification.
+   - **Absolute Path Barring:** Edits targeting absolute filesystem paths (e.g., `/etc`, `/tmp`) raise explicit validation errors.
+   - **Symlink Escape Protection:** Symlinks resolving outside the target workspace are blocked from modification.
+   - **Extension Filtering:** Non-Python files (`.sh`, `.exe`, dotfiles) are excluded from patch targets.
+   - **Repository Allowlisting:** Edits are restricted strictly to files identified during intake or explicitly allowlisted.
+   - **Transactional Rollback:** Multi-file modifications use two-phase staging; any disk write or verification failure cleanly rolls back modified and newly created files to their exact pre-edit state.
+
+2. **Runtime Execution & Sandbox Boundary:**
+   - **Disposable Workspaces:** Candidate evaluations run inside isolated temporary working directories (`tempfile.TemporaryDirectory`).
+   - **No Network Egress During Replay:** Local test runners execute strictly offline test fixtures.
+   - *Kernel-Level Sandboxing Distinction:* Current execution containment operates at the filesystem workspace and process boundary. Production environments requiring defense against untrusted arbitrary code execution should wrap test runs in containerized OS sandboxes (e.g. gVisor, Docker, or seccomp).

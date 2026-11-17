@@ -1,5 +1,5 @@
 {
-  "analysis_schema": 1,
+  "analysis_schema": 2,
   "results_directory": "research-full-suite-22",
   "total_tasks": 22,
   "summary_statistics": {
@@ -15,13 +15,15 @@
         0.5,
         0.86
       ],
-      "mean_tokens_per_task": 303.27,
+      "mean_tokens_per_task": 1131.59,
       "tokens_95ci": [
-        206.82,
-        411.64
+        841.86,
+        1461.73
       ],
-      "total_tokens": 6672,
-      "tokens_per_heldout_success": 444.8,
+      "provider_reported_tokens": 24895,
+      "estimated_tokens": null,
+      "token_accounting_mode": "provider_verified",
+      "tokens_per_heldout_success": 1659.7,
       "total_live_calls": 23
     },
     "feedback": {
@@ -36,13 +38,15 @@
         0.5,
         0.86
       ],
-      "mean_tokens_per_task": 370.73,
+      "mean_tokens_per_task": 2042.73,
       "tokens_95ci": [
-        174.27,
-        702.0
+        1192.36,
+        3486.5
       ],
-      "total_tokens": 8156,
-      "tokens_per_heldout_success": 543.7,
+      "provider_reported_tokens": 44940,
+      "estimated_tokens": null,
+      "token_accounting_mode": "provider_verified",
+      "tokens_per_heldout_success": 2996.0,
       "total_live_calls": 24
     },
     "counterfactual": {
@@ -57,39 +61,53 @@
         0.5,
         0.86
       ],
-      "mean_tokens_per_task": 266.09,
+      "mean_tokens_per_task": 1520.41,
       "tokens_95ci": [
-        167.18,
-        382.18
+        1181.27,
+        1898.23
       ],
-      "total_tokens": 5854,
-      "tokens_per_heldout_success": 390.3,
+      "provider_reported_tokens": 33449,
+      "estimated_tokens": null,
+      "token_accounting_mode": "provider_verified",
+      "tokens_per_heldout_success": 2229.9,
       "total_live_calls": 22
     }
   },
   "mcnemar_paired_tests": {
     "resample_vs_feedback": {
+      "paired_evaluable_tasks": 22,
+      "dropped_missing_strategy_tasks": [],
       "resample_only_pass": 0,
       "feedback_only_pass": 0,
+      "both_pass_or_both_fail": 22,
       "exact_p_value": 1.0,
-      "significant_at_05": false
+      "significant_at_05": false,
+      "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
     },
     "feedback_vs_counterfactual": {
+      "paired_evaluable_tasks": 22,
+      "dropped_missing_strategy_tasks": [],
       "feedback_only_pass": 0,
       "counterfactual_only_pass": 0,
+      "both_pass_or_both_fail": 22,
       "exact_p_value": 1.0,
-      "significant_at_05": false
+      "significant_at_05": false,
+      "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
     },
     "resample_vs_counterfactual": {
+      "paired_evaluable_tasks": 22,
+      "dropped_missing_strategy_tasks": [],
       "resample_only_pass": 0,
       "counterfactual_only_pass": 0,
+      "both_pass_or_both_fail": 22,
       "exact_p_value": 1.0,
-      "significant_at_05": false
+      "significant_at_05": false,
+      "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
     }
   },
   "methodology_notes": [
-    "Bootstrap confidence intervals calculated over 2,000 resamples at alpha=0.05",
-    "McNemar test evaluates paired heldout pass/fail divergence per task",
-    "Cost per success normalizes total tokens by verified held-out repairs"
+    "Strict paired evaluation: tasks missing either arm are excluded from McNemar comparison rather than imputed as failures.",
+    "Provider-reported tokens extracted directly from request_accounting without heuristic substitution.",
+    "Bootstrap confidence intervals calculated over 2,000 resamples at alpha=0.05."
   ]
 }
