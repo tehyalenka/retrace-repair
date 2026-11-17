@@ -1,0 +1,95 @@
+{
+  "analysis_schema": 1,
+  "results_directory": "research-full-suite-22",
+  "total_tasks": 22,
+  "summary_statistics": {
+    "resample": {
+      "tasks_evaluated": 22,
+      "public_pass_rate": 0.95,
+      "public_pass_95ci": [
+        0.86,
+        1.0
+      ],
+      "heldout_pass_rate": 0.68,
+      "heldout_pass_95ci": [
+        0.5,
+        0.86
+      ],
+      "mean_tokens_per_task": 303.27,
+      "tokens_95ci": [
+        206.82,
+        411.64
+      ],
+      "total_tokens": 6672,
+      "tokens_per_heldout_success": 444.8,
+      "total_live_calls": 23
+    },
+    "feedback": {
+      "tasks_evaluated": 22,
+      "public_pass_rate": 1.0,
+      "public_pass_95ci": [
+        1.0,
+        1.0
+      ],
+      "heldout_pass_rate": 0.68,
+      "heldout_pass_95ci": [
+        0.5,
+        0.86
+      ],
+      "mean_tokens_per_task": 370.73,
+      "tokens_95ci": [
+        174.27,
+        702.0
+      ],
+      "total_tokens": 8156,
+      "tokens_per_heldout_success": 543.7,
+      "total_live_calls": 24
+    },
+    "counterfactual": {
+      "tasks_evaluated": 22,
+      "public_pass_rate": 0.95,
+      "public_pass_95ci": [
+        0.86,
+        1.0
+      ],
+      "heldout_pass_rate": 0.68,
+      "heldout_pass_95ci": [
+        0.5,
+        0.86
+      ],
+      "mean_tokens_per_task": 266.09,
+      "tokens_95ci": [
+        167.18,
+        382.18
+      ],
+      "total_tokens": 5854,
+      "tokens_per_heldout_success": 390.3,
+      "total_live_calls": 22
+    }
+  },
+  "mcnemar_paired_tests": {
+    "resample_vs_feedback": {
+      "resample_only_pass": 0,
+      "feedback_only_pass": 0,
+      "exact_p_value": 1.0,
+      "significant_at_05": false
+    },
+    "feedback_vs_counterfactual": {
+      "feedback_only_pass": 0,
+      "counterfactual_only_pass": 0,
+      "exact_p_value": 1.0,
+      "significant_at_05": false
+    },
+    "resample_vs_counterfactual": {
+      "resample_only_pass": 0,
+      "counterfactual_only_pass": 0,
+      "exact_p_value": 1.0,
+      "significant_at_05": false
+    }
+  },
+  "methodology_notes": [
+    "Bootstrap confidence intervals calculated over 2,000 resamples at alpha=0.05",
+    "McNemar test evaluates paired heldout pass/fail divergence per task",
+    "Cost per success normalizes total tokens by verified held-out repairs"
+  ]
+}
