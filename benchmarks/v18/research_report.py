@@ -37,6 +37,7 @@ def collect(results_dir, manifest_path=None):
             continue
         data = json.loads(path.read_text())
         seen = set()
+        reservations = data.get('request_reservations', {})
         for row in data.get('rows', []):
             arm = row['condition']
             if arm not in ARMS:
@@ -55,6 +56,14 @@ def collect(results_dir, manifest_path=None):
                                 public=public, heldout=hidden,
                                 combined=bool(public and hidden) if not blocked and hidden is not None else None,
                                 calls=int(row.get('live_calls', 0)),
+                                http_requests=(
+                                    reservations.get(row.get('key', f'{rep}:{arm}'))
+                                    if row.get('key', f'{rep}:{arm}') in reservations
+                                    else (row.get('request_accounting') or {}).get('http_requests')
+                                ),
+                                prompt_tokens=(row.get('request_accounting') or {}).get('prompt_tokens'),
+                                completion_tokens=(row.get('request_accounting') or {}).get('completion_tokens'),
+                                usage_reports=(row.get('request_accounting') or {}).get('usage_reports'),
                                 infrastructure_warning=_infra(row)))
         for key in data.get('pending', {}):
             rep_str, arm = key.split(':', 1)
@@ -66,7 +75,12 @@ def collect(results_dir, manifest_path=None):
             seen.add((rep, arm))
             records.append(dict(task=item['id'], category=item['category'], arm=arm,
                                 repetition=rep, status='pending', public=None, heldout=None,
-                                combined=None, calls=0, infrastructure_warning=False))
+                                combined=None, calls=0,
+                                http_requests=reservations.get(key),
+                                prompt_tokens=None,
+                                completion_tokens=None,
+                                usage_reports=None,
+                                infrastructure_warning=False))
         reps = int(data.get('settings', {}).get('repetitions', 1))
         for rep in range(1, reps + 1):
             for arm in ARMS:
@@ -90,6 +104,39 @@ def summarize(records):
                        'combined_pass': sum(r['combined'] is True for r in completed),
                        'live_calls': sum(r['calls'] for r in rows),
                        'infrastructure_warnings': sum(r['infrastructure_warning'] for r in completed)}
+    resource_usage = {}
+
+    for arm in ARMS:
+        rows = [r for r in records if r['arm'] == arm]
+
+        known_http = [
+            r for r in rows
+            if r.get('http_requests') is not None
+        ]
+
+        observed_tokens = [
+            r for r in rows
+            if r.get('usage_reports') is not None
+            and r.get('usage_reports') > 0
+            and r.get('prompt_tokens') is not None
+            and r.get('completion_tokens') is not None
+        ]
+
+        resource_usage[arm] = {
+            'http_known_evaluations': len(known_http),
+            'http_unknown_evaluations': len(rows) - len(known_http),
+            'known_http_requests': sum(
+                int(r['http_requests']) for r in known_http
+            ) if known_http else None,
+            'token_observed_evaluations': len(observed_tokens),
+            'observed_prompt_tokens': sum(
+                int(r['prompt_tokens']) for r in observed_tokens
+            ) if observed_tokens else None,
+            'observed_completion_tokens': sum(
+                int(r['completion_tokens']) for r in observed_tokens
+            ) if observed_tokens else None,
+        }
+
     by_category = []
     for category in CATEGORIES:
         for arm in ARMS:
@@ -113,7 +160,8 @@ def summarize(records):
             xp, yp = x['combined'] is True, y['combined'] is True
             pair['both_pass' if xp and yp else 'a_only' if xp else 'b_only' if yp else 'neither_pass'] += 1
         pairs[a + '_vs_' + b] = pair
-    return {'strategies': totals, 'categories': by_category, 'paired': pairs,
+    return {'strategies': totals, 'resource_usage': resource_usage,
+            'categories': by_category, 'paired': pairs,
             'scope': {'tasks': len(set(r['task'] for r in records)), 'evaluations': len(records),
                       'completed': sum(r['status'] == 'completed' for r in records),
                       'pending': sum(r['status'] == 'pending' for r in records),
@@ -151,7 +199,7 @@ def svg_chart(data, path):
 
 def markdown_report(data):
     scope = data['scope']
-    lines = ['# CodePilot-X: Synthetic Three-Arm Repair Benchmark', '',
+    lines = ['# RETRACE: Synthetic Three-Arm Repair Benchmark', '',
              '## Evaluation status', '',
              f"This report covers {scope['tasks']} synthetic tasks and {scope['evaluations']} strategy evaluations: "
              f"{scope['completed']} completed and {scope['pending']} pending. Pending evaluations are **not** repair failures.", '',
@@ -161,8 +209,34 @@ def markdown_report(data):
         r = data['strategies'][arm]
         lines.append(f"| {arm} | {r['completed']} | {r['pending']} | {r['public_pass']} | {r['heldout_pass']} | {r['combined_pass']} | {r['live_calls']} |")
     lines += ['', '![Evaluation coverage](evaluation-coverage.svg)', '',
+              '## Resource usage', '',
+              '| Strategy | HTTP known | HTTP unknown | Known HTTP requests | Token-observed evaluations | Observed prompt tokens | Observed completion tokens |',
+              '|---|---:|---:|---:|---:|---:|---:|']
+
+    for arm in ARMS:
+        usage = data['resource_usage'][arm]
+
+        def display(value):
+            return 'N/A' if value is None else str(value)
+
+        lines.append(
+            f"| {arm} | "
+            f"{usage['http_known_evaluations']} | "
+            f"{usage['http_unknown_evaluations']} | "
+            f"{display(usage['known_http_requests'])} | "
+            f"{usage['token_observed_evaluations']} | "
+            f"{display(usage['observed_prompt_tokens'])} | "
+            f"{display(usage['observed_completion_tokens'])} |"
+        )
+
+    lines += ['', 'HTTP request counts include durable reservations when available. '
+              'Reservations conservatively count attempts and do not prove that every '
+              'request reached the provider.', '',
+              'Observed token counts are not necessarily complete totals, particularly '
+              'for evaluations resumed from checkpoints. N/A means accounting data '
+              'is unavailable, not zero.', '',
               '## Methodology', '',
-              'The three strategies are resampling, standard failure-feedback repair, and counterfactual repair. '
+              'The three strategies are resampling, standard failure-feedback repair, and counterfactual-guided prompting. '
               'Each task begins with a replayed deterministic failed edit. Public test feedback may guide repair; '
               'heldout verification is intended for post-repair evaluation. Fixtures are synthetic and not an external benchmark.', '',
               'Combined pass requires both public and heldout passes. Only completed evaluations are included in pass counts. '
@@ -180,7 +254,8 @@ def markdown_report(data):
     lines += ['', '## Validity and limitations', '',
               f"- {scope['infrastructure_warnings']} completed evaluations contain a recognizable test-discovery infrastructure warning. "
               'These outcomes require investigation before any performance claim.',
-              '- Groq HTTP 429 interruptions led to incomplete evaluations; the current results do not support a comparative effectiveness claim.',
+              '- Provider interruptions and incomplete evaluations may reduce usable paired comparisons. '
+              'Do not interpret incomplete evaluations as failed repairs.',
               '- A heldout pass alongside a public failure is not counted as combined success.',
               '- Small samples, synthetic fixtures, and a deterministic replayed first failure limit generalizability.',
               '- `live_calls` counts recorded successful model responses, not necessarily all attempted provider requests.',
