@@ -191,8 +191,17 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                     # Never count a provider outage as a failed repair.
                     _write(output, report)
                     raise ProviderBlocked(str(provider_errors[-1].get("output", "Provider unavailable")))
-                if not result.get("history") or result["history"][0].get("failure_category") != "test_failure":
-                    raise ValueError("First-attempt failure was not reproduced")
+                history = result.get("history") or []
+                first_replayed = history[0] if history else {}
+                if (
+                    first_replayed.get("failure_category") != "test_failure"
+                    or first_replayed.get("tests_run", 0) < 1
+                    or "No tests discovered" in str(first_replayed.get("output", ""))
+                    or "Start directory is not importable" in str(first_replayed.get("output", ""))
+                ):
+                    raise ValueError(
+                        "First-attempt public-test failure was not genuinely reproduced"
+                    )
                 heldout = _heldout_check(repo, result, heldout_verification) if heldout_verification is not None else None
                 report["rows"].append({"key": key, "repetition": repetition,
                                        "condition": condition, "success": bool(result["success"]),

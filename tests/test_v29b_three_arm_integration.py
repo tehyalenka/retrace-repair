@@ -106,5 +106,60 @@ class ThreeArmIntegrationTests(unittest.TestCase):
             self.assertTrue(report_path.is_file())
 
 
+    def test_replayed_first_attempt_without_tests_is_rejected(self):
+        """A replayed test_failure must represent an executed public test."""
+        import tempfile
+        from unittest.mock import patch
+
+        from benchmarks.v18 import checkpointed_three_arm as cp
+        from benchmarks.v18 import record_replay as replay
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trace_path = root / "trace.json"
+            report_path = root / "report.json"
+
+            replay.capture("offline", "bugfix", trace_path)
+
+            def invalid_agent(*args, **kwargs):
+                return {
+                    "success": False,
+                    "history": [{
+                        "failure_category": "test_failure",
+                        "failure_stage": "smoke_tests",
+                        "tests_run": 0,
+                        "output": "No tests discovered",
+                    }],
+                }
+
+            with patch.object(
+                replay.agent_module, "run_agent",
+                side_effect=invalid_agent,
+            ):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "public-test failure was not genuinely reproduced",
+                ):
+                    cp.evaluate(
+                        trace_path,
+                        report_path,
+                        offline=True,
+                        attempts=2,
+                    )
+
+            self.assertFalse(
+                any(
+                    row.get("success")
+                    for row in (
+                        __import__("json").loads(
+                            report_path.read_text(encoding="utf-8")
+                        ).get("rows", [])
+                        if report_path.exists()
+                        else []
+                    )
+                )
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
