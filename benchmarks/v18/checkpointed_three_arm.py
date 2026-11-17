@@ -68,7 +68,7 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
     active_arms = (
         ("resample", False, "standard"),
         ("feedback", True, "standard"),
-        ("counterfactual", True, counterfactual_policy),
+        (counterfactual_policy, True, counterfactual_policy),
     )
     if repetitions < 1 or attempts < 2:
         raise ValueError("repetitions must be >=1 and attempts >=2")

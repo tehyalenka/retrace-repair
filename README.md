@@ -35,7 +35,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dashboard,test]"
 
-# 2. Run the full unit regression suite (267 tests)
+# 2. Run the full unit regression suite (270 tests)
 python3 -m unittest discover -s tests -p 'test_*.py'
 
 # 3. Explore repository mapping and semantic search
@@ -117,7 +117,7 @@ Evaluated live on Groq (`openai/gpt-oss-120b`) across all 22 tasks and 66 policy
 2. **Statistical Significance & Paired Analysis:**
    - Evaluated with exact two-tailed McNemar tests on strictly paired tasks (`paired_evaluable_tasks = 22`, dropped missing tasks = 0).
    - Pairwise $p = 1.0$ across all conditions (`resample` vs `feedback`, `feedback` vs `counterfactual`, `resample` vs `counterfactual`). Because the 15 synthetic tasks passed and 7 enterprise tasks failed across all three arms, the current single-shot evaluation reveals **no statistically significant correctness advantage** for prompt-guided counterfactual reasoning over feedback or resample.
-   - **Prompting vs. Replay Delineation:** Prompt-guided `counterfactual` conditioning differs from executable multi-candidate `counterfactual_replay` (best-of-N candidate exploration ranked deterministically by local test execution without held-out leakage), which is currently under active multi-trial evaluation.
+   - **Prompting vs. Replay Delineation:** Prompt-guided `counterfactual` conditioning differs fundamentally from executable multi-candidate `counterfactual_replay` (best-of-N candidate exploration ranked deterministically by local test execution without held-out leakage). The runner enforces strict policy identity with zero cross-policy substitution in benchmark completion matrices and evaluation logs.
 
 ---
 
@@ -131,7 +131,7 @@ Evaluated live on Groq (`openai/gpt-oss-120b`) across all 22 tasks and 66 policy
 | `benchmarks/archive/` | Historical benchmark iterations (`v09` through `v30`) preserved with version index |
 | `backend/` | Optional FastAPI local dashboard API with multi-policy support |
 | `frontend/` | Angular local research dashboard |
-| `tests/` | 267 unit and regression tests (edit safety, provenance, replay, hardening, statistical analysis, fail-closed manifest lifecycle, matrix completion, schema validation) |
+| `tests/` | 270 unit and regression tests (edit safety, provenance, replay, hardening, statistical analysis, fail-closed manifest lifecycle, matrix completion, strict policy identity, schema validation) |
 | `research-full-suite-22/` | Cryptographic evidence, metrics, SVG coverage charts, and proof JSON |
 | `research-full-suite-22/run-manifest.json` | Pre-run execution snapshot (effective configuration, Git provenance, input fixture digests) |
 | `research-full-suite-22/evidence-manifest.json` | Post-run sealed evidence (artifact SHA-256 digests referencing pre-run manifest) |

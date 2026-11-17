@@ -15,7 +15,9 @@ import time
 from pathlib import Path
 from typing import Any, Collection, Dict, List, Optional, Set
 
+from codepilot.agent import LLMAPIError
 from benchmarks.v18 import task_suite_runner
+from benchmarks.v18.checkpointed_three_arm import ProviderBlocked
 from benchmarks.v18.task_suite_runner import summarize
 
 
@@ -24,27 +26,40 @@ def is_valid_evaluation_row(row: Dict[str, Any], condition: str, repetition: int
 
     Checks:
     1. Condition and repetition consistency (including agreement with row['key'] if present).
-    2. Terminal public-test outcome ('success' present and is a boolean).
-    3. Terminal held-out outcome ('heldout' present, is a dict, with boolean 'passed').
-    4. Terminal execution evidence (presence of non-empty 'history', 'calls', or 'request_accounting').
+    2. Exact condition identity: strictly rejects policy substitution between 'counterfactual' and 'counterfactual_replay'.
+    3. Terminal public-test outcome ('success' present and is a boolean).
+    4. Terminal held-out outcome ('heldout' present, is a dict, with boolean 'passed').
+    5. Terminal execution evidence (presence of NON-EMPTY 'history', 'calls', or 'request_accounting').
     """
     if not isinstance(row, dict):
         return False
 
+    # Safely validate repetition value
+    rep_val = row.get("repetition")
+    if rep_val is None:
+        key = row.get("key")
+        if isinstance(key, str) and ":" in key:
+            parts = key.split(":", 1)
+            if parts[0].isdigit():
+                rep_val = int(parts[0])
+    if not isinstance(rep_val, int) or rep_val != repetition:
+        return False
+
+    # Strict condition identity: reject any cross-policy substitution
+    cond_val = row.get("condition")
+    if cond_val is None:
+        key = row.get("key")
+        if isinstance(key, str) and ":" in key:
+            cond_val = key.split(":", 1)[1]
+    if cond_val != condition:
+        return False
+
+    # Key consistency if key is present
     key = row.get("key")
     if key and isinstance(key, str):
-        # Allow exact match or key formats like '1:resample'
-        parts = key.split(":")
-        if len(parts) == 2:
-            key_rep, key_cond = parts
-            if key_rep.isdigit() and int(key_rep) != repetition:
-                return False
-            # Check condition match
-            if key_cond != condition and not (
-                (key_cond == "counterfactual" and condition == "counterfactual_replay")
-                or (key_cond == "counterfactual_replay" and condition == "counterfactual")
-            ):
-                return False
+        expected_key = f"{repetition}:{condition}"
+        if key != expected_key:
+            return False
 
     if "success" not in row or not isinstance(row["success"], bool):
         return False
@@ -53,9 +68,21 @@ def is_valid_evaluation_row(row: Dict[str, Any], condition: str, repetition: int
     if not isinstance(heldout, dict) or "passed" not in heldout or not isinstance(heldout["passed"], bool):
         return False
 
-    has_history = "history" in row and isinstance(row["history"], list)
-    has_calls = "calls" in row and isinstance(row["calls"], list)
-    has_accounting = "request_accounting" in row and isinstance(row["request_accounting"], dict)
+    # Non-empty execution evidence (must not be empty containers)
+    history = row.get("history")
+    has_history = isinstance(history, list) and len(history) > 0
+
+    calls = row.get("calls")
+    has_calls = isinstance(calls, list) and len(calls) > 0
+
+    req_acc = row.get("request_accounting")
+    has_accounting = isinstance(req_acc, dict) and len(req_acc) > 0 and (
+        req_acc.get("http_requests", 0) > 0
+        or req_acc.get("logical_calls", 0) > 0
+        or req_acc.get("usage_reports", 0) > 0
+        or req_acc.get("prompt_tokens") is not None
+    )
+
     if not (has_history or has_calls or has_accounting):
         return False
 
@@ -101,30 +128,29 @@ def check_benchmark_matrix(
         rows = data.get("rows", [])
         completed_for_task = set()
         for r in rows:
+            if not isinstance(r, dict):
+                continue
+
             cond = r.get("condition")
-            if not cond and "key" in r:
+            if not cond and "key" in r and isinstance(r["key"], str):
                 parts = r["key"].split(":")
                 if len(parts) == 2:
                     cond = parts[1]
-            rep = int(r.get("repetition", 1))
-            if not r.get("repetition") and "key" in r:
+
+            rep_raw = r.get("repetition")
+            if rep_raw is None and "key" in r and isinstance(r["key"], str):
                 parts = r["key"].split(":")
                 if len(parts) == 2 and parts[0].isdigit():
-                    rep = int(parts[0])
+                    rep_raw = parts[0]
+            try:
+                rep = int(rep_raw) if rep_raw is not None else 1
+            except (ValueError, TypeError):
+                continue
 
-            # Check matching policy in required policies
-            target_policy = None
-            if cond in policies:
-                target_policy = cond
-            elif "counterfactual_replay" in policies and cond == "counterfactual":
-                target_policy = "counterfactual_replay"
-            elif "counterfactual" in policies and cond == "counterfactual_replay":
-                target_policy = "counterfactual"
-
-            if target_policy and 1 <= rep <= repetitions:
-                # Schema and terminal outcome verification (Finding 1)
+            # Strict policy match: NEVER substitute replay for prompt or vice versa
+            if cond in policies and 1 <= rep <= repetitions:
                 if is_valid_evaluation_row(r, cond, rep):
-                    completed_for_task.add((target_policy, rep))
+                    completed_for_task.add((cond, rep))
 
         completed_cells += len(completed_for_task)
         if len(completed_for_task) >= len(policies) * repetitions:
@@ -422,35 +448,27 @@ def main():
                 delay_seconds=args.delay_seconds,
                 category=args.category,
                 task_ids=task_ids_set,
+                counterfactual_policy=args.counterfactual_policy,
             )
         except Exception as exc:
-            # Distinguish recognized transient provider quota/rate limits from fatal programming / integrity errors (Finding 3)
-            exc_str = str(exc).lower()
-            is_transient_provider_error = any(
-                token in exc_str
-                for token in [
-                    "429",
-                    "rate limit",
-                    "quota",
-                    "provider blocked",
-                    "temporarily unavailable",
-                    "resource exhausted",
-                    "too many requests",
-                    "service unavailable",
-                    "gateway timeout",
-                    "503",
-                    "504",
-                ]
+            # Typed provider-error classification (Finding 3)
+            is_typed_provider_error = isinstance(exc, (LLMAPIError, ProviderBlocked))
+            http_status = getattr(exc, "status_code", None)
+            is_transient_status = http_status in (429, 503, 504)
+            is_transient_os_network = isinstance(exc, (IOError, OSError)) and any(
+                phrase in str(exc).lower() for phrase in ["429", "too many requests", "rate limit"]
             )
-            if is_transient_provider_error:
+            is_transient = is_typed_provider_error or is_transient_status or is_transient_os_network
+
+            if is_transient:
                 print(
-                    f"\n[Cycle {cycle}] Transient provider quota/rate limit encountered: {exc}. "
+                    f"\n[Cycle {cycle}] Transient provider quota/rate limit encountered ({type(exc).__name__}): {exc}. "
                     f"Will back off and retry.",
                     flush=True,
                 )
             else:
                 print("\n" + "!" * 70, flush=True)
-                print(f"FATAL NON-TRANSIENT BENCHMARK ERROR: {exc}", flush=True)
+                print(f"FATAL NON-TRANSIENT BENCHMARK ERROR ({type(exc).__name__}): {exc}", flush=True)
                 print("Aborting autonomous execution immediately (fail-closed).", flush=True)
                 print("!" * 70 + "\n", flush=True)
                 raise exc

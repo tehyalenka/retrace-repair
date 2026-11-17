@@ -73,7 +73,9 @@ def validate():
     with ThreadPoolExecutor(max_workers=8) as pool:
         return list(pool.map(check,tasks()))
 
-def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_requests_per_arm=None, task_id=None, category=None, task_ids=None):
+def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_requests_per_arm=None, task_id=None, category=None, task_ids=None, counterfactual_policy=None):
+    if counterfactual_policy is None:
+        counterfactual_policy = os.environ.get("CODEPILOT_COUNTERFACTUAL_POLICY", "counterfactual")
     output_dir=Path(output_dir);output_dir.mkdir(parents=True,exist_ok=True)
     all_rows=[]
     for item in tasks():
@@ -114,7 +116,8 @@ def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_re
             try:
                 report=checkpointed_three_arm.evaluate(trace_path,report_path,offline=False,
                            repetitions=repetitions,attempts=attempts,heldout_verification=heldout,
-                              max_http_requests_per_arm=max_http_requests_per_arm)
+                              max_http_requests_per_arm=max_http_requests_per_arm,
+                              counterfactual_policy=counterfactual_policy)
             except checkpointed_three_arm.ProviderBlocked as exc:
                 print('PROVIDER BLOCKED on {}: {}'.format(item['id'], exc), flush=True)
                 print('Existing completed results retained; rerun after quota reset.', flush=True)

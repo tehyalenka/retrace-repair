@@ -22,13 +22,13 @@ class TestAutonomousRunner(unittest.TestCase):
             self.assertEqual(get_completed_tasks_count(p, 22), 0)
             self.assertFalse(is_benchmark_complete(p, 22))
 
-            # create 1 completed file with valid terminal evaluation evidence
+            # create 1 completed file with valid non-empty terminal evaluation evidence
             t1 = p / "task1-live.json"
             t1.write_text(json.dumps({
                 "rows": [
-                    {"key": "1:resample", "condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
-                    {"key": "1:feedback", "condition": "feedback", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
-                    {"key": "1:counterfactual", "condition": "counterfactual", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
+                    {"key": "1:resample", "condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                    {"key": "1:feedback", "condition": "feedback", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                    {"key": "1:counterfactual", "condition": "counterfactual", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
                 ],
                 "pending": {}
             }), encoding="utf-8")
@@ -38,7 +38,7 @@ class TestAutonomousRunner(unittest.TestCase):
             t2 = p / "task2-live.json"
             t2.write_text(json.dumps({
                 "rows": [
-                    {"key": "1:resample", "condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []}
+                    {"key": "1:resample", "condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]}
                 ],
                 "pending": {"1:feedback": []}
             }), encoding="utf-8")
@@ -54,9 +54,9 @@ class TestAutonomousRunner(unittest.TestCase):
             t1 = p / "t1-live.json"
             t1.write_text(json.dumps({
                 "rows": [
-                    {"condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
-                    {"condition": "feedback", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
-                    {"condition": "counterfactual", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
+                    {"condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                    {"condition": "feedback", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                    {"condition": "counterfactual", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
                 ],
                 "pending": {}
             }), encoding="utf-8")
@@ -80,8 +80,8 @@ class TestAutonomousRunner(unittest.TestCase):
             target = [{"id": "task_a"}]
             (p / "task_a-live.json").write_text(json.dumps({
                 "rows": [
-                    {"condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
-                    {"condition": "feedback", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
+                    {"condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                    {"condition": "feedback", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
                 ],
                 "pending": {}
             }), encoding="utf-8")
@@ -94,7 +94,6 @@ class TestAutonomousRunner(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td)
             target = [{"id": "task_stub"}]
-            # Row has condition and repetition but lacks success and heldout
             (p / "task_stub-live.json").write_text(json.dumps({
                 "rows": [
                     {"condition": "resample", "repetition": 1},
@@ -108,32 +107,77 @@ class TestAutonomousRunner(unittest.TestCase):
             self.assertEqual(res["completed_tasks_count"], 0)
             self.assertEqual(res["completed_matrix_cells"], 0)
 
+    def test_rejects_empty_evidence_containers(self):
+        """Finding 1 & Audit 6: Empty containers must not pass terminal outcome validation."""
+        empty_evidence_row = {
+            "key": "1:resample",
+            "condition": "resample",
+            "repetition": 1,
+            "success": True,
+            "heldout": {"passed": True},
+            "history": [],
+            "calls": [],
+            "request_accounting": {},
+        }
+        self.assertFalse(is_valid_evaluation_row(empty_evidence_row, "resample", 1))
+
+        # Adding non-empty request accounting makes it valid
+        valid_evidence_row = dict(empty_evidence_row)
+        valid_evidence_row["request_accounting"] = {"prompt_tokens": 100, "completion_tokens": 50}
+        self.assertTrue(is_valid_evaluation_row(valid_evidence_row, "resample", 1))
+
     def test_matrix_rejects_contradicting_key(self):
-        """Finding 1: Reject row where condition or repetition contradicts row['key']."""
+        """Reject row where condition or repetition contradicts row['key']."""
         bad_row = {
             "key": "2:feedback",
             "condition": "resample",
             "repetition": 1,
             "success": True,
             "heldout": {"passed": True},
-            "history": [],
+            "history": [{"passed": True}],
         }
         self.assertFalse(is_valid_evaluation_row(bad_row, "resample", 1))
 
+    def test_strict_policy_identity_no_substitution(self):
+        """Audit 6 Research-Critical: counterfactual prompting CANNOT substitute for counterfactual_replay."""
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td)
+            target = [{"id": "t_strict"}]
+            # Task only has 'counterfactual' (prompting)
+            (p / "t_strict-live.json").write_text(json.dumps({
+                "rows": [
+                    {"condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                    {"condition": "feedback", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                    {"condition": "counterfactual", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                ],
+                "pending": {}
+            }), encoding="utf-8")
+
+            # Check against a replay experiment requiring 'counterfactual_replay'
+            res = check_benchmark_matrix(
+                p,
+                target_tasks=target,
+                repetitions=1,
+                required_policies={"resample", "feedback", "counterfactual_replay"},
+            )
+            # Must NOT be complete because prompt condition cannot substitute for replay
+            self.assertFalse(res["is_complete"])
+            self.assertEqual(res["completed_tasks_count"], 0)
+            self.assertEqual(res["completed_matrix_cells"], 2)  # only resample and feedback satisfied
+
     def test_matrix_supports_counterfactual_replay_policy(self):
-        """Finding 2: Matrix properly recognizes and requires counterfactual_replay when configured."""
+        """Matrix properly completes when exact counterfactual_replay results are present."""
         with tempfile.TemporaryDirectory() as td:
             p = Path(td)
             target = [{"id": "t_rep"}]
             (p / "t_rep-live.json").write_text(json.dumps({
                 "rows": [
-                    {"condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
-                    {"condition": "feedback", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
-                    {"condition": "counterfactual_replay", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": []},
+                    {"condition": "resample", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                    {"condition": "feedback", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
+                    {"condition": "counterfactual_replay", "repetition": 1, "success": True, "heldout": {"passed": True}, "history": [{"passed": True}]},
                 ],
                 "pending": {}
             }), encoding="utf-8")
-            # Should be complete under replay policy set
             res = check_benchmark_matrix(
                 p,
                 target_tasks=target,
@@ -142,6 +186,18 @@ class TestAutonomousRunner(unittest.TestCase):
             )
             self.assertTrue(res["is_complete"])
             self.assertEqual(res["completed_tasks_count"], 1)
+            self.assertEqual(res["completed_matrix_cells"], 3)
+
+    def test_handles_malformed_repetition_without_crash(self):
+        """Safely handle malformed repetition values without raising unhandled exceptions."""
+        bad_rep_row = {
+            "condition": "resample",
+            "repetition": "invalid_not_an_int",
+            "success": True,
+            "heldout": {"passed": True},
+            "history": [{"passed": True}],
+        }
+        self.assertFalse(is_valid_evaluation_row(bad_rep_row, "resample", 1))
 
     def test_post_benchmark_pipeline_fails_closed_on_error(self):
         """Verify that run_post_benchmark_pipeline raises RuntimeError when a step fails."""
