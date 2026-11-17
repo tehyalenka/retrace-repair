@@ -5,6 +5,7 @@ Only public failures may be included in repair prompts; heldout runs post-repair
 Run untrusted code only in a secure sandbox; this harness is NOT a sandbox.
 """
 import argparse
+import re
 import json
 import shutil
 import subprocess
@@ -46,7 +47,12 @@ def verify(repo, source):
         result=subprocess.run([sys.executable,'-m','unittest','discover','-s',tmp,
                                '-p','test_suite_fixture.py'],cwd=repo,env=env,
                               capture_output=True,text=True,timeout=15)
-        return result.returncode==0
+        # A successful exit with zero discovered tests is not verification.
+        match = re.search(r"^Ran (\d+) tests? in ", result.stderr + "\n" + result.stdout, re.MULTILINE)
+        count = int(match.group(1)) if match else 0
+        skipped = re.search(r"\(skipped=(\d+)\)", result.stderr + "\n" + result.stdout)
+        skipped_count = int(skipped.group(1)) if skipped else 0
+        return result.returncode == 0 and count > skipped_count
 
 def validate():
     def check(item):
