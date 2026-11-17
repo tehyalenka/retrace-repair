@@ -65,7 +65,7 @@ def validate():
     with ThreadPoolExecutor(max_workers=8) as pool:
         return list(pool.map(check,tasks()))
 
-def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0):
+def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_requests_per_arm=None):
     output_dir=Path(output_dir);output_dir.mkdir(parents=True,exist_ok=True)
     all_rows=[]
     for item in tasks():
@@ -90,10 +90,16 @@ def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0):
                 raise ValueError('Expected public failure for '+item['id'])
             try:
                 report=checkpointed_three_arm.evaluate(trace_path,report_path,offline=False,
-                           repetitions=repetitions,attempts=attempts,heldout_verification=heldout)
+                           repetitions=repetitions,attempts=attempts,heldout_verification=heldout,
+                              max_http_requests_per_arm=max_http_requests_per_arm)
             except checkpointed_three_arm.ProviderBlocked as exc:
                 print('PROVIDER BLOCKED on {}: {}'.format(item['id'], exc), flush=True)
                 print('Existing completed results retained; rerun after quota reset.', flush=True)
+                summarize(output_dir)
+                return all_rows
+            except checkpointed_three_arm.BenchmarkBudgetExceeded as exc:
+                print('HTTP BUDGET EXHAUSTED on {}: {}'.format(item['id'], exc), flush=True)
+                print('Checkpoint preserved. Inspect the budget before resuming.', flush=True)
                 summarize(output_dir)
                 return all_rows
         all_rows.append({'task':item['id'],'category':item['category'],
@@ -213,6 +219,7 @@ def main():
     parser.add_argument('--output-dir',default='v18-task-suite-results')
     parser.add_argument('--repetitions',type=int,default=1)
     parser.add_argument('--attempts',type=int,default=3)
+    parser.add_argument('--max-http-requests-per-arm',type=int,default=None)
     parser.add_argument('--delay-seconds',type=float,default=0,help='Pause between tasks (not per request)')
     args=parser.parse_args()
     if args.delay_seconds < 0:
@@ -231,7 +238,8 @@ def main():
     if len(checks)!=15 or any(c['initial_public_pass'] or not c['solution_public_pass'] or not c['solution_heldout_pass'] for c in checks):
         raise SystemExit('Fixture validation failed; live experiment blocked')
     if args.command=='live':
-        run_live(args.output_dir,args.repetitions,args.attempts,args.delay_seconds)
+        run_live(args.output_dir,args.repetitions,args.attempts,args.delay_seconds,
+                 args.max_http_requests_per_arm)
 
 if __name__=='__main__':
     main()
