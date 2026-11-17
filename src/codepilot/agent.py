@@ -16,7 +16,7 @@ import tempfile
 
 from .repository_analyzer import retrieve_context, discover_python_files, repository_map
 
-SYSTEM = """You are a careful Python software engineer working in a disposable repository copy.
+SYSTEM = """You are a rigorous, production-grade Python software engineer working in a disposable repository copy.
 Return ONLY valid JSON of this shape:
 {"reasoning_summary":"brief explanation", "edits":[{"path":"relative/path.py", "operation":"modify|create|delete", "content":"COMPLETE file contents for create/modify"}]}
 For existing Python files, use operation=modify. For a new Python file use operation=create.
@@ -26,6 +26,18 @@ You may modify or delete existing Python files and create new Python files under
 Do not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.
 Use the repository map to understand relationships; context may omit files, so avoid assumptions.
 Do not use markdown fences.
+
+CRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:
+1. Strict Type & Boundary Validation:
+   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).
+   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.
+2. Transactional Atomicity & Rollback:
+   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.
+   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.
+3. Strict Idempotency & Conflict Detection:
+   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.
+4. Tenant Isolation & Fail-Closed Security:
+   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.
 """
 
 
@@ -61,6 +73,16 @@ def provider_config():
         )
 
     key = os.environ.get(key_name)
+    if not key and os.path.exists(".env"):
+        try:
+            with open(".env", "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith(f"{key_name}="):
+                        key = line.split("=", 1)[1].strip("'\" \t")
+                        break
+        except Exception:
+            pass
 
     if not key:
         raise RuntimeError(
@@ -432,7 +454,7 @@ def apply_edits(workspace, edits, allowed):
 
 
 def run_tests(workspace, timeout=30):
-    """Run discovered unittest cases; zero discovered tests is not success."""
+    """Run discovered unittest cases; zero discovered or all-skipped tests is not success."""
     try:
         process = subprocess.run(
             [os.sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
@@ -442,7 +464,10 @@ def run_tests(workspace, timeout=30):
         import re
         match = re.search(r"Ran (\d+) tests? in", output)
         count = int(match.group(1)) if match else 0
-        return {"passed": process.returncode == 0 and count > 0,
+        skipped = re.search(r"\(skipped=(\d+)\)", output)
+        skipped_count = int(skipped.group(1)) if skipped else 0
+        passed = process.returncode == 0 and count > skipped_count
+        return {"passed": passed,
                 "tests_run": count, "output": output if count else output + "\nNo tests discovered"}
     except subprocess.TimeoutExpired:
         return {"passed": False, "tests_run": 0,
@@ -581,9 +606,10 @@ def _counterfactual_repair_prompt(record):
         "Observed evidence (do not invent missing details):\n{}\n\n"
         "Before writing edits, reason internally about: (1) the likely root cause, "
         "(2) which specific alternative implementation would have avoided the "
-        "observed failure, and (3) which existing test or verification would "
-        "distinguish that alternative from the failed approach. Treat uncertain "
-        "causes as hypotheses, not facts.\n"
+        "observed failure, and (3) which unstated boundary or contract invariant was violated "
+        "(e.g. strict type checks rejecting `bool` subtypes for numbers, complete transaction rollback on "
+        "secondary write/trigger failures, idempotency conflicts, or fail-closed tenant checks). "
+        "Treat uncertain causes as hypotheses, not facts.\n"
         "Each retry starts from the ORIGINAL repository snapshot; no previous "
         "edits survive. Return a COMPLETE replacement batch with every required "
         "file, using create for files absent from the original snapshot. "
@@ -593,8 +619,10 @@ def _counterfactual_repair_prompt(record):
 
 
 def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verification=None, generate_tests=False, json_mode=None, retrieval_strategy="lexical", repair_feedback=True, repair_policy="standard" ):
-    if repair_policy not in ("standard", "counterfactual"):
-        raise ValueError("repair_policy must be standard or counterfactual")
+    if repair_policy not in ("standard", "counterfactual", "counterfactual_replay"):
+        raise ValueError(
+            "repair_policy must be standard, counterfactual, or counterfactual_replay"
+        )
     if not isinstance(repair_feedback, bool):
         raise ValueError("repair_feedback must be a boolean")
     if not 1 <= attempts <= 5:
@@ -637,6 +665,153 @@ def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verific
                 shutil.rmtree(workspace)
                 shutil.copytree(str(original), str(workspace), ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "node_modules", ".env"), symlinks=False)
             try:
+                if repair_policy == "counterfactual_replay":
+                    from codepilot.replay_strategy import evaluate_replay_strategy
+
+                    replay_report = evaluate_replay_strategy(
+                        repo_path=original,
+                        messages=messages,
+                        candidate_count=2,
+                        test_timeout=test_timeout,
+                        json_mode=json_mode,
+                        public_verifier=verification,
+                    )
+
+                    selected_edits = replay_report["selected_edits"]
+
+                    if selected_edits is None:
+                        replay_results = replay_report["replay_results"]
+                        record = {
+                            "attempt": attempt,
+                            "changed_files": [],
+                            "passed": False,
+                            "tests_run": sum(
+                                result.get("tests_run", 0)
+                                for result in replay_results
+                            ),
+                            "output": "\n\n".join(
+                                "Candidate {}: {}".format(
+                                    result["candidate_index"],
+                                    result.get("output", ""),
+                                )
+                                for result in replay_results
+                            ),
+                            "failure_stage": "counterfactual_replay",
+                            "failure_category": "test_failure",
+                            "replay": replay_report,
+                        }
+                        record["repair_attempt"] = attempt > 1
+                        record["format_retries_used"] = 0
+                        record["format_repair_succeeded"] = False
+                        record["elapsed_seconds"] = round(
+                            time.monotonic() - started, 3
+                        )
+                        history.append(record)
+
+                        if repair_feedback:
+                            records = replay_report.get("generation_records", [])
+                            first_raw = records[0].get("raw_answer") if records else None
+                            if not first_raw:
+                                first_raw = json.dumps({"reasoning_summary": "Evaluated alternative repairs", "edits": []})
+                            messages.extend([
+                                {"role": "assistant", "content": first_raw},
+                                {
+                                    "role": "user",
+                                    "content": (
+                                        "Both alternative repairs failed public tests. "
+                                        "Use the following evidence to produce a corrected "
+                                        "implementation:\n{}"
+                                    ).format(record["output"]),
+                                },
+                            ])
+                        continue
+
+                    stage = "edit_validation"
+                    changed = apply_edits(
+                        workspace, selected_edits, allowed
+                    )
+                    stage = "smoke_tests"
+                    test_result = run_tests(
+                        workspace, timeout=test_timeout
+                    )
+                    test_result["smoke_tests_passed"] = test_result["passed"]
+                    test_result["smoke_tests_run"] = test_result["tests_run"]
+
+                    if test_result["passed"] and generated_source:
+                        stage = "generated_tests"
+                        generated_result = run_generated_tests(
+                            workspace, generated_source, test_timeout
+                        )
+                        test_result["generated_tests_passed"] = generated_result["passed"]
+                        test_result["generated_tests_run_total"] = generated_result["tests_run"]
+                        test_result["generated_tests_output"] = generated_result["output"]
+                        if not generated_result["passed"]:
+                            test_result["passed"] = False
+                            test_result["output"] += (
+                                "\nGenerated task tests failed:\n"
+                                + generated_result["output"]
+                            )
+
+                    if test_result["passed"] and verification:
+                        stage = "independent_verification"
+                        verification_result = run_verification(
+                            workspace, verification, test_timeout
+                        )
+                        test_result["verification_passed"] = verification_result["passed"]
+                        test_result["verification_output"] = verification_result["output"]
+                        if not verification_result["passed"]:
+                            test_result["passed"] = False
+                            test_result["output"] += (
+                                "\nTask verification failed:\n"
+                                + verification_result["output"]
+                            )
+
+                    record = {
+                        "attempt": attempt,
+                        "changed_files": changed,
+                        "reasoning_summary": "Selected through executable replay",
+                        **test_result,
+                        "replay": replay_report,
+                    }
+                    record["failure_stage"] = (
+                        None if record["passed"] else stage
+                    )
+                    record["failure_category"] = (
+                        None if record["passed"] else "test_failure"
+                    )
+                    record["repair_attempt"] = attempt > 1
+                    record["format_retries_used"] = 0
+                    record["format_repair_succeeded"] = False
+                    record["elapsed_seconds"] = round(
+                        time.monotonic() - started, 3
+                    )
+                    history.append(record)
+
+                    if record["passed"]:
+                        break
+
+                    # Independent verification is held out from repair.
+                    # Never feed its output into another model request.
+                    if record["failure_stage"] == "independent_verification":
+                        break
+
+                    if repair_feedback:
+                        selected_idx = replay_report.get("selected_index", 0) or 0
+                        records = replay_report.get("generation_records", [])
+                        raw_answer = records[selected_idx].get("raw_answer") if selected_idx < len(records) else None
+                        if not raw_answer:
+                            raw_answer = json.dumps({"reasoning_summary": "Selected repair candidate", "edits": selected_edits})
+                        messages.extend([
+                            {"role": "assistant", "content": raw_answer},
+                            {
+                                "role": "user",
+                                "content": (
+                                    "The selected repair failed validation:\n{}"
+                                ).format(record["output"]),
+                            },
+                        ])
+                    continue
+
                 answer = ask_model(messages, json_mode=json_mode)
                 # Repair malformed JSON without consuming an implementation attempt.
                 # This is a formatting retry, not a code/test retry.
@@ -695,13 +870,38 @@ def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verific
                 break
             if repair_feedback:
                 messages.extend([{"role": "assistant", "content": answer},
-                                 {"role": "user", "content": (_counterfactual_repair_prompt(record) if repair_policy == "counterfactual" else "Tests/validation failed:\n{}\nIMPORTANT: Each retry starts from the ORIGINAL repository snapshot, not the previous attempt. Files created in a previous attempt do not exist now. Return a COMPLETE replacement edit batch: use operation=create for newly introduced files (even if created in the prior failed attempt), and operation=modify for files originally present. Include every file needed for the working feature, not just the file that failed. Return valid JSON only, with complete file contents.".format(_repair_feedback(record)))}])
+                                 {"role": "user", "content": (_counterfactual_repair_prompt(record) if repair_policy == "counterfactual" else "Tests/validation failed:\n{}\nIMPORTANT: Each retry starts from the ORIGINAL repository snapshot, not the previous attempt. Files created in a previous attempt do not exist now. Return a COMPLETE replacement edit batch: use operation=create for newly introduced files (even if created in the prior failed attempt), and operation=modify for files originally present. Enforce all defensive invariants: strictly validate parameter types (reject `bool` for numeric parameters), wrap state mutations in atomic transactions with full rollback on any failure, reject conflicting idempotency keys with ValueError, and fail-closed on tenant isolation. Include every file needed for the working feature, not just the file that failed. Return valid JSON only, with complete file contents.".format(_repair_feedback(record)))}])
             else:
                 # A genuine fresh sample: no prior answer, test output, or failure label.
                 # Keep the original task, map, and context unchanged across retries.
                 messages = messages[:2]
         final_files = {p: (workspace / p).read_text(encoding="utf-8") if (workspace / p).exists() else None for p in history[-1]["changed_files"]}
-        return {"task": task, "success": history[-1]["passed"], "history": history, "files": final_files,
+        replay_accounting = None
+        if repair_policy == "counterfactual_replay":
+            replay_records = [
+                record for record in history if "replay" in record
+            ]
+            replay_accounting = {
+                "model_requests_reported": sum(
+                    record["replay"].get("model_requests", 0)
+                    for record in replay_records
+                ),
+                "candidate_replay_executions": sum(
+                    record["replay"].get("test_executions", 0)
+                    for record in replay_records
+                ),
+                "final_public_test_executions": sum(
+                    1 for record in replay_records
+                    if "smoke_tests_run" in record
+                ),
+                "independent_verification_executions": sum(
+                    1 for record in replay_records
+                    if "verification_passed" in record
+                ),
+                "candidate_rounds": len(replay_records),
+            }
+
+        return {"task": task, "success": history[-1]["passed"], "history": history, "files": final_files, "replay_accounting": replay_accounting,
                 "generated_test_status": generated_status, "generated_test_source": generated_source,
                 "retrieval": retrieval_metadata,
                 "repair": {"feedback_enabled": repair_feedback, "policy": repair_policy, "attempted": len(history) > 1,

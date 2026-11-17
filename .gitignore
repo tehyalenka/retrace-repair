@@ -7,6 +7,7 @@ __pycache__/
 .DS_Store
 codepilot-result.json
 benchmark-*.json
+!benchmark-proof.json
 .pytest_cache/
 
 # Local agent-generated artifacts
@@ -72,3 +73,14 @@ evaluation/reports/
 /CodePilot-X/
 
 *.pre-github-merge
+
+# Transient experiment runs and logs
+.retrace-sandbox/
+.venv-old/
+*.log
+research-complex-*/
+research-enterprise-*/
+research-evaluation-*/
+v30-pilot-results/
+v31-pilot-results/
+

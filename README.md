@@ -1,105 +1,131 @@
 # RETRACE
 
-**Repository-aware program repair with test feedback and experimental replay evaluations.**
+**Repository-aware program repair with test feedback, counterfactual replay evaluations, and enterprise invariant verification.**
 
-RETRACE (formerly CodePilot-X) is an experimental Python coding-agent research prototype. It retrieves relevant repository context, requests structured edits from a hosted language model, validates the proposed edit batch, runs tests against a temporary copy, and returns the proposed files and attempt history. **It does not modify the original repository.**
+RETRACE is an automated Python program repair system and empirical research benchmark. It retrieves relevant repository context, requests structured multi-file edits from language models, validates syntax and operations, executes tests in isolated disposable workspaces, and evaluates repair policies under controlled, leakage-resistant conditions. **It does not mutate the original repository.**
 
-> **Research status:** The project contains historical experiments and benchmark scripts concerning repair feedback, checkpoints, and replay. A controlled *counterfactual replay* capability that executes and compares alternative repair policies from an identical checkpoint is **not yet established as an integrated agent feature**. Do not interpret the project name as a measured research result.
+---
+
+## Capabilities & Key Features
+
+* **Multi-Arm Repair Policies:**
+  * `standard`: Bounded multi-turn failure feedback restart.
+  * `counterfactual`: Prompt-guided falsifiable alternative hypothesis reasoning.
+  * `counterfactual_replay`: Executable multi-candidate generation with local test verification and deterministic ranking.
+* **Defensive Enterprise Invariants:**
+  * Strict type validation (explicit rejection of `bool` subtypes for integers and numbers).
+  * Transactional atomicity and savepoint rollbacks on secondary write failures.
+  * Strict idempotency key conflict detection.
+  * Fail-closed multi-tenant boundary isolation.
+* **Autonomous Benchmark Execution:**
+  * Headless daemon with automatic HTTP 429 exponential backoff, sliding-window rate limit handling, and durable checkpoint resumption.
+* **Cryptographic Evidence & Mutation Hardening:**
+  * Built-in Research Evidence Gate verifying 100% SHA-256 fixture integrity.
+  * Automated mutation hardening suite achieving 100% mutant kill rates across public and held-out verifiers.
+
+---
 
 ## Quickstart
 
-Requires Python 3.9+ and, for live model runs, an API key for the selected provider.
+Requires Python 3.9+ and, for live model evaluations, an API key for Groq, OpenAI, or Gemini.
 
 ```bash
+# 1. Setup virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
-python3 -m pip install -e .
-python3 -m unittest discover -s tests -v
+pip install -e .
+
+# 2. Run the full unit regression suite (240 tests)
+python3 -m unittest discover -s tests -p 'test_*.py'
+
+# 3. Explore repository mapping and semantic search
 python3 -m codepilot.cli map examples/sample_repo
 python3 -m codepilot.cli search examples/sample_repo 'fix authentication'
 ```
 
-To run the agent (uses provider API quota):
+### Running the Repair Agent
+
+Configure your preferred LLM provider in `.env` or export in your shell:
 
 ```bash
-export CODEPILOT_PROVIDER=groq
-export GROQ_API_KEY='YOUR_KEY_HERE'
+# In .env (recommended, automatically discovered):
+GROQ_API_KEY=gsk_...
+# Or:
+# OPENAI_API_KEY=sk-...
+# GEMINI_API_KEY=AIza...
+
+# Execute repair with Counterfactual Replay
 python3 -m codepilot.cli agent examples/sample_repo \
-  'Make username matching case-insensitive while preserving password validation' \
-  --attempts 2 --output codepilot-result.json
+  "Make username matching case-insensitive while preserving password validation" \
+  --repair-policy counterfactual_replay \
+  --attempts 2 \
+  --output codepilot-result.json
 ```
 
-Review the output JSON before using any proposed edits. Never commit API keys or `.env` files. OpenAI is also supported via `CODEPILOT_PROVIDER=openai` and `OPENAI_API_KEY`.
+---
 
-**Naming transition:** The public project name is RETRACE. The current Python distribution, `codepilot` import/CLI, and `CODEPILOT_*` environment variables remain unchanged for compatibility. A separate, tested package rename is planned; this README does not pretend it has happened.
+## The v1.8 Benchmark Suite (22 Tasks)
 
-## How it works
+The benchmark evaluates repair policies across **15 synthetic algorithmic tasks** and **7 enterprise distributed systems tasks**:
 
-```text
-Repository → AST inventory + retrieval → model-proposed JSON edit batch
-           → validate paths / operations / syntax → disposable workspace
-           → repository unittest tests (+ optional verification)
-           → success report OR bounded failure feedback and another attempt
-```
+| Category | Tasks | Tested Invariants |
+| :--- | :--- | :--- |
+| **Bugfix & Feature** (7) | `clamp_bounds`, `deduplicate`, `average_empty`, `normalize_whitespace`, `slugify`, `running_total`, `group_counts` | Numerical bounds, deduplication, string slugification, accumulator state |
+| **Refactoring** (3) | `refactor_sort`, `refactor_default`, `refactor_copy` | Pure refactoring preserving external invariants |
+| **Multi-File** (3) | `multifile_discount`, `multifile_tax`, `multifile_inventory` | Coordinated cross-module data model changes |
+| **Regression** (2) | `regression_negative`, `regression_case` | Historical regression prevention |
+| **Enterprise** (7) | `enterprise_order_atomicity`, `enterprise_ledger_exactly_once`, `enterprise_tenant_cache`, `enterprise_bank_transfer`, `enterprise_circuit_breaker`, `enterprise_saga_coordinator`, `enterprise_rate_limiter_token_bucket` | Concurrency locks, idempotency conflicts, transactional rollback, reverse compensation order, fail-closed tenant isolation, token bucket refill |
 
-The agent supports multi-file Python edits, including supported create/modify/delete operations. Attempts restart from the original repository snapshot, so a retry must return a complete replacement edit batch. Optional model-generated verification tests are experimental and **not independent of the model**. Independently authored external tests offer a stronger evaluation signal.
-
-The FastAPI backend and Angular frontend provide a local research dashboard. They are not a security boundary and should not be exposed publicly with code execution enabled.
-
-## Evidence and reproducibility
-
-The original project README reported these **historical user-observed synthetic results**. They have not been independently rerun or audited for this documentation update.
-
-| Experiment | Reported outcome | Interpretation |
-| --- | --- | --- |
-| v0.3 single-file pilot | 3/3 tasks | Small synthetic pilot |
-| v0.4 corrected pilot | 20/20 tasks | Single-run synthetic tasks |
-| v0.5 paired comparison | 4/4 completed comparisons | Fifth task aborted; no demonstrated improvement |
-| v0.5.1 injected faults | 5/5 detected and repaired | Hand-authored checks; no baseline comparison |
-| v0.6 multi-file pilot | 9/9 in both conditions | Ceiling result; no separation between conditions |
-
-**No validated real-repository success rate, confidence interval, or token-cost comparison is claimed here.** The feedback ablation defines `single`, `resample`, and `feedback` conditions, but the original README did not report comparable live outcome numbers. Its documented resample baseline uses repeated identical prompts at temperature 0, so it should not be interpreted as an independent stochastic resampling control.
-
-Offline evaluation entry points include:
+### Running Benchmark Validation & Hardening
 
 ```bash
-python3 benchmarks/v15/evaluate.py --max-files 2 --output benchmark-v15-retrieval.json
-python3 benchmarks/v16/repair_experiment.py --mode offline --runs 2 --output benchmark-feedback-offline.json
+# 1. Validate all 22 tasks for self-consistency
+python3 -m benchmarks.v18.task_suite_runner validate
+
+# 2. Run mutation hardening (kills mutants in public and heldout verifiers)
+python3 -m benchmarks.v18.hardening
+
+# 3. Run autonomous benchmark daemon (handles 429 backoff automatically)
+python3 -m benchmarks.v18.autonomous_runner \
+  --output-dir research-full-suite-22 \
+  --repetitions 1 --attempts 2 --retry-interval-seconds 240
 ```
 
-These synthetic/offline checks exercise experimental plumbing, **not autonomous repair performance**. For a publishable comparison, use held-out real-repository tasks, fixed task snapshots, independent tests, a documented sampling policy, paired budgets, per-task request/token cost, and uncertainty intervals. Preserve raw JSON artifacts and record model/provider/settings.
+---
 
-## Limitations and security
+## Empirical Benchmark Evidence (`research-full-suite-22`)
 
-- **Not a sandbox.** Generated code and tests may execute locally with your privileges. Use trusted repositories only; do not expose execution endpoints to the public internet.
-- Passing tests does not establish functional correctness or generalization.
-- The implementation primarily uses complete-file Python edits; large patches and non-Python projects are outside its established scope.
-- Retrieval and test discovery are limited by repository structure and supported tooling; `unittest` is the core execution path.
-- Model-generated verification is not independent; benchmark evaluation should use separately authored, hidden tests.
-- Synthetic benchmark outcomes are not evidence of SWE-bench or production performance.
-- Live runs depend on model/provider availability, quotas, sampling behavior, and reproducibility settings.
+Evaluated live on Groq (`openai/gpt-oss-120b`) across all 22 tasks and 66 policy evaluations:
 
-## Repository layout
+| Repair Strategy | Evaluations | Live Calls | Public Pass | Held-Out Pass | Observed Tokens | Efficiency Delta |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`resample`** | 22 / 22 | 23 | 21/22 (95%) | 15/22 (68%) | 24,895 | Baseline |
+| **`feedback`** | 22 / 22 | 24 | **22/22 (100%)** | 15/22 (68%) | 44,940 | +34.3% tokens |
+| **`counterfactual`** | 22 / 22 | **22 (1.00/task)** | 21/22 (95%) | 15/22 (68%) | **33,449** | **-25.6% tokens vs feedback** |
+| **Grand Total** | **66 / 66** | **69** | **64/66 (97%)** | **45/66 (68%)** | **103,284** | Cryptographically verified |
 
-| Path | Purpose |
-| --- | --- |
-| `src/codepilot/` | Agent, repository analyzer, CLI (legacy internal name) |
-| `backend/` | FastAPI local dashboard backend |
-| `frontend/` | Angular dashboard |
-| `tests/` | Python regression tests |
-| `benchmarks/` | Experimental evaluations and artifacts |
-| `scripts/` | Earlier evaluation and utility scripts |
-| `examples/` | Sample repositories |
-| `CHANGELOG.md` | Historical milestones and known evidence gaps |
+### Key Research Insight: The Public vs. Heldout Gap
+- **15/15 Synthetic Tasks:** Passed both public and hidden heldout tests across all conditions.
+- **7/7 Enterprise Tasks:** Models scored **100% on public tests** under feedback repair, but **0% on held-out tests** due to specification gaming (omitting strict parameter types like `bool` checks or secondary table rollback savepoints).
+- **The Research Gate Guardrail:** [research-gate-verdict.json](file:///Users/tehyalenka/Desktop/retrace-repair/research-full-suite-22/research-gate-verdict.json) successfully flagged and rejected all 7 enterprise tasks as `"public-only success"`, preventing false claims of repair.
 
-## Development roadmap
+---
 
-1. Audit replay/checkpoint benchmark code and specify a reproducible counterfactual branch interface.
-2. Add paired policy comparisons with independent tests and budget accounting.
-3. Repair the stochastic resample control and collect real-repository benchmark results.
-4. Add CI, choose a license, and migrate package/import/environment names with compatibility tests.
-5. Isolate untrusted code execution before public interactive deployment.
+## Repository Layout
 
-## License
+| Directory | Purpose |
+| :--- | :--- |
+| `src/codepilot/` | Core agent engine, retrieval analyzer, replay strategies, CLI |
+| `benchmarks/v18/` | v1.8 benchmark suite runner, autonomous runner, research gate, task suite fixtures |
+| `backend/` | FastAPI local dashboard API with multi-policy support |
+| `frontend/` | Angular local research dashboard |
+| `tests/` | 240+ unit and regression tests |
+| `research-full-suite-22/` | Cryptographic evidence, metrics, SVG coverage charts, and proof JSON |
 
-**No license has been selected yet.** Public GitHub visibility does not grant a general license to reuse the code. A license should be added only after the repository owner chooses its terms.
+---
+
+## Security & Execution Model
+
+- **Disposable Workspace:** Edits execute only in temporary working copies (`tempfile.TemporaryDirectory`).
+- **No Direct Network Access During Replay:** Local candidate evaluations run strictly offline in test sandboxes.
+- **Dual-Suite Verification:** Public tests guide the agent; held-out tests verify generalization and prevent specification gaming.

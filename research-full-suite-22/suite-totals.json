@@ -1,0 +1,38 @@
+{
+  "resample": {
+    "completed": 22,
+    "provider_blocked": 0,
+    "pending": 0,
+    "combined_pass": 15,
+    "public_pass": 21,
+    "heldout_pass": 15,
+    "live_calls": 23
+  },
+  "feedback": {
+    "completed": 22,
+    "provider_blocked": 0,
+    "pending": 0,
+    "combined_pass": 15,
+    "public_pass": 22,
+    "heldout_pass": 15,
+    "live_calls": 24
+  },
+  "counterfactual": {
+    "completed": 22,
+    "provider_blocked": 0,
+    "pending": 0,
+    "combined_pass": 15,
+    "public_pass": 21,
+    "heldout_pass": 15,
+    "live_calls": 22
+  },
+  "counterfactual_replay": {
+    "completed": 0,
+    "provider_blocked": 0,
+    "pending": 0,
+    "combined_pass": 0,
+    "public_pass": 0,
+    "heldout_pass": 0,
+    "live_calls": 0
+  }
+}

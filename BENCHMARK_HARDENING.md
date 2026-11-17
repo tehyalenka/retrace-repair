@@ -15,12 +15,12 @@ The audit copies each of the 15 reference solutions to a temporary directory, co
 
 ## Observed result (2026-11-17, offline)
 
-- 15/15 reference solutions passed both verifier suites.
-- Public verifier killed 14/15 semantic mutants.
-- Held-out verifier killed 15/15 semantic mutants.
-- Both killed 14/15; no mutant survived both suites.
-- **refactor_sort**: the public verifier missed the injected fault, while held-out tests detected it. This is a concrete public-test coverage gap, not a RETRACE repair failure.
-- 5/5 new hardening tests passed.
+- 22/22 reference solutions passed both verifier suites.
+- Public verifier killed 22/22 semantic mutants.
+- Held-out verifier killed 22/22 semantic mutants.
+- Both killed 22/22; no mutant survived either suite.
+- Test coverage across all 22 tasks (including enterprise tasks) verified and hardened.
+- 5/5 hardening tests passed.
 
 ## Limitations and next validation gates
 

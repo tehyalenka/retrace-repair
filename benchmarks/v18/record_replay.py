@@ -51,7 +51,10 @@ def capture(mode, case, output):
         calls = []
 
         def recording_ask(messages, **kwargs):
-            request = {"messages": messages, "options": kwargs}
+            request = {
+                "messages": [dict(m) for m in messages],
+                "options": dict(kwargs),
+            }
             try:
                 if mode == "offline":
                     response = _edit("def double(x):\n    return x\n")

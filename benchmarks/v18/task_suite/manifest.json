@@ -135,6 +135,69 @@
       "solution": "regression_case/solution",
       "public_verifier": "regression_case/public.py",
       "heldout_verifier": "regression_case/heldout.py"
+    },
+    {
+      "id": "enterprise_order_atomicity",
+      "category": "enterprise",
+      "task": "Repair transactional order placement with idempotent retries, stock reservation, atomic outbox writes, and rollback on failure. Reject invalid quantities with ValueError. Reusing an idempotency key with a different order payload must raise ValueError without changing inventory, orders, or outbox records.",
+      "repo": "enterprise_order_atomicity/repo",
+      "solution": "enterprise_order_atomicity/solution",
+      "public_verifier": "enterprise_order_atomicity/public.py",
+      "heldout_verifier": "enterprise_order_atomicity/heldout.py"
+    },
+    {
+      "id": "enterprise_ledger_exactly_once",
+      "category": "enterprise",
+      "task": "Repair financial ledger posting with replay-safe event IDs, atomic balance updates and signed integer-cent accounting.",
+      "repo": "enterprise_ledger_exactly_once/repo",
+      "solution": "enterprise_ledger_exactly_once/solution",
+      "public_verifier": "enterprise_ledger_exactly_once/public.py",
+      "heldout_verifier": "enterprise_ledger_exactly_once/heldout.py"
+    },
+    {
+      "id": "enterprise_tenant_cache",
+      "category": "enterprise",
+      "task": "Repair tenant-scoped authorization cache isolation and revocation freshness without allowing cross-tenant access.",
+      "repo": "enterprise_tenant_cache/repo",
+      "solution": "enterprise_tenant_cache/solution",
+      "public_verifier": "enterprise_tenant_cache/public.py",
+      "heldout_verifier": "enterprise_tenant_cache/heldout.py"
+    },
+    {
+      "id": "enterprise_bank_transfer",
+      "category": "enterprise",
+      "task": "Repair atomic multi-account transfers with idempotency, total balance conservation, non-negative integer accounting, and rollback on failure.",
+      "repo": "enterprise_bank_transfer/repo",
+      "solution": "enterprise_bank_transfer/solution",
+      "public_verifier": "enterprise_bank_transfer/public.py",
+      "heldout_verifier": "enterprise_bank_transfer/heldout.py"
+    },
+    {
+      "id": "enterprise_circuit_breaker",
+      "category": "enterprise",
+      "task": "Implement an enterprise state machine circuit breaker (CLOSED, OPEN, HALF_OPEN) with failure counting, recovery timeout, and probe call reset.",
+      "repo": "enterprise_circuit_breaker/repo",
+      "solution": "enterprise_circuit_breaker/solution",
+      "public_verifier": "enterprise_circuit_breaker/public.py",
+      "heldout_verifier": "enterprise_circuit_breaker/heldout.py"
+    },
+    {
+      "id": "enterprise_saga_coordinator",
+      "category": "enterprise",
+      "task": "Implement a distributed saga coordinator that executes multi-step workflows and reverses completed actions via compensation in reverse chronological order on failure.",
+      "repo": "enterprise_saga_coordinator/repo",
+      "solution": "enterprise_saga_coordinator/solution",
+      "public_verifier": "enterprise_saga_coordinator/public.py",
+      "heldout_verifier": "enterprise_saga_coordinator/heldout.py"
+    },
+    {
+      "id": "enterprise_rate_limiter_token_bucket",
+      "category": "enterprise",
+      "task": "Implement a tenant-isolated token bucket rate limiter in SQLite with fractional token accumulation, atomic consumption, and clock drift protection.",
+      "repo": "enterprise_rate_limiter_token_bucket/repo",
+      "solution": "enterprise_rate_limiter_token_bucket/solution",
+      "public_verifier": "enterprise_rate_limiter_token_bucket/public.py",
+      "heldout_verifier": "enterprise_rate_limiter_token_bucket/heldout.py"
     }
   ]
 }

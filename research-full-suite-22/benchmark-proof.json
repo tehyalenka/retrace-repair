@@ -1,0 +1,797 @@
+{
+  "schema": 1,
+  "evidence_type": "retrace_benchmark_proof",
+  "generated_at_utc": "2026-11-17T17:33:37Z",
+  "tasks_evaluated_count": 22,
+  "total_benchmark_tasks": 22,
+  "tasks": [
+    {
+      "task": "clamp_bounds",
+      "category": "bugfix",
+      "repo_sha256": "54defc76fe9a395b20ecb5a8706a2376adb4c7e7ac9cef98dbaafbb1f0dfd317",
+      "verifier_sha256": "6277cca630485427d68251fe5f2118ff0b1c2d4642ac302722b1e6ec2ddaa5ae",
+      "heldout_sha256": "96081b6cf78b32340f503597f0ac40ed24a782bd1ca6cbd030e0e8ce874404f6",
+      "trace_sha256": "a677116b1ae4ab718e5646c9748f874ee4cc4e3b6847c76268c3f61b9eb42b40",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "deduplicate",
+      "category": "bugfix",
+      "repo_sha256": "c96de4a39efedb15a9932f8292b2e573ac13e89a05110f7f3f353343615640d9",
+      "verifier_sha256": "5390fe428bccda0e116cf94d1fc86164320d0e75e49357f1a2022c8796689bb3",
+      "heldout_sha256": "3287368c41f68ebbed5d1a3a97b470ff86017409b0b075b0383102cdddb4189f",
+      "trace_sha256": "c4d634cc2cde7a5dc36d759da10629a52f3f07089f22b713f65ffb83f1219163",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "average_empty",
+      "category": "bugfix",
+      "repo_sha256": "f1b1dfc646fb9b418dcc11ab0b60ebd4bf3ff8f469ecf5dc745f2f1c433f11d1",
+      "verifier_sha256": "ca70e4631e23a4005fb9eeddb1ff46abc756368dce0538dd7ba923d7b242321d",
+      "heldout_sha256": "0de566dadc97984a3c3fb0d844e22a03844b9e47713a040e36c186a331c742fa",
+      "trace_sha256": "7ee859ebaab0b2c70a2f07b3979ee48d515740ee0d26c5338152483303fe027d",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "normalize_whitespace",
+      "category": "bugfix",
+      "repo_sha256": "cf12cd258542132c3075b33b705f6e4f0da69fda8aa2deaf750690aac9044a68",
+      "verifier_sha256": "7c5011073c2bfe5ca3687ce0aa3106778e27237c5da8c4070b7f7ae42868af52",
+      "heldout_sha256": "5b8e50e12cea3d9044a29116c70432e2603a28d55e0bc73a398657199af26037",
+      "trace_sha256": "6d2d17bd4c3646cd6b69eb691ff86e1964327f9403f78fe8adcf997c90deff5d",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "slugify",
+      "category": "feature",
+      "repo_sha256": "868b1975e3d7a904e2a326d234947bba77be1033e30d6fddc2733335cb0904b9",
+      "verifier_sha256": "29d1bdb1da8f4cc5632c145deef4a4a6293d0dffdb9baa1061e2ab281371d64f",
+      "heldout_sha256": "939444d7fff4738b82c56d4d2b8a1b87718f902b0911548ecc04d9f7bf7352ee",
+      "trace_sha256": "fa84bd888872700fea10f1924fd511721aa001440bbd90eb6c4986f76981ea25",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "running_total",
+      "category": "feature",
+      "repo_sha256": "0e17440ef67dd43331d5410a119997e6cfdf099d9945066f59187e5e02371e70",
+      "verifier_sha256": "004224781ef2278e4ad33df773a628645ffbfbe92762af7ba9ea3924b7e894af",
+      "heldout_sha256": "d8bbea631b592a7df8a4021f603427643ae9a04c6fb01d75a5117ee77070c6bd",
+      "trace_sha256": "0885dc9f8f3464366fc2964582ae1584f031d7c67fa519705bf4c4342b44823e",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "group_counts",
+      "category": "feature",
+      "repo_sha256": "2ab8d613153e760d59706ac4c42a31660cabc6f19af8a67440f2fa7b25227ae6",
+      "verifier_sha256": "9f1083baf447e692bc6a7cd14add05a01c4ada103c29ef8d698bf1de5737d26c",
+      "heldout_sha256": "58d8ebda4c79a80040b32fcc6355a8dd77d18560cc84f4f584c3e446fd8eb7da",
+      "trace_sha256": "c19899d494b276fae06b97b3336a00cdd0b286eafce87cfc7fca5eb27f382ed6",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "refactor_sort",
+      "category": "refactor",
+      "repo_sha256": "0e138707f6e896afee3e35c386ab8bb974d7455e3c63bf7254bed8f5d3f3e259",
+      "verifier_sha256": "3036c3069fcf9e41a29483ebe818216197844be04fac8cd0373da78977f139dd",
+      "heldout_sha256": "a19a63b7216d637ad3043ab08a04d469c13a4e805c497caf031cfc9c365aab6c",
+      "trace_sha256": "5c882980f9fb3ff912c8d5594c6e65c9c7217ed73e11f91153564a38a44ff246",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "refactor_default",
+      "category": "refactor",
+      "repo_sha256": "f4245a008153682be5ebf59ee9112be3039db961cbb42fa5e57df95c5150d3f3",
+      "verifier_sha256": "dfbe871bf2fc73658c16a4ac581ae99cd8e868a9caa794d2dcc203e78e611e3c",
+      "heldout_sha256": "045a24cbf335fad23a1a60cd924f2b59e5f6e6c4ff3d1b6aa70714d5c8df122c",
+      "trace_sha256": "ec960a0e0dcb7d964e83c0a05c3a1f50f07353d7e8b3d5772cf20503ccd3ea4d",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "refactor_copy",
+      "category": "refactor",
+      "repo_sha256": "6dc3bf3ac83a7006ccbc8a86a815fee35004bec425900ac85c8adfc701286b6d",
+      "verifier_sha256": "672150f2659e28d6fe21c90da4b0a179a2cf50645523953f63e642173a9ebf87",
+      "heldout_sha256": "7ac4abc4ad54f1f7dfde55812307800106c6758ae5ec643882585fd00b35389d",
+      "trace_sha256": "ddde81a892d802c745b173a6d3778d685c2803502d0d1c50d2d80aee15b1a7b7",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "multifile_discount",
+      "category": "multifile",
+      "repo_sha256": "91a5de8d6de45b62b57fc0641111b0de6f79e94e481dca16433f6c23202c8d7b",
+      "verifier_sha256": "ed0e258489a7a729b872c47f8e046edd12c1d926a522dce02beb9135d89b4ae5",
+      "heldout_sha256": "9fe280dbe2170e2050179154695e632c5eef1b8c447682d345631646620dd801",
+      "trace_sha256": "f9afee0241da6804db147658088f542c2f9470144d0472170eb3c48608222f67",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 2
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "multifile_tax",
+      "category": "multifile",
+      "repo_sha256": "35b51958c31d890cbf3792575c49357ffc78f37c72c37b6869f43600104a5f38",
+      "verifier_sha256": "c94bee4c160579a97bda6497c8a19a34811d9a55d6b11dd5eb36516cb6c38c18",
+      "heldout_sha256": "6ab9820693f8a91392cca5266396f300182767fc262677e6a54ff2c817b9d6eb",
+      "trace_sha256": "c6714f81347fe2fe35388d0779483b720e4709f37387e4b32696b72b5028ed35",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "multifile_inventory",
+      "category": "multifile",
+      "repo_sha256": "5b77caea503a5b0ba5ce0ed1457adfa6baa89081d706ddab5c8219f050f2132f",
+      "verifier_sha256": "7615d9c3d3ec697ce9023524883bc68b2f1c67329f83bedf0f5cac050b1b6455",
+      "heldout_sha256": "dd8206e1c47db72c8451cc32021a38fc79989b725ec95a5a23e2426c638046e8",
+      "trace_sha256": "bfd5206df847dcfbc85c904c19858196089e1e2856300b317291829168c12ce8",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "regression_negative",
+      "category": "regression",
+      "repo_sha256": "3714418bf1d40bfc79f7cee7095109d75c8c95eea97b177f86a3e485a027c626",
+      "verifier_sha256": "63a580402f059e91bec89454cb23e3c1dd18260754d62bead4c3801c3a62db15",
+      "heldout_sha256": "20537b6343b0a574c5976d1a7a0d807ba1f029147adf232e25e8121cf41f4908",
+      "trace_sha256": "b393c941f0cb828a6469913147038b9c3c377924c6c0815bdddcef43b45d2c7e",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "regression_case",
+      "category": "regression",
+      "repo_sha256": "3cbfd3c555ca084fb4c84a040966c852eddd03fa78b922f631655a7da8506074",
+      "verifier_sha256": "94d07bf2823f129a7613c71a56afd8d1e3c370ae45c76922ea8604e48bae3c2b",
+      "heldout_sha256": "bbbf14759e80bb29a15db9486d282a32b7e18462e3074c25f791f25f44a3eac8",
+      "trace_sha256": "6e326d56641af8ad92defc50ebe11cb27483b91f84dd3bb073b28ec3cc65a7ec",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "enterprise_order_atomicity",
+      "category": "enterprise",
+      "repo_sha256": "13f17c86ab591405c24e7b7f49b620745da4e672dc0d2505f0d2922b5bb2bfc4",
+      "verifier_sha256": "7533999c30b3486a64bf1176bfe26ebfda45ba13fc630ef00aef09962735b4ea",
+      "heldout_sha256": "bd82790dc9dcec7d5aa0ad2809c4d82fc6e50f4ec71db00a08fdac3a668c228c",
+      "trace_sha256": "88928c7b469b901bc658d94a9d10b20d1db401c969865816e25dad3f57146bf5",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "enterprise_ledger_exactly_once",
+      "category": "enterprise",
+      "repo_sha256": "166a6c7be717892cb45943a98690518a080a6c76ddff109db96ecb6de03c3893",
+      "verifier_sha256": "e9da7b27892ca5c634e4905b1093fedc00655e4a504beec82de10cb796cb21f2",
+      "heldout_sha256": "1129ea694b197da174a3bb290b1b07bd54aca9c3f0d1c69512831530536962c7",
+      "trace_sha256": "a4c7a2abf449262a5238918570f0fbcd0b94cddf876231a84194c65256f7eda9",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "enterprise_tenant_cache",
+      "category": "enterprise",
+      "repo_sha256": "4f0361167ce4cf8a5d1833b2431fde372335703ef1cb092aab56b90c0d2e3fbf",
+      "verifier_sha256": "53202e9a1d89584af4a60725016f1318ab85020a72d0d3c685da40a4c1fdaa2c",
+      "heldout_sha256": "6992c41a7853a49a98b4d0b980e2a72b06dcbed8c1b123c23068eb49737b3911",
+      "trace_sha256": "58b485d4fa44dc19b0c0b05dc3cf5032b9017ec7a21c834ae61ea03b95f897b7",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "enterprise_bank_transfer",
+      "category": "enterprise",
+      "repo_sha256": "7b68e76c55401cac20289a24168ac1fed11bf15dae40ee866bf34720522fbffd",
+      "verifier_sha256": "10699cfbe36debd918e8f52f49f302810c3bfda697b3ee59b310c778009a6237",
+      "heldout_sha256": "b1ac59824d2762bd078a99fd30c40086cdb3814486230b52e891b81a5148b1e9",
+      "trace_sha256": "8832ae41b1b8a811cb0d0ee7ab1ef525b66c930600224ddc5a59ac2e6100db84",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": false,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "enterprise_circuit_breaker",
+      "category": "enterprise",
+      "repo_sha256": "9400e60c8082b4bb6a5a7cf0623955dbc26f1e9739c7904ee636701c8a351681",
+      "verifier_sha256": "be4712fd87c5eb2d4adc5c53037021d186cefc5cfc6cca8d4acb4d0cb8df2aa3",
+      "heldout_sha256": "2b294d8b4a578d4cfb262d9ef63f5b598971d2d20ad21ec414d93b9a92b67d10",
+      "trace_sha256": "c640f5ae12e24f86970e43ae583a642b43728473c7ea6d47ecad3fdd2885c06b",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 3
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": false,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "enterprise_saga_coordinator",
+      "category": "enterprise",
+      "repo_sha256": "5e285e025ea47b8fd3cab524636fc430a8cb74bb14818c70fffd834d449d8dbd",
+      "verifier_sha256": "3c9cdc84890964ea59f07679b0c0728994ee029fe50170552a129f6349870b97",
+      "heldout_sha256": "8eb1efbfc02c6a0b5377b9df7546cb299a41c13c1d77c18294248cb86d536376",
+      "trace_sha256": "700d9397dbdd98f882c7c0787a3409f7ee035ebce9c1ab740c1c3af7686f7de7",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        }
+      ]
+    },
+    {
+      "task": "enterprise_rate_limiter_token_bucket",
+      "category": "enterprise",
+      "repo_sha256": "2f106f07d85fecee5b3ddecbf2510729cb031fde4df8e291cd74404cb6c7d366",
+      "verifier_sha256": "5cc8043c6a1a50742f5b691cc875b6adfe5b50d8096e2d1be62f8205dc67b72f",
+      "heldout_sha256": "d3ef7afdf97d8c2651375851036b693cae800e991e138f6ec2eab81b213e4b1d",
+      "trace_sha256": "8ef1c049e4acd58971310a88ad550b1b0f1ef558154ceb36ec95f2fad6ebf9b6",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        }
+      ]
+    }
+  ],
+  "suite_totals": {
+    "resample": {
+      "completed": 22,
+      "provider_blocked": 0,
+      "pending": 0,
+      "combined_pass": 15,
+      "public_pass": 21,
+      "heldout_pass": 15,
+      "live_calls": 23
+    },
+    "feedback": {
+      "completed": 22,
+      "provider_blocked": 0,
+      "pending": 0,
+      "combined_pass": 15,
+      "public_pass": 22,
+      "heldout_pass": 15,
+      "live_calls": 24
+    },
+    "counterfactual": {
+      "completed": 22,
+      "provider_blocked": 0,
+      "pending": 0,
+      "combined_pass": 15,
+      "public_pass": 21,
+      "heldout_pass": 15,
+      "live_calls": 22
+    },
+    "counterfactual_replay": {
+      "completed": 0,
+      "provider_blocked": 0,
+      "pending": 0,
+      "combined_pass": 0,
+      "public_pass": 0,
+      "heldout_pass": 0,
+      "live_calls": 0
+    }
+  },
+  "proof_sha256": "f404e3d270bbf99e746f7866bcd4e5063a49d3e46fb1fd078edc334027229528",
+  "all_heldout_verified": false
+}

@@ -157,7 +157,7 @@ def execute(run_id, request):
 @app.post("/api/runs", status_code=202)
 def create_run(request: RunRequest):
     safe_repo(request.repository)
-    if request.repair_policy not in ("standard", "counterfactual"):
+    if request.repair_policy not in ("standard", "counterfactual", "counterfactual_replay"):
         raise HTTPException(400, "Invalid repair policy")
     if request.strategy not in ("lexical", "dependency"):
         raise HTTPException(400, "Invalid retrieval strategy")

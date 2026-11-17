@@ -62,7 +62,14 @@ def _heldout_check(repo, result, heldout_source):
                 "output": check["output"]}
 
 
-def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldout_verification=None, max_http_requests_per_arm=None):
+def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldout_verification=None, max_http_requests_per_arm=None, counterfactual_policy=None):
+    if counterfactual_policy is None:
+        counterfactual_policy = os.environ.get("CODEPILOT_COUNTERFACTUAL_POLICY", "counterfactual")
+    active_arms = (
+        ("resample", False, "standard"),
+        ("feedback", True, "standard"),
+        ("counterfactual", True, counterfactual_policy),
+    )
     if repetitions < 1 or attempts < 2:
         raise ValueError("repetitions must be >=1 and attempts >=2")
     if max_http_requests_per_arm is not None:
@@ -120,7 +127,7 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
         real_ask = base.agent_module.ask_model
         for repetition in range(1, repetitions + 1):
             # Rotate execution order across repetitions to reduce order effects.
-            arms = list(ARMS)
+            arms = list(active_arms)
             arms = arms[(repetition - 1) % 3:] + arms[:(repetition - 1) % 3]
             for condition, feedback, policy in arms:
                 key = "{}:{}".format(repetition, condition)
@@ -139,7 +146,10 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                 def ask(messages, **kwargs):
                     i = index[0]
                     index[0] += 1
-                    request = {"messages": messages, "options": kwargs}
+                    request = {
+                        "messages": [dict(m) for m in messages],
+                        "options": dict(kwargs),
+                    }
                     if i < len(saved):
                         previous = saved[i]
                         if previous["request"] != request:

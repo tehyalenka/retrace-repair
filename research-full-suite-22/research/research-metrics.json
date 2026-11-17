@@ -1,0 +1,200 @@
+{
+  "strategies": {
+    "resample": {
+      "completed": 22,
+      "pending": 0,
+      "blocked_legacy": 0,
+      "missing": 0,
+      "public_pass": 21,
+      "heldout_pass": 15,
+      "combined_pass": 15,
+      "live_calls": 23,
+      "infrastructure_warnings": 0
+    },
+    "feedback": {
+      "completed": 22,
+      "pending": 0,
+      "blocked_legacy": 0,
+      "missing": 0,
+      "public_pass": 22,
+      "heldout_pass": 15,
+      "combined_pass": 15,
+      "live_calls": 24,
+      "infrastructure_warnings": 0
+    },
+    "counterfactual": {
+      "completed": 22,
+      "pending": 0,
+      "blocked_legacy": 0,
+      "missing": 0,
+      "public_pass": 21,
+      "heldout_pass": 15,
+      "combined_pass": 15,
+      "live_calls": 22,
+      "infrastructure_warnings": 0
+    }
+  },
+  "resource_usage": {
+    "resample": {
+      "http_known_evaluations": 22,
+      "http_unknown_evaluations": 0,
+      "known_http_requests": 38,
+      "token_observed_evaluations": 22,
+      "observed_prompt_tokens": 10015,
+      "observed_completion_tokens": 14880
+    },
+    "feedback": {
+      "http_known_evaluations": 22,
+      "http_unknown_evaluations": 0,
+      "known_http_requests": 44,
+      "token_observed_evaluations": 22,
+      "observed_prompt_tokens": 25542,
+      "observed_completion_tokens": 19398
+    },
+    "counterfactual": {
+      "http_known_evaluations": 22,
+      "http_unknown_evaluations": 0,
+      "known_http_requests": 42,
+      "token_observed_evaluations": 22,
+      "observed_prompt_tokens": 20721,
+      "observed_completion_tokens": 12728
+    }
+  },
+  "categories": [
+    {
+      "category": "bugfix",
+      "arm": "resample",
+      "completed": 4,
+      "pending": 0,
+      "combined_pass": 4
+    },
+    {
+      "category": "bugfix",
+      "arm": "feedback",
+      "completed": 4,
+      "pending": 0,
+      "combined_pass": 4
+    },
+    {
+      "category": "bugfix",
+      "arm": "counterfactual",
+      "completed": 4,
+      "pending": 0,
+      "combined_pass": 4
+    },
+    {
+      "category": "feature",
+      "arm": "resample",
+      "completed": 3,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "feature",
+      "arm": "feedback",
+      "completed": 3,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "feature",
+      "arm": "counterfactual",
+      "completed": 3,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "refactor",
+      "arm": "resample",
+      "completed": 3,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "refactor",
+      "arm": "feedback",
+      "completed": 3,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "refactor",
+      "arm": "counterfactual",
+      "completed": 3,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "multifile",
+      "arm": "resample",
+      "completed": 3,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "multifile",
+      "arm": "feedback",
+      "completed": 3,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "multifile",
+      "arm": "counterfactual",
+      "completed": 3,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "regression",
+      "arm": "resample",
+      "completed": 2,
+      "pending": 0,
+      "combined_pass": 2
+    },
+    {
+      "category": "regression",
+      "arm": "feedback",
+      "completed": 2,
+      "pending": 0,
+      "combined_pass": 2
+    },
+    {
+      "category": "regression",
+      "arm": "counterfactual",
+      "completed": 2,
+      "pending": 0,
+      "combined_pass": 2
+    }
+  ],
+  "paired": {
+    "resample_vs_feedback": {
+      "eligible": 22,
+      "both_pass": 15,
+      "a_only": 0,
+      "b_only": 0,
+      "neither_pass": 7
+    },
+    "resample_vs_counterfactual": {
+      "eligible": 22,
+      "both_pass": 15,
+      "a_only": 0,
+      "b_only": 0,
+      "neither_pass": 7
+    },
+    "feedback_vs_counterfactual": {
+      "eligible": 22,
+      "both_pass": 15,
+      "a_only": 0,
+      "b_only": 0,
+      "neither_pass": 7
+    }
+  },
+  "scope": {
+    "tasks": 22,
+    "evaluations": 66,
+    "completed": 66,
+    "pending": 0,
+    "infrastructure_warnings": 0
+  }
+}

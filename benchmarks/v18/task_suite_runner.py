@@ -1,10 +1,11 @@
-"""Validate 15 self-contained fixtures and run leakage-resistant live comparisons.
+"""Validate self-contained fixtures and run leakage-resistant live comparisons.
 
 Fixtures are synthetic, not independently sourced software engineering tasks.
 Only public failures may be included in repair prompts; heldout runs post-repair.
 Run untrusted code only in a secure sandbox; this harness is NOT a sandbox.
 """
 import argparse
+import hashlib
 import re
 import json
 import shutil
@@ -48,9 +49,10 @@ def verify(repo, source):
                                '-p','test_suite_fixture.py'],cwd=repo,env=env,
                               capture_output=True,text=True,timeout=15)
         # A successful exit with zero discovered tests is not verification.
-        match = re.search(r"^Ran (\d+) tests? in ", result.stderr + "\n" + result.stdout, re.MULTILINE)
+        output = result.stderr + "\n" + result.stdout
+        match = re.search(r"^Ran (\d+) tests? in ", output, re.MULTILINE)
         count = int(match.group(1)) if match else 0
-        skipped = re.search(r"\(skipped=(\d+)\)", result.stderr + "\n" + result.stdout)
+        skipped = re.search(r"\(skipped=(\d+)\)", output)
         skipped_count = int(skipped.group(1)) if skipped else 0
         return result.returncode == 0 and count > skipped_count
 
@@ -71,11 +73,15 @@ def validate():
     with ThreadPoolExecutor(max_workers=8) as pool:
         return list(pool.map(check,tasks()))
 
-def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_requests_per_arm=None, task_id=None):
+def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_requests_per_arm=None, task_id=None, category=None, task_ids=None):
     output_dir=Path(output_dir);output_dir.mkdir(parents=True,exist_ok=True)
     all_rows=[]
     for item in tasks():
         if task_id is not None and item['id'] != task_id:
+            continue
+        if task_ids is not None and item['id'] not in task_ids:
+            continue
+        if category is not None and item['category'] != category:
             continue
         public=(ROOT/item['public_verifier']).read_text()
         heldout=(ROOT/item['heldout_verifier']).read_text()
@@ -189,7 +195,8 @@ def summarize(output_dir):
     totals = {arm: {'completed': 0, 'provider_blocked': 0, 'pending': 0,
                     'combined_pass': 0, 'public_pass': 0, 'heldout_pass': 0,
                     'live_calls': 0}
-              for arm in ('resample', 'feedback', 'counterfactual')}
+              for arm in ('resample', 'feedback', 'counterfactual', 'counterfactual_replay')}
+    proof_items = []
     for item in tasks():
         path = output_dir / (item['id'] + '-live.json')
         if not path.exists():
@@ -198,6 +205,10 @@ def summarize(output_dir):
         rows = []
         for r in report.get('rows', []):
             arm = r['condition']
+            if arm not in totals:
+                totals[arm] = {'completed': 0, 'provider_blocked': 0, 'pending': 0,
+                               'combined_pass': 0, 'public_pass': 0, 'heldout_pass': 0,
+                               'live_calls': 0}
             blocked = _provider_blocked(r)
             heldout = r.get('heldout') or {}
             public = bool(r.get('success'))
@@ -219,14 +230,60 @@ def summarize(output_dir):
         for key in pending:
             try:
                 arm = key.split(':', 1)[1]
+                if arm not in totals:
+                    totals[arm] = {'completed': 0, 'provider_blocked': 0, 'pending': 0,
+                                   'combined_pass': 0, 'public_pass': 0, 'heldout_pass': 0,
+                                   'live_calls': 0}
                 totals[arm]['pending'] += 1
             except (IndexError, KeyError):
                 raise ValueError('Unknown pending checkpoint key: ' + key)
         summary.append({'task': item['id'], 'category': item['category'],
                         'arms': rows, 'pending': pending})
+
+        settings = report.get('settings', {})
+        cap_path = output_dir / (item['id'] + '-capture.json')
+        cap_data = json.loads(cap_path.read_text(encoding='utf-8')) if cap_path.exists() else {}
+        proof_items.append({
+            'task': item['id'],
+            'category': item['category'],
+            'repo_sha256': settings.get('repo_sha256') or cap_data.get('repo_sha256'),
+            'verifier_sha256': settings.get('verifier_sha256') or cap_data.get('verifier_sha256'),
+            'heldout_sha256': settings.get('heldout_sha256'),
+            'trace_sha256': settings.get('trace_sha256'),
+            'completed_arms': [
+                {
+                    'condition': r.get('condition'),
+                    'repetition': r.get('repetition'),
+                    'public_pass': bool(r.get('success')),
+                    'heldout_pass': bool((r.get('heldout') or {}).get('passed')),
+                    'combined_pass': bool(r.get('success') and (r.get('heldout') or {}).get('passed')),
+                    'live_calls': r.get('live_calls', 0),
+                }
+                for r in report.get('rows', [])
+            ],
+        })
+
     output_dir.mkdir(parents=True, exist_ok=True)
     checkpointed_three_arm._write(output_dir / 'suite-summary.json', summary)
     checkpointed_three_arm._write(output_dir / 'suite-totals.json', totals)
+
+    canonical_proof = json.dumps(proof_items, sort_keys=True)
+    proof_digest = hashlib.sha256(canonical_proof.encode('utf-8')).hexdigest()
+    proof_report = {
+        'schema': 1,
+        'evidence_type': 'retrace_benchmark_proof',
+        'generated_at_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+        'tasks_evaluated_count': len(proof_items),
+        'total_benchmark_tasks': len(tasks()),
+        'tasks': proof_items,
+        'suite_totals': totals,
+        'proof_sha256': proof_digest,
+        'all_heldout_verified': len(proof_items) > 0 and all(
+            all(a['heldout_pass'] for a in p['completed_arms'] if a['public_pass'])
+            for p in proof_items
+        ),
+    }
+    checkpointed_three_arm._write(output_dir / 'benchmark-proof.json', proof_report)
     return totals
 
 
@@ -236,6 +293,10 @@ def main():
     parser.add_argument('--output-dir',default='v18-task-suite-results')
     parser.add_argument('--task',choices=[item['id'] for item in tasks()],default=None,
                         help='Run only the selected task in live mode')
+    parser.add_argument('--tasks',type=str,default=None,
+                        help='Comma-separated task IDs to evaluate together')
+    parser.add_argument('--category',choices=['bugfix','feature','refactor','multifile','regression','enterprise'],default=None,
+                        help='Run only tasks belonging to this category')
     parser.add_argument('--repetitions',type=int,default=1)
     parser.add_argument('--attempts',type=int,default=3)
     parser.add_argument('--max-http-requests-per-arm',type=int,default=None)
@@ -254,11 +315,12 @@ def main():
     for c in checks:
         print(c['id'], 'initial_public=',c['initial_public_pass'],
               'fixed_public=',c['solution_public_pass'],'fixed_heldout=',c['solution_heldout_pass'])
-    if len(checks)!=15 or any(c['initial_public_pass'] or not c['solution_public_pass'] or not c['solution_heldout_pass'] for c in checks):
+    if len(checks)!=len(tasks()) or any(c['initial_public_pass'] or not c['solution_public_pass'] or not c['solution_heldout_pass'] for c in checks):
         raise SystemExit('Fixture validation failed; live experiment blocked')
     if args.command=='live':
+        task_ids = [t.strip() for t in args.tasks.split(',')] if args.tasks else None
         run_live(args.output_dir,args.repetitions,args.attempts,args.delay_seconds,
-                 args.max_http_requests_per_arm,task_id=args.task)
+                 args.max_http_requests_per_arm,task_id=args.task,category=args.category,task_ids=task_ids)
 
 if __name__=='__main__':
     main()

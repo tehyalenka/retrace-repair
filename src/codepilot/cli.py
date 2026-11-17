@@ -21,6 +21,12 @@ def main():
     p_agent.add_argument("repository")
     p_agent.add_argument("task")
     p_agent.add_argument("--attempts", type=int, default=2)
+    p_agent.add_argument(
+        "--repair-policy",
+        choices=["standard", "counterfactual", "counterfactual_replay"],
+        default="standard",
+        help="Repair policy strategy: standard, counterfactual, or counterfactual_replay",
+    )
     p_agent.add_argument("--generate-tests", action="store_true", help="Generate task-specific unittest checks before coding (experimental)")
     p_agent.add_argument("--output", default="codepilot-result.json")
     args = parser.parse_args()
@@ -33,7 +39,13 @@ def main():
     else:
         if not 1 <= args.attempts <= 5:
             parser.error("--attempts must be between 1 and 5")
-        result = run_agent(args.repository, args.task, attempts=args.attempts, generate_tests=args.generate_tests)
+        result = run_agent(
+            args.repository,
+            args.task,
+            attempts=args.attempts,
+            generate_tests=args.generate_tests,
+            repair_policy=args.repair_policy,
+        )
         target = Path(args.output)
         target.write_text(json.dumps(result, indent=2), encoding="utf-8")
         print("Success: {} | Attempts: {} | Saved: {}".format(result["success"], len(result["history"]), target))
