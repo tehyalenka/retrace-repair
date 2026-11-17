@@ -85,7 +85,11 @@ def is_valid_evaluation_row(row: Dict[str, Any], condition: str, repetition: int
     has_calls = (
         isinstance(calls, list)
         and len(calls) > 0
-        and all(isinstance(c, dict) for c in calls)
+        and all(
+            isinstance(c, dict)
+            and ("response" in c or "request" in c or "messages" in c)
+            for c in calls
+        )
     )
 
     req_acc = row.get("request_accounting")

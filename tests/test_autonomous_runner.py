@@ -293,6 +293,28 @@ class TestAutonomousRunner(unittest.TestCase):
         api_err_401 = LLMAPIError("LLM API HTTP 401 unauthorized")
         self.assertEqual(api_err_401.status_code, 401)
 
+    def test_rejects_arbitrary_call_records(self):
+        """Audit Observation: calls list must contain genuine call records (response or request), not empty dicts."""
+        # Empty dict entry in calls
+        row_empty_call = {
+            "condition": "resample",
+            "repetition": 1,
+            "success": True,
+            "heldout": {"passed": True},
+            "calls": [{}],
+        }
+        self.assertFalse(is_valid_evaluation_row(row_empty_call, "resample", 1))
+
+        # Valid call record with response
+        row_valid_call = {
+            "condition": "resample",
+            "repetition": 1,
+            "success": True,
+            "heldout": {"passed": True},
+            "calls": [{"request": {"messages": []}, "response": "{}"}],
+        }
+        self.assertTrue(is_valid_evaluation_row(row_valid_call, "resample", 1))
+
     def test_post_benchmark_pipeline_fails_closed_on_error(self):
         """Verify that run_post_benchmark_pipeline raises RuntimeError when a step fails."""
         with tempfile.TemporaryDirectory() as td:
