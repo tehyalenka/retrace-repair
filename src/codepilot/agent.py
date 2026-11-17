@@ -1,6 +1,7 @@
 
 """LLM-assisted coding agent. Never edits the user's original repository."""
 import json
+from contextvars import ContextVar
 import os
 from pathlib import Path, PurePosixPath
 import shutil
@@ -74,6 +75,40 @@ def provider_config():
     return key, model, base_url
 
 
+_ACTIVE_MODEL_ACCOUNTING = ContextVar(
+    "retrace_model_accounting", default=None
+)
+
+
+class ModelRequestAccounting:
+    """Scoped model request accounting."""
+
+    def __init__(self):
+        self.logical_calls = 0
+        self.http_requests = 0
+        self.http_failures = 0
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
+        self.usage_reports = 0
+
+    def snapshot(self):
+        return {
+            "logical_calls": self.logical_calls,
+            "http_requests": self.http_requests,
+            "http_failures": self.http_failures,
+            "prompt_tokens": self.prompt_tokens,
+            "completion_tokens": self.completion_tokens,
+            "usage_reports": self.usage_reports,
+        }
+
+    def __enter__(self):
+        self._token = _ACTIVE_MODEL_ACCOUNTING.set(self)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        _ACTIVE_MODEL_ACCOUNTING.reset(self._token)
+
+
 class LLMAPIError(RuntimeError):
     """Non-secret, user-readable provider error."""
 
@@ -128,18 +163,29 @@ def ask_model(messages, model=None, base_url=None, json_mode=None, temperature=N
     if not 0 <= max_retries <= 10:
         raise ValueError("CODEPILOT_MAX_RETRIES must be between 0 and 10")
     max_retry_wait = 60.0  # Longer waits are deferred to benchmark --resume.
+    accounting = _ACTIVE_MODEL_ACCOUNTING.get()
+    if accounting is not None:
+        accounting.logical_calls += 1
+
     for retry in range(max_retries + 1):
         try:
+            if accounting is not None:
+                accounting.http_requests += 1
             response = requests.post(
                 base_url + "/chat/completions",
                 headers={"Authorization": "Bearer " + key,
                          "Content-Type": "application/json"},
                 json=payload, timeout=90)
         except requests.RequestException as exc:
+            if accounting is not None:
+                accounting.http_failures += 1
             if retry < max_retries:
                 time.sleep(min(2 ** retry, 8))
                 continue
             raise LLMAPIError("LLM connection failed after retries: {}".format(type(exc).__name__)) from exc
+        if accounting is not None and response.status_code != 200:
+            accounting.http_failures += 1
+
         if response.status_code in (429, 500, 502, 503, 504):
             delay = _retry_delay(response, retry)
             if response.status_code == 429 and delay > max_retry_wait:
@@ -160,6 +206,19 @@ def ask_model(messages, model=None, base_url=None, json_mode=None, temperature=N
             content = result["choices"][0]["message"]["content"]
             if not isinstance(content, str) or not content.strip():
                 raise ValueError("Empty model content")
+            if accounting is not None:
+                usage = result.get("usage")
+                if isinstance(usage, dict):
+                    prompt = usage.get("prompt_tokens")
+                    completion = usage.get("completion_tokens")
+                    if (
+                        type(prompt) is int and prompt >= 0
+                        and type(completion) is int and completion >= 0
+                    ):
+                        accounting.prompt_tokens += prompt
+                        accounting.completion_tokens += completion
+                        accounting.usage_reports += 1
+
             return content
         except (ValueError, TypeError, KeyError, IndexError) as exc:
             raise LLMAPIError("LLM returned an invalid completion envelope") from exc
