@@ -65,10 +65,12 @@ def validate():
     with ThreadPoolExecutor(max_workers=8) as pool:
         return list(pool.map(check,tasks()))
 
-def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_requests_per_arm=None):
+def run_live(output_dir, repetitions=1, attempts=3, delay_seconds=0, max_http_requests_per_arm=None, task_id=None):
     output_dir=Path(output_dir);output_dir.mkdir(parents=True,exist_ok=True)
     all_rows=[]
     for item in tasks():
+        if task_id is not None and item['id'] != task_id:
+            continue
         public=(ROOT/item['public_verifier']).read_text()
         heldout=(ROOT/item['heldout_verifier']).read_text()
         # A deterministic incorrect edit reproduces the source's known public failure.
@@ -226,6 +228,8 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command',choices=['validate','live','summarize','recover'])
     parser.add_argument('--output-dir',default='v18-task-suite-results')
+    parser.add_argument('--task',choices=[item['id'] for item in tasks()],default=None,
+                        help='Run only the selected task in live mode')
     parser.add_argument('--repetitions',type=int,default=1)
     parser.add_argument('--attempts',type=int,default=3)
     parser.add_argument('--max-http-requests-per-arm',type=int,default=None)
@@ -248,7 +252,7 @@ def main():
         raise SystemExit('Fixture validation failed; live experiment blocked')
     if args.command=='live':
         run_live(args.output_dir,args.repetitions,args.attempts,args.delay_seconds,
-                 args.max_http_requests_per_arm)
+                 args.max_http_requests_per_arm,task_id=args.task)
 
 if __name__=='__main__':
     main()
