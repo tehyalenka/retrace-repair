@@ -50,31 +50,35 @@ def analyze_directory(results_dir: str) -> Dict:
     if not live_files:
         raise ValueError(f"No live benchmark JSON files found in {results_dir}")
 
+    active_conditions = set()
+    for file_path in live_files:
+        try:
+            data = json.loads(file_path.read_text(encoding="utf-8"))
+            for row in data.get("rows", []):
+                if row.get("condition"):
+                    active_conditions.add(row["condition"])
+        except Exception:
+            pass
+
+    known_arms = ["resample", "feedback", "counterfactual", "counterfactual_replay"]
+    strategy_keys = [a for a in known_arms if a in active_conditions]
+    if "resample" not in strategy_keys:
+        strategy_keys.insert(0, "resample")
+    if "feedback" not in strategy_keys:
+        strategy_keys.insert(1, "feedback")
+    if "counterfactual" not in strategy_keys and "counterfactual_replay" not in strategy_keys:
+        strategy_keys.append("counterfactual")
+
     arms_data = {
-        "resample": {
+        arm: {
             "tasks": 0,
             "public_pass": [],
             "heldout_pass": [],
             "provider_tokens": [],
             "estimated_tokens": [],
             "live_calls": [],
-        },
-        "feedback": {
-            "tasks": 0,
-            "public_pass": [],
-            "heldout_pass": [],
-            "provider_tokens": [],
-            "estimated_tokens": [],
-            "live_calls": [],
-        },
-        "counterfactual": {
-            "tasks": 0,
-            "public_pass": [],
-            "heldout_pass": [],
-            "provider_tokens": [],
-            "estimated_tokens": [],
-            "live_calls": [],
-        },
+        }
+        for arm in strategy_keys
     }
 
     per_task_paired = []
@@ -179,7 +183,15 @@ def analyze_directory(results_dir: str) -> Dict:
 
     # Strict McNemar tests: only include tasks where BOTH strategies have valid observations
     mcnemar_results = {}
-    pairs = [("resample", "feedback"), ("feedback", "counterfactual"), ("resample", "counterfactual")]
+    pairs = []
+    if "resample" in strategy_keys and "feedback" in strategy_keys:
+        pairs.append(("resample", "feedback"))
+    cf_arms = [a for a in ("counterfactual", "counterfactual_replay") if a in strategy_keys]
+    for cf in cf_arms:
+        if "feedback" in strategy_keys:
+            pairs.append(("feedback", cf))
+        if "resample" in strategy_keys:
+            pairs.append(("resample", cf))
     for a1, a2 in pairs:
         b = 0  # a1 passed heldout, a2 failed
         c = 0  # a1 failed heldout, a2 passed
