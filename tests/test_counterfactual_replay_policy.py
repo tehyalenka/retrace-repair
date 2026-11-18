@@ -182,6 +182,47 @@ class CounterfactualReplayPolicyTests(unittest.TestCase):
         self.assertFalse(result["history"][0]["passed"])
         self.assertTrue(result["history"][1]["passed"])
 
+    def test_run_agent_replay_on_repair_only(self):
+        calls = []
+
+        def model_response(messages, **kwargs):
+            calls.append([dict(m) for m in messages])
+            if len(calls) == 1:
+                # Attempt 1: initial failing implementation
+                source = "def double(x):\n    return x + 10\n"
+            elif len(calls) == 2:
+                # Attempt 2 Candidate 1: failing candidate
+                source = "def double(x):\n    return x - 5\n"
+            else:
+                # Attempt 2 Candidate 2: passing candidate
+                source = "def double(x):\n    return x * 2\n"
+            return json.dumps({
+                "reasoning_summary": f"Call {len(calls)}",
+                "edits": [{"path": "calc.py", "operation": "modify", "content": source}],
+            })
+
+        with patch("codepilot.agent.ask_model", side_effect=model_response):
+            result = run_agent(
+                self.repo,
+                "Implement double",
+                attempts=2,
+                repair_policy="counterfactual_replay",
+                replay_on_repair_only=True,
+            )
+
+        self.assertTrue(result["success"])
+        self.assertEqual(len(result["history"]), 2)
+        # Attempt 1 should be a standard generation reproducing test failure (not replay)
+        self.assertFalse(result["history"][0]["passed"])
+        self.assertEqual(result["history"][0]["failure_category"], "test_failure")
+        self.assertNotIn("replay", result["history"][0])
+        # Attempt 2 should execute replay and succeed
+        self.assertTrue(result["history"][1]["passed"])
+        self.assertIn("replay", result["history"][1])
+        accounting = result["replay_accounting"]
+        self.assertIsNotNone(accounting)
+        self.assertEqual(accounting["candidate_rounds"], 1)
+
     @unittest.skipUnless(HAS_BACKEND, "Backend dependencies not installed")
     def test_backend_app_accepts_counterfactual_replay_policy(self):
         req = RunRequest(task="fix bug", repair_policy="counterfactual_replay")

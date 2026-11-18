@@ -141,7 +141,8 @@ def paired(trace_path, output, offline=False, include_counterfactual=False):
             with patch.object(agent_module, "ask_model", side_effect=continuation):
                 result = agent_module.run_agent(repo, task, attempts=3, verification=verifier,
                                                 repair_feedback=feedback, repair_policy=policy,
-                                                temperature=arm_temperature, seed=arm_seed)
+                                                temperature=arm_temperature, seed=arm_seed,
+                                                replay_on_repair_only=True)
             history = result["history"]
             if not history or history[0].get("failure_category") != "test_failure":
                 raise ValueError("Replay did not reproduce original test failure")

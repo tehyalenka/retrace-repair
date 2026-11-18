@@ -220,7 +220,8 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                             result = base.agent_module.run_agent(
                                 repo, task, attempts=attempts, verification=verifier,
                                 repair_feedback=feedback, repair_policy=policy,
-                                temperature=arm_temperature, seed=arm_seed)
+                                temperature=arm_temperature, seed=arm_seed,
+                                replay_on_repair_only=True)
                     except ModelRequestBudgetExceeded as exc:
                         raise BenchmarkBudgetExceeded(
                             "HTTP request budget exhausted for arm {}".format(key)

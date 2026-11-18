@@ -630,7 +630,7 @@ def _counterfactual_repair_prompt(record):
     ).format(feedback)
 
 
-def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verification=None, generate_tests=False, json_mode=None, retrieval_strategy="lexical", repair_feedback=True, repair_policy="standard", temperature=None, seed=None):
+def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verification=None, generate_tests=False, json_mode=None, retrieval_strategy="lexical", repair_feedback=True, repair_policy="standard", temperature=None, seed=None, replay_on_repair_only=False):
     if repair_policy not in ("standard", "counterfactual", "counterfactual_replay"):
         raise ValueError(
             "repair_policy must be standard, counterfactual, or counterfactual_replay"
@@ -677,7 +677,7 @@ def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verific
                 shutil.rmtree(workspace)
                 shutil.copytree(str(original), str(workspace), ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "node_modules", ".env"), symlinks=False)
             try:
-                if repair_policy == "counterfactual_replay":
+                if repair_policy == "counterfactual_replay" and (attempt > 1 or not replay_on_repair_only):
                     from codepilot.replay_strategy import evaluate_replay_strategy
 
                     replay_report = evaluate_replay_strategy(
