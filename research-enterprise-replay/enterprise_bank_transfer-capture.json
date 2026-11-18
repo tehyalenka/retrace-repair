@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_bank_transfer",
+  "task": "Repair atomic multi-account transfers with idempotency, total balance conservation, non-negative integer accounting, and rollback on failure.",
+  "repo_sha256": "7b68e76c55401cac20289a24168ac1fed11bf15dae40ee866bf34720522fbffd",
+  "verifier_sha256": "10699cfbe36debd918e8f52f49f302810c3bfda697b3ee59b310c778009a6237",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Repair atomic multi-account transfers with idempotency, total balance conservation, non-negative integer accounting, and rollback on failure.\n\nRepository map:\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: storage, transfers, unittest | symbols: test_transfer_success, test_idempotent_duplicate_transfer, test_self_transfer_rejected, test_insufficient_funds_returns_false, Public\ntransfers.py | imports: sqlite3, storage | symbols: __init__, seed, transfer, balance, transfer_count, BankTransferService\n\nSelected source context:\n### transfers.py\nimport sqlite3\nfrom storage import connect\n\nclass BankTransferService:\n    def __init__(self, db):\n        self.db = db\n\n    def seed(self, account_id, balance):\n        self.db.execute('INSERT INTO accounts VALUES (?,?)', (account_id, balance))\n        self.db.commit()\n\n    def transfer(self, transfer_id, source, destination, amount):\n        if amount <= 0:\n            raise ValueError('amount must be positive')\n        # Buggy implementation: no idempotency checks, allows self transfer, no atomic rollback\n        s_row = self.db.execute('SELECT balance FROM accounts WHERE id=?', (source,)).fetchone()\n        if not s_row or s_row[0] < amount:\n            return False\n        self.db.execute('UPDATE accounts SET balance=balance-? WHERE id=?', (amount, source))\n        self.db.execute('UPDATE accounts SET balance=balance+? WHERE id=?', (amount, destination))\n        self.db.execute('INSERT INTO transfers VALUES (?,?,?,?,?)', (transfer_id, source, destination, amount, 'completed'))\n        self.db.commit()\n        return True\n\n    def balance(self, account_id):\n        row = self.db.execute('SELECT balance FROM accounts WHERE id=?', (account_id,)).fetchone()\n        return row[0] if row else 0\n\n    def transfer_count(self):\n        return self.db.execute('SELECT count(*) FROM transfers').fetchone()[0]\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n    d = sqlite3.connect(':memory:')\n    d.execute('CREATE TABLE accounts (id TEXT PRIMARY KEY, balance INTEGER)')\n    d.execute('CREATE TABLE transfers (id TEXT PRIMARY KEY, source TEXT, destination TEXT, amount INTEGER, status TEXT)')\n    d.commit()\n    return d\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"storage.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\n\\ndef connect():\\n    d = sqlite3.connect(':memory:')\\n    d.execute('CREATE TABLE accounts (id TEXT PRIMARY KEY, balance INTEGER)')\\n    d.execute('CREATE TABLE transfers (id TEXT PRIMARY KEY, source TEXT, destination TEXT, amount INTEGER, status TEXT)')\\n    d.commit()\\n    return d\\n\"}, {\"path\": \"transfers.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\nfrom storage import connect\\n\\nclass BankTransferService:\\n    def __init__(self, db):\\n        self.db = db\\n\\n    def seed(self, account_id, balance):\\n        self.db.execute('INSERT INTO accounts VALUES (?,?)', (account_id, balance))\\n        self.db.commit()\\n\\n    def transfer(self, transfer_id, source, destination, amount):\\n        if amount <= 0:\\n            raise ValueError('amount must be positive')\\n        # Buggy implementation: no idempotency checks, allows self transfer, no atomic rollback\\n        s_row = self.db.execute('SELECT balance FROM accounts WHERE id=?', (source,)).fetchone()\\n        if not s_row or s_row[0] < amount:\\n            return False\\n        self.db.execute('UPDATE accounts SET balance=balance-? WHERE id=?', (amount, source))\\n        self.db.execute('UPDATE accounts SET balance=balance+? WHERE id=?', (amount, destination))\\n        self.db.execute('INSERT INTO transfers VALUES (?,?,?,?,?)', (transfer_id, source, destination, amount, 'completed'))\\n        self.db.commit()\\n        return True\\n\\n    def balance(self, account_id):\\n        row = self.db.execute('SELECT balance FROM accounts WHERE id=?', (account_id,)).fetchone()\\n        return row[0] if row else 0\\n\\n    def transfer_count(self):\\n        return self.db.execute('SELECT count(*) FROM transfers').fetchone()[0]\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "storage.py",
+      "transfers.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 4,
+    "output": "\ntest_idempotent_duplicate_transfer (test_public.Public.test_idempotent_duplicate_transfer) ... ERROR\ntest_insufficient_funds_returns_false (test_public.Public.test_insufficient_funds_returns_false) ... ok\ntest_self_transfer_rejected (test_public.Public.test_self_transfer_rejected) ... FAIL\ntest_transfer_success (test_public.Public.test_transfer_success) ... ok\n\n======================================================================\nERROR: test_idempotent_duplicate_transfer (test_public.Public.test_idempotent_duplicate_transfer)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-27uoyp76/repo/tests/test_public.py\", line 22, in test_idempotent_duplicate_transfer\n    self.assertIs(s.transfer('t1', 'A', 'B', 200), True)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-27uoyp76/repo/transfers.py\", line 21, in transfer\n    self.db.execute('INSERT INTO transfers VALUES (?,?,?,?,?)', (transfer_id, source, destination, amount, 'completed'))\nsqlite3.IntegrityError: UNIQUE constraint failed: transfers.id\n\n======================================================================\nFAIL: test_self_transfer_rejected (test_public.Public.test_self_transfer_rejected)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-27uoyp76/repo/tests/test_public.py\", line 31, in test_self_transfer_rejected\n    with self.assertRaises(ValueError):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 4 tests in 0.004s\n\nFAILED (failures=1, errors=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 4,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.212
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

@@ -1,0 +1,221 @@
+{
+  "strategies": {
+    "resample": {
+      "completed": 7,
+      "pending": 0,
+      "blocked_legacy": 0,
+      "missing": 15,
+      "public_pass": 6,
+      "heldout_pass": 3,
+      "combined_pass": 3,
+      "live_calls": 7,
+      "infrastructure_warnings": 0
+    },
+    "feedback": {
+      "completed": 7,
+      "pending": 0,
+      "blocked_legacy": 0,
+      "missing": 15,
+      "public_pass": 4,
+      "heldout_pass": 2,
+      "combined_pass": 2,
+      "live_calls": 10,
+      "infrastructure_warnings": 0
+    },
+    "counterfactual_replay": {
+      "completed": 7,
+      "pending": 0,
+      "blocked_legacy": 0,
+      "missing": 15,
+      "public_pass": 7,
+      "heldout_pass": 4,
+      "combined_pass": 4,
+      "live_calls": 16,
+      "infrastructure_warnings": 0
+    }
+  },
+  "resource_usage": {
+    "resample": {
+      "http_known_evaluations": 7,
+      "http_unknown_evaluations": 15,
+      "known_http_requests": 16,
+      "token_observed_evaluations": 7,
+      "observed_prompt_tokens": 6671,
+      "observed_completion_tokens": 12724
+    },
+    "feedback": {
+      "http_known_evaluations": 7,
+      "http_unknown_evaluations": 15,
+      "known_http_requests": 19,
+      "token_observed_evaluations": 7,
+      "observed_prompt_tokens": 21405,
+      "observed_completion_tokens": 20230
+    },
+    "counterfactual_replay": {
+      "http_known_evaluations": 7,
+      "http_unknown_evaluations": 15,
+      "known_http_requests": 36,
+      "token_observed_evaluations": 7,
+      "observed_prompt_tokens": 34238,
+      "observed_completion_tokens": 35032
+    }
+  },
+  "categories": [
+    {
+      "category": "bugfix",
+      "arm": "resample",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "bugfix",
+      "arm": "feedback",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "bugfix",
+      "arm": "counterfactual_replay",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "feature",
+      "arm": "resample",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "feature",
+      "arm": "feedback",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "feature",
+      "arm": "counterfactual_replay",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "refactor",
+      "arm": "resample",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "refactor",
+      "arm": "feedback",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "refactor",
+      "arm": "counterfactual_replay",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "multifile",
+      "arm": "resample",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "multifile",
+      "arm": "feedback",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "multifile",
+      "arm": "counterfactual_replay",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "regression",
+      "arm": "resample",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "regression",
+      "arm": "feedback",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "regression",
+      "arm": "counterfactual_replay",
+      "completed": 0,
+      "pending": 0,
+      "combined_pass": 0
+    },
+    {
+      "category": "enterprise",
+      "arm": "resample",
+      "completed": 7,
+      "pending": 0,
+      "combined_pass": 3
+    },
+    {
+      "category": "enterprise",
+      "arm": "feedback",
+      "completed": 7,
+      "pending": 0,
+      "combined_pass": 2
+    },
+    {
+      "category": "enterprise",
+      "arm": "counterfactual_replay",
+      "completed": 7,
+      "pending": 0,
+      "combined_pass": 4
+    }
+  ],
+  "paired": {
+    "resample_vs_feedback": {
+      "eligible": 7,
+      "both_pass": 2,
+      "a_only": 1,
+      "b_only": 0,
+      "neither_pass": 4
+    },
+    "resample_vs_counterfactual_replay": {
+      "eligible": 7,
+      "both_pass": 3,
+      "a_only": 0,
+      "b_only": 1,
+      "neither_pass": 3
+    },
+    "feedback_vs_counterfactual_replay": {
+      "eligible": 7,
+      "both_pass": 2,
+      "a_only": 0,
+      "b_only": 2,
+      "neither_pass": 3
+    }
+  },
+  "scope": {
+    "tasks": 22,
+    "evaluations": 66,
+    "completed": 21,
+    "pending": 0,
+    "infrastructure_warnings": 0
+  }
+}

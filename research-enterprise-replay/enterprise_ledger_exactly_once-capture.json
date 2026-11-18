@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_ledger_exactly_once",
+  "task": "Repair financial ledger posting with replay-safe event IDs, atomic balance updates and signed integer-cent accounting.",
+  "repo_sha256": "166a6c7be717892cb45943a98690518a080a6c76ddff109db96ecb6de03c3893",
+  "verifier_sha256": "e9da7b27892ca5c634e4905b1093fedc00655e4a504beec82de10cb796cb21f2",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Repair financial ledger posting with replay-safe event IDs, atomic balance updates and signed integer-cent accounting.\n\nRepository map:\nledger.py | imports:  | symbols: __init__, balance, post, Ledger\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: ledger, storage, unittest | symbols: test_duplicate_delivery, Public\n\nSelected source context:\n### ledger.py\nclass Ledger:\n def __init__(self,db):self.db=db\n def balance(self,account):\n  row=self.db.execute('SELECT cents FROM balances WHERE account=?',(account,)).fetchone()\n  return row[0] if row else 0\n def post(self,event_id,account,cents):\n  if not isinstance(cents,int):raise ValueError('integer cents required')\n  self.db.execute('INSERT OR REPLACE INTO ledger VALUES (?,?,?)',(event_id,account,cents))\n  self.db.execute('INSERT INTO balances VALUES (?,?) ON CONFLICT(account) DO UPDATE SET cents=cents+excluded.cents',(account,cents))\n  self.db.commit()\n  return self.balance(account)\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n d=sqlite3.connect(':memory:')\n d.execute('CREATE TABLE ledger (event_id TEXT PRIMARY KEY, account TEXT, cents INTEGER)')\n d.execute('CREATE TABLE balances (account TEXT PRIMARY KEY, cents INTEGER NOT NULL)')\n return d\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"ledger.py\", \"operation\": \"modify\", \"content\": \"class Ledger:\\n def __init__(self,db):self.db=db\\n def balance(self,account):\\n  row=self.db.execute('SELECT cents FROM balances WHERE account=?',(account,)).fetchone()\\n  return row[0] if row else 0\\n def post(self,event_id,account,cents):\\n  if not isinstance(cents,int):raise ValueError('integer cents required')\\n  self.db.execute('INSERT OR REPLACE INTO ledger VALUES (?,?,?)',(event_id,account,cents))\\n  self.db.execute('INSERT INTO balances VALUES (?,?) ON CONFLICT(account) DO UPDATE SET cents=cents+excluded.cents',(account,cents))\\n  self.db.commit()\\n  return self.balance(account)\\n\"}, {\"path\": \"storage.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\n\\ndef connect():\\n d=sqlite3.connect(':memory:')\\n d.execute('CREATE TABLE ledger (event_id TEXT PRIMARY KEY, account TEXT, cents INTEGER)')\\n d.execute('CREATE TABLE balances (account TEXT PRIMARY KEY, cents INTEGER NOT NULL)')\\n return d\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "ledger.py",
+      "storage.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 1,
+    "output": "\ntest_duplicate_delivery (test_public.Public.test_duplicate_delivery) ... FAIL\n\n======================================================================\nFAIL: test_duplicate_delivery (test_public.Public.test_duplicate_delivery)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-z9b0nvyv/repo/tests/test_public.py\", line 7, in test_duplicate_delivery\n    self.assertEqual(l.post('e1','A',100),100)\nAssertionError: 200 != 100\n\n----------------------------------------------------------------------\nRan 1 test in 0.001s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 1,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.124
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}
