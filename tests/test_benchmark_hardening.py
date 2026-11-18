@@ -51,8 +51,8 @@ class HardeningTests(unittest.TestCase):
     def test_all_reference_solutions_and_semantic_mutants(self):
         with patch('codepilot.agent.requests.post', side_effect=AssertionError('No network allowed')):
             report = hardening.run()
-        self.assertEqual(report['tasks'], 22)
-        self.assertEqual(len(report['rows']), 22)
+        self.assertEqual(report['tasks'], 45)
+        self.assertEqual(len(report['rows']), 45)
         for row in report['rows']:
             with self.subTest(task=row['task']):
                 self.assertTrue(row['reference_public_pass'])

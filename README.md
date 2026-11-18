@@ -68,30 +68,36 @@ retrace agent examples/sample_repo \
 
 ---
 
-## The v1.8 Benchmark Suite (22 Tasks)
+## The Benchmark Suite (45 Tasks: 15 Algorithmic + 30 Enterprise)
 
-The benchmark evaluates repair policies across **15 synthetic algorithmic tasks** and **7 enterprise distributed systems tasks**:
+The benchmark evaluates repair policies across **15 synthetic algorithmic tasks** and **30 enterprise distributed systems tasks** grouped into 6 architectural clusters:
 
-| Category | Tasks | Tested Invariants |
-| :--- | :--- | :--- |
-| **Bugfix & Feature** (7) | `clamp_bounds`, `deduplicate`, `average_empty`, `normalize_whitespace`, `slugify`, `running_total`, `group_counts` | Numerical bounds, deduplication, string slugification, accumulator state |
-| **Refactoring** (3) | `refactor_sort`, `refactor_default`, `refactor_copy` | Pure refactoring preserving external invariants |
-| **Multi-File** (3) | `multifile_discount`, `multifile_tax`, `multifile_inventory` | Coordinated cross-module data model changes |
-| **Regression** (2) | `regression_negative`, `regression_case` | Historical regression prevention |
-| **Enterprise** (7) | `enterprise_order_atomicity`, `enterprise_ledger_exactly_once`, `enterprise_tenant_cache`, `enterprise_bank_transfer`, `enterprise_circuit_breaker`, `enterprise_saga_coordinator`, `enterprise_rate_limiter_token_bucket` | Concurrency locks, idempotency conflicts, transactional rollback, reverse compensation order, fail-closed tenant isolation, token bucket refill |
+| Category / Cluster | Count | Tasks | Tested Invariants & Architectural Patterns |
+| :--- | :---: | :--- | :--- |
+| **Bugfix & Feature** | 7 | `clamp_bounds`, `deduplicate`, `average_empty`, `normalize_whitespace`, `slugify`, `running_total`, `group_counts` | Numerical bounds, deduplication, string slugification, accumulator state |
+| **Refactoring** | 3 | `refactor_sort`, `refactor_default`, `refactor_copy` | Pure refactoring preserving external invariants |
+| **Multi-File** | 3 | `multifile_discount`, `multifile_tax`, `multifile_inventory` | Coordinated cross-module data model changes |
+| **Regression** | 2 | `regression_negative`, `regression_case` | Historical regression prevention |
+| **Transactional & Durability** | 3 | `enterprise_wal_replay`, `enterprise_two_phase_commit`, `enterprise_event_sourcing_aggregate` | Write-Ahead Log CRC32 recovery, 2PC prepare/commit/abort atomicity, CQRS optimistic concurrency versioning |
+| **Concurrency & CRDTs** | 5 | `enterprise_distributed_lock_lease`, `enterprise_optimistic_concurrency_doc`, `enterprise_read_write_lock_fair`, `enterprise_crdt_pn_counter`, `enterprise_idempotent_event_consumer` | Monotonic fencing token renewal, ETag document patching, fair writer-starvation prevention, state-based PN-Counter join, deduplication collision rejection |
+| **Fault Tolerance & Sagas** | 6 | `enterprise_dead_letter_retry`, `enterprise_cache_stampede_mutex`, `enterprise_bulkhead_isolation`, `enterprise_outbox_publisher`, `enterprise_saga_coordinator`, `enterprise_circuit_breaker` | Exponential jitter backoff DLQ routing, single-flight mutex coalescing, tenant bulkhead thread/queue shedding, transactional outbox atomicity, reverse compensation order, three-state circuit breaker |
+| **Multi-Tenant Security & Isolation** | 5 | `enterprise_secret_rotation_vault`, `enterprise_tenant_rate_limiter`, `enterprise_audit_log_tamper_evident`, `enterprise_rbac_policy_evaluator`, `enterprise_tenant_cache` | Zero-downtime dual-version secret grace period, hierarchical noisy-neighbor rate limits, tamper-evident SHA-256 hash chains, deny-by-default circular RBAC evaluation, tenant cache revocation |
+| **Traffic Control & Resource Pools** | 5 | `enterprise_sliding_window_rate_limiter`, `enterprise_connection_pool`, `enterprise_token_bucket_burst`, `enterprise_adaptive_concurrency_limiter`, `enterprise_rate_limiter_token_bucket` | Sub-second sliding window log rate limiting, pooled socket leak recovery, fractional burst token refill, Vegas gradient latency throttling, SQLite atomic token consumption |
+| **Coordination & Consensus** | 3 | `enterprise_consistent_hash_ring`, `enterprise_leader_epoch_election`, `enterprise_replicated_state_machine` | Virtual node ring minimal partition churn, monotonic leader epoch fencing, quorum write replication ($W + R > N$) |
 
 ### Running Benchmark Validation & Hardening
 
 ```bash
-# 1. Validate all 22 tasks for self-consistency
+# 1. Validate all 45 tasks for self-consistency (bad_public=False, good_public=True, good_heldout=True)
 python3 -m benchmarks.v18.task_suite_runner validate
 
-# 2. Run mutation hardening (kills mutants in public and heldout verifiers)
+# 2. Run multi-operator AST mutation hardening (kills mutants in public and heldout verifiers)
 python3 -m benchmarks.v18.hardening
 
-# 3. Run autonomous benchmark daemon (handles 429 backoff automatically)
+# 3. Run autonomous benchmark daemon across enterprise tasks (handles 429 backoff automatically)
 python3 -m benchmarks.v18.autonomous_runner \
-  --output-dir research-full-suite-22 \
+  --output-dir research-enterprise-30 \
+  --category enterprise \
   --repetitions 1 --attempts 2 --retry-interval-seconds 240
 ```
 

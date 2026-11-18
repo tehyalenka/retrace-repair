@@ -198,6 +198,213 @@
       "solution": "enterprise_rate_limiter_token_bucket/solution",
       "public_verifier": "enterprise_rate_limiter_token_bucket/public.py",
       "heldout_verifier": "enterprise_rate_limiter_token_bucket/heldout.py"
+    },
+    {
+      "id": "enterprise_wal_replay",
+      "category": "enterprise",
+      "task": "Implement Write-Ahead Log (WAL) record serialization, recovery manager, checkpointing, and replay with CRC32 integrity verification. Corrupted records or checksum mismatches must raise CorruptedLogRecordError.",
+      "repo": "enterprise_wal_replay/repo",
+      "solution": "enterprise_wal_replay/solution",
+      "public_verifier": "enterprise_wal_replay/public.py",
+      "heldout_verifier": "enterprise_wal_replay/heldout.py"
+    },
+    {
+      "id": "enterprise_two_phase_commit",
+      "category": "enterprise",
+      "task": "Implement a 2-Phase Commit (2PC) coordinator with participant prepare/commit/abort phases, rolling back all prepared participants if any participant votes abort or fails.",
+      "repo": "enterprise_two_phase_commit/repo",
+      "solution": "enterprise_two_phase_commit/solution",
+      "public_verifier": "enterprise_two_phase_commit/public.py",
+      "heldout_verifier": "enterprise_two_phase_commit/heldout.py"
+    },
+    {
+      "id": "enterprise_event_sourcing_aggregate",
+      "category": "enterprise",
+      "task": "Implement an event-sourced aggregate root with optimistic concurrency control (OCC), rejecting concurrent stream appends on mismatched expected versions with OptimisticConcurrencyError.",
+      "repo": "enterprise_event_sourcing_aggregate/repo",
+      "solution": "enterprise_event_sourcing_aggregate/solution",
+      "public_verifier": "enterprise_event_sourcing_aggregate/public.py",
+      "heldout_verifier": "enterprise_event_sourcing_aggregate/heldout.py"
+    },
+    {
+      "id": "enterprise_distributed_lock_lease",
+      "category": "enterprise",
+      "task": "Implement a lease-based distributed lock manager with monotonic fencing tokens and heartbeat lease renewal, rejecting expired lease operations and stale owner releases.",
+      "repo": "enterprise_distributed_lock_lease/repo",
+      "solution": "enterprise_distributed_lock_lease/solution",
+      "public_verifier": "enterprise_distributed_lock_lease/public.py",
+      "heldout_verifier": "enterprise_distributed_lock_lease/heldout.py"
+    },
+    {
+      "id": "enterprise_optimistic_concurrency_doc",
+      "category": "enterprise",
+      "task": "Implement an optimistic concurrency document store with ETag revision verification, rejecting patch updates with mismatched ETags via PreconditionFailedError without mutating state.",
+      "repo": "enterprise_optimistic_concurrency_doc/repo",
+      "solution": "enterprise_optimistic_concurrency_doc/solution",
+      "public_verifier": "enterprise_optimistic_concurrency_doc/public.py",
+      "heldout_verifier": "enterprise_optimistic_concurrency_doc/heldout.py"
+    },
+    {
+      "id": "enterprise_read_write_lock_fair",
+      "category": "enterprise",
+      "task": "Implement a fair Reader-Writer Lock (RWLock) preventing writer starvation by queuing new readers behind waiting writers, with context manager support.",
+      "repo": "enterprise_read_write_lock_fair/repo",
+      "solution": "enterprise_read_write_lock_fair/solution",
+      "public_verifier": "enterprise_read_write_lock_fair/public.py",
+      "heldout_verifier": "enterprise_read_write_lock_fair/heldout.py"
+    },
+    {
+      "id": "enterprise_crdt_pn_counter",
+      "category": "enterprise",
+      "task": "Implement a conflict-free replicated data type (CRDT) PN-Counter with component-wise maximum merge, guaranteeing idempotence, commutativity, and monotonicity.",
+      "repo": "enterprise_crdt_pn_counter/repo",
+      "solution": "enterprise_crdt_pn_counter/solution",
+      "public_verifier": "enterprise_crdt_pn_counter/public.py",
+      "heldout_verifier": "enterprise_crdt_pn_counter/heldout.py"
+    },
+    {
+      "id": "enterprise_idempotent_event_consumer",
+      "category": "enterprise",
+      "task": "Implement an idempotent event consumer with sliding deduplication window, returning cached results on duplicate delivery and rejecting conflicting payloads with ConflictingPayloadError.",
+      "repo": "enterprise_idempotent_event_consumer/repo",
+      "solution": "enterprise_idempotent_event_consumer/solution",
+      "public_verifier": "enterprise_idempotent_event_consumer/public.py",
+      "heldout_verifier": "enterprise_idempotent_event_consumer/heldout.py"
+    },
+    {
+      "id": "enterprise_dead_letter_retry",
+      "category": "enterprise",
+      "task": "Implement retry dispatching with exponential backoff, immediate dead-letter queue (DLQ) routing for NonRetryableError, and retry exhaustion routing with failure metadata.",
+      "repo": "enterprise_dead_letter_retry/repo",
+      "solution": "enterprise_dead_letter_retry/solution",
+      "public_verifier": "enterprise_dead_letter_retry/public.py",
+      "heldout_verifier": "enterprise_dead_letter_retry/heldout.py"
+    },
+    {
+      "id": "enterprise_cache_stampede_mutex",
+      "category": "enterprise",
+      "task": "Implement cache stampede prevention with single-flight mutex coalescing, ensuring exactly one backend loader executes during concurrent cache misses.",
+      "repo": "enterprise_cache_stampede_mutex/repo",
+      "solution": "enterprise_cache_stampede_mutex/solution",
+      "public_verifier": "enterprise_cache_stampede_mutex/public.py",
+      "heldout_verifier": "enterprise_cache_stampede_mutex/heldout.py"
+    },
+    {
+      "id": "enterprise_bulkhead_isolation",
+      "category": "enterprise",
+      "task": "Implement tenant bulkhead resource isolation with bounded concurrent execution and queue capacity, rejecting saturated tenants with BulkheadFullError without impacting other tenants.",
+      "repo": "enterprise_bulkhead_isolation/repo",
+      "solution": "enterprise_bulkhead_isolation/solution",
+      "public_verifier": "enterprise_bulkhead_isolation/public.py",
+      "heldout_verifier": "enterprise_bulkhead_isolation/heldout.py"
+    },
+    {
+      "id": "enterprise_outbox_publisher",
+      "category": "enterprise",
+      "task": "Implement transactional outbox polling publisher in SQLite with atomic status transitions, keeping records PENDING on broker exceptions for retry.",
+      "repo": "enterprise_outbox_publisher/repo",
+      "solution": "enterprise_outbox_publisher/solution",
+      "public_verifier": "enterprise_outbox_publisher/public.py",
+      "heldout_verifier": "enterprise_outbox_publisher/heldout.py"
+    },
+    {
+      "id": "enterprise_secret_rotation_vault",
+      "category": "enterprise",
+      "task": "Implement zero-downtime secret rotation vault with active/previous grace-period decryption and immediate SecretRevokedError on revoked secret versions.",
+      "repo": "enterprise_secret_rotation_vault/repo",
+      "solution": "enterprise_secret_rotation_vault/solution",
+      "public_verifier": "enterprise_secret_rotation_vault/public.py",
+      "heldout_verifier": "enterprise_secret_rotation_vault/heldout.py"
+    },
+    {
+      "id": "enterprise_tenant_rate_limiter",
+      "category": "enterprise",
+      "task": "Implement hierarchical multi-tenant rate limiter enforcing per-tenant tier quotas alongside global limits to prevent noisy-neighbor starvation.",
+      "repo": "enterprise_tenant_rate_limiter/repo",
+      "solution": "enterprise_tenant_rate_limiter/solution",
+      "public_verifier": "enterprise_tenant_rate_limiter/public.py",
+      "heldout_verifier": "enterprise_tenant_rate_limiter/heldout.py"
+    },
+    {
+      "id": "enterprise_audit_log_tamper_evident",
+      "category": "enterprise",
+      "task": "Implement tamper-evident cryptographic hash-chain audit log with SHA-256 prev_hash verification, pinpointing sequence discontinuity and record tampering.",
+      "repo": "enterprise_audit_log_tamper_evident/repo",
+      "solution": "enterprise_audit_log_tamper_evident/solution",
+      "public_verifier": "enterprise_audit_log_tamper_evident/public.py",
+      "heldout_verifier": "enterprise_audit_log_tamper_evident/heldout.py"
+    },
+    {
+      "id": "enterprise_rbac_policy_evaluator",
+      "category": "enterprise",
+      "task": "Implement deny-by-default RBAC engine with role inheritance, explicit DENY precedence over ALLOW, and CyclicRoleInheritanceError detection.",
+      "repo": "enterprise_rbac_policy_evaluator/repo",
+      "solution": "enterprise_rbac_policy_evaluator/solution",
+      "public_verifier": "enterprise_rbac_policy_evaluator/public.py",
+      "heldout_verifier": "enterprise_rbac_policy_evaluator/heldout.py"
+    },
+    {
+      "id": "enterprise_sliding_window_rate_limiter",
+      "category": "enterprise",
+      "task": "Implement sliding-window log rate limiter with sub-second timestamps, preventing boundary burst leakage across fixed window boundaries.",
+      "repo": "enterprise_sliding_window_rate_limiter/repo",
+      "solution": "enterprise_sliding_window_rate_limiter/solution",
+      "public_verifier": "enterprise_sliding_window_rate_limiter/public.py",
+      "heldout_verifier": "enterprise_sliding_window_rate_limiter/heldout.py"
+    },
+    {
+      "id": "enterprise_connection_pool",
+      "category": "enterprise",
+      "task": "Implement connection pool with max_size bounds, acquisition timeout raising ConnectionPoolExhaustedError, and dead connection eviction/replacement.",
+      "repo": "enterprise_connection_pool/repo",
+      "solution": "enterprise_connection_pool/solution",
+      "public_verifier": "enterprise_connection_pool/public.py",
+      "heldout_verifier": "enterprise_connection_pool/heldout.py"
+    },
+    {
+      "id": "enterprise_token_bucket_burst",
+      "category": "enterprise",
+      "task": "Implement dual-capacity token bucket rate limiter with floating-point fractional sub-second refill and burst capacity clamping.",
+      "repo": "enterprise_token_bucket_burst/repo",
+      "solution": "enterprise_token_bucket_burst/solution",
+      "public_verifier": "enterprise_token_bucket_burst/public.py",
+      "heldout_verifier": "enterprise_token_bucket_burst/heldout.py"
+    },
+    {
+      "id": "enterprise_adaptive_concurrency_limiter",
+      "category": "enterprise",
+      "task": "Implement Vegas-style gradient adaptive concurrency limiter dynamically throttling concurrency limit downwards during round-trip time spikes.",
+      "repo": "enterprise_adaptive_concurrency_limiter/repo",
+      "solution": "enterprise_adaptive_concurrency_limiter/solution",
+      "public_verifier": "enterprise_adaptive_concurrency_limiter/public.py",
+      "heldout_verifier": "enterprise_adaptive_concurrency_limiter/heldout.py"
+    },
+    {
+      "id": "enterprise_consistent_hash_ring",
+      "category": "enterprise",
+      "task": "Implement consistent hash ring with virtual nodes, guaranteeing deterministic lookup and minimal key relocation on cluster topology changes.",
+      "repo": "enterprise_consistent_hash_ring/repo",
+      "solution": "enterprise_consistent_hash_ring/solution",
+      "public_verifier": "enterprise_consistent_hash_ring/public.py",
+      "heldout_verifier": "enterprise_consistent_hash_ring/heldout.py"
+    },
+    {
+      "id": "enterprise_leader_epoch_election",
+      "category": "enterprise",
+      "task": "Implement leader election coordinator with monotonic epochs and split-brain fencing, rejecting stale epoch writes with StaleEpochError.",
+      "repo": "enterprise_leader_epoch_election/repo",
+      "solution": "enterprise_leader_epoch_election/solution",
+      "public_verifier": "enterprise_leader_epoch_election/public.py",
+      "heldout_verifier": "enterprise_leader_epoch_election/heldout.py"
+    },
+    {
+      "id": "enterprise_replicated_state_machine",
+      "category": "enterprise",
+      "task": "Implement quorum-replicated state machine, ensuring state machine mutations only apply after quorum confirmation and rolling back uncommitted entries.",
+      "repo": "enterprise_replicated_state_machine/repo",
+      "solution": "enterprise_replicated_state_machine/solution",
+      "public_verifier": "enterprise_replicated_state_machine/public.py",
+      "heldout_verifier": "enterprise_replicated_state_machine/heldout.py"
     }
   ]
 }

@@ -54,7 +54,7 @@ class StatisticalAnalysisTests(unittest.TestCase):
             self.assertGreaterEqual(data["manifest_schema"], 1)
             self.assertIn("git_provenance", data)
             self.assertIn("task_inputs", data["benchmark_metadata"])
-            self.assertEqual(data["benchmark_metadata"]["total_tasks"], 22)
+            self.assertEqual(data["benchmark_metadata"]["total_tasks"], 45)
 
     def test_mcnemar_drops_unpaired_tasks_cleanly(self):
         """Verify that tasks missing in either arm are dropped rather than imputed as failure."""
