@@ -14,6 +14,52 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 
+ENTERPRISE_CLUSTERS = {
+    "transactional_durability": [
+        "enterprise_wal_replay",
+        "enterprise_two_phase_commit",
+        "enterprise_event_sourcing_aggregate",
+        "enterprise_order_atomicity",
+        "enterprise_ledger_exactly_once",
+        "enterprise_bank_transfer",
+    ],
+    "concurrency_crdts": [
+        "enterprise_distributed_lock_lease",
+        "enterprise_optimistic_concurrency_doc",
+        "enterprise_read_write_lock_fair",
+        "enterprise_crdt_pn_counter",
+        "enterprise_idempotent_event_consumer",
+    ],
+    "fault_tolerance_sagas": [
+        "enterprise_dead_letter_retry",
+        "enterprise_cache_stampede_mutex",
+        "enterprise_bulkhead_isolation",
+        "enterprise_outbox_publisher",
+        "enterprise_saga_coordinator",
+        "enterprise_circuit_breaker",
+    ],
+    "multi_tenant_isolation": [
+        "enterprise_secret_rotation_vault",
+        "enterprise_tenant_rate_limiter",
+        "enterprise_audit_log_tamper_evident",
+        "enterprise_rbac_policy_evaluator",
+        "enterprise_tenant_cache",
+    ],
+    "traffic_resource_pools": [
+        "enterprise_sliding_window_rate_limiter",
+        "enterprise_connection_pool",
+        "enterprise_token_bucket_burst",
+        "enterprise_adaptive_concurrency_limiter",
+        "enterprise_rate_limiter_token_bucket",
+    ],
+    "coordination_consensus": [
+        "enterprise_consistent_hash_ring",
+        "enterprise_leader_epoch_election",
+        "enterprise_replicated_state_machine",
+    ],
+}
+
+
 def bootstrap_ci(values: List[float], num_samples: int = 2000, alpha: float = 0.05) -> Tuple[float, float, float]:
     """Calculate mean and non-parametric bootstrap confidence interval."""
     if not values:
@@ -44,31 +90,7 @@ def mcnemar_exact_p_value(b: int, c: int) -> float:
     return min(1.0, 2.0 * prob)
 
 
-def analyze_directory(results_dir: str) -> Dict:
-    path = Path(results_dir)
-    live_files = sorted(path.glob("*-live.json"))
-    if not live_files:
-        raise ValueError(f"No live benchmark JSON files found in {results_dir}")
-
-    active_conditions = set()
-    for file_path in live_files:
-        try:
-            data = json.loads(file_path.read_text(encoding="utf-8"))
-            for row in data.get("rows", []):
-                if row.get("condition"):
-                    active_conditions.add(row["condition"])
-        except Exception:
-            pass
-
-    known_arms = ["resample", "feedback", "counterfactual", "counterfactual_replay"]
-    strategy_keys = [a for a in known_arms if a in active_conditions]
-    if "resample" not in strategy_keys:
-        strategy_keys.insert(0, "resample")
-    if "feedback" not in strategy_keys:
-        strategy_keys.insert(1, "feedback")
-    if "counterfactual" not in strategy_keys and "counterfactual_replay" not in strategy_keys:
-        strategy_keys.append("counterfactual")
-
+def compute_metrics_for_tasks(task_rows: List[Dict], strategy_keys: List[str]) -> Tuple[Dict, Dict]:
     arms_data = {
         arm: {
             "tasks": 0,
@@ -81,73 +103,23 @@ def analyze_directory(results_dir: str) -> Dict:
         for arm in strategy_keys
     }
 
-    per_task_paired = []
-    seen_tasks = set()
-
-    for file_path in live_files:
-        try:
-            content = file_path.read_text(encoding="utf-8")
-            data = json.loads(content)
-        except Exception as exc:
-            raise ValueError(f"Malformed benchmark JSON file: {file_path} ({exc})") from exc
-
-        task_id = file_path.stem.replace("-live", "")
-        if task_id in seen_tasks:
-            raise ValueError(f"Duplicate task JSON file encountered: {task_id}")
-        seen_tasks.add(task_id)
-
-        task_row = {"task": task_id, "arms": {}}
-        seen_conditions = set()
-
-        for row in data.get("rows", []):
-            cond = row.get("condition")
+    for task_row in task_rows:
+        for cond, arm_vals in task_row.get("arms", {}).items():
             if cond not in arms_data:
                 continue
-            if cond in seen_conditions:
-                raise ValueError(f"Duplicate strategy row '{cond}' in task '{task_id}'")
-            seen_conditions.add(cond)
-
-            pub = 1.0 if row.get("success") else 0.0
-            held = 1.0 if row.get("heldout", {}).get("passed") else 0.0
-            live_calls = int(row.get("live_calls", 0))
-
-            # Extract provider-reported tokens from request_accounting
-            req_acc = row.get("request_accounting") or {}
-            prompt_tok = req_acc.get("prompt_tokens")
-            comp_tok = req_acc.get("completion_tokens")
-
-            provider_tok: Optional[int] = None
-            estimated_tok: Optional[int] = None
-
-            if prompt_tok is not None and comp_tok is not None:
-                provider_tok = int(prompt_tok) + int(comp_tok)
-            elif "calls" in row:
-                # Disaggregate estimation: explicitly marked as estimated, never conflated with provider-reported
-                estimated_tok = sum(
-                    len(c.get("response", "").split()) * 2
-                    for c in row["calls"]
-                    if c.get("origin") == "live"
-                )
+            pub = 1.0 if arm_vals.get("public_pass") else 0.0
+            held = 1.0 if arm_vals.get("heldout_pass") else 0.0
+            live_calls = int(arm_vals.get("live_calls", 0))
 
             arms_data[cond]["tasks"] += 1
             arms_data[cond]["public_pass"].append(pub)
             arms_data[cond]["heldout_pass"].append(held)
             arms_data[cond]["live_calls"].append(live_calls)
 
-            if provider_tok is not None:
-                arms_data[cond]["provider_tokens"].append(provider_tok)
-            if estimated_tok is not None:
-                arms_data[cond]["estimated_tokens"].append(estimated_tok)
-
-            task_row["arms"][cond] = {
-                "public_pass": bool(pub),
-                "heldout_pass": bool(held),
-                "provider_tokens": provider_tok,
-                "estimated_tokens": estimated_tok,
-                "live_calls": live_calls,
-            }
-
-        per_task_paired.append(task_row)
+            if arm_vals.get("provider_tokens") is not None:
+                arms_data[cond]["provider_tokens"].append(arm_vals["provider_tokens"])
+            if arm_vals.get("estimated_tokens") is not None:
+                arms_data[cond]["estimated_tokens"].append(arm_vals["estimated_tokens"])
 
     summary_stats = {}
     for arm, metrics in arms_data.items():
@@ -192,13 +164,14 @@ def analyze_directory(results_dir: str) -> Dict:
             pairs.append(("feedback", cf))
         if "resample" in strategy_keys:
             pairs.append(("resample", cf))
+
     for a1, a2 in pairs:
         b = 0  # a1 passed heldout, a2 failed
         c = 0  # a1 failed heldout, a2 passed
         paired_evaluable = 0
         dropped_tasks = []
 
-        for t in per_task_paired:
+        for t in task_rows:
             has_a1 = a1 in t["arms"]
             has_a2 = a2 in t["arms"]
             if not has_a1 or not has_a2:
@@ -229,16 +202,117 @@ def analyze_directory(results_dir: str) -> Dict:
             ),
         }
 
+    return summary_stats, mcnemar_results
+
+
+def analyze_directory(results_dir: str) -> Dict:
+    path = Path(results_dir)
+    live_files = sorted(path.glob("*-live.json"))
+    if not live_files:
+        raise ValueError(f"No live benchmark JSON files found in {results_dir}")
+
+    active_conditions = set()
+    for file_path in live_files:
+        try:
+            data = json.loads(file_path.read_text(encoding="utf-8"))
+            for row in data.get("rows", []):
+                if row.get("condition"):
+                    active_conditions.add(row["condition"])
+        except Exception:
+            pass
+
+    known_arms = ["resample", "feedback", "counterfactual", "counterfactual_replay"]
+    strategy_keys = [a for a in known_arms if a in active_conditions]
+    if "resample" not in strategy_keys:
+        strategy_keys.insert(0, "resample")
+    if "feedback" not in strategy_keys:
+        strategy_keys.insert(1, "feedback")
+    if "counterfactual" not in strategy_keys and "counterfactual_replay" not in strategy_keys:
+        strategy_keys.append("counterfactual")
+
+    per_task_paired = []
+    seen_tasks = set()
+
+    for file_path in live_files:
+        try:
+            content = file_path.read_text(encoding="utf-8")
+            data = json.loads(content)
+        except Exception as exc:
+            raise ValueError(f"Malformed benchmark JSON file: {file_path} ({exc})") from exc
+
+        task_id = file_path.stem.replace("-live", "")
+        if task_id in seen_tasks:
+            raise ValueError(f"Duplicate task JSON file encountered: {task_id}")
+        seen_tasks.add(task_id)
+
+        task_row = {"task": task_id, "arms": {}}
+        seen_conditions = set()
+
+        for row in data.get("rows", []):
+            cond = row.get("condition")
+            if cond not in strategy_keys:
+                continue
+            if cond in seen_conditions:
+                raise ValueError(f"Duplicate strategy row '{cond}' in task '{task_id}'")
+            seen_conditions.add(cond)
+
+            pub = 1.0 if row.get("success") else 0.0
+            held = 1.0 if row.get("heldout", {}).get("passed") else 0.0
+            live_calls = int(row.get("live_calls", 0))
+
+            req_acc = row.get("request_accounting") or {}
+            prompt_tok = req_acc.get("prompt_tokens")
+            comp_tok = req_acc.get("completion_tokens")
+
+            provider_tok: Optional[int] = None
+            estimated_tok: Optional[int] = None
+
+            if prompt_tok is not None and comp_tok is not None:
+                provider_tok = int(prompt_tok) + int(comp_tok)
+            elif "calls" in row:
+                estimated_tok = sum(
+                    len(c.get("response", "").split()) * 2
+                    for c in row["calls"]
+                    if c.get("origin") == "live"
+                )
+
+            task_row["arms"][cond] = {
+                "public_pass": bool(pub),
+                "heldout_pass": bool(held),
+                "provider_tokens": provider_tok,
+                "estimated_tokens": estimated_tok,
+                "live_calls": live_calls,
+            }
+
+        per_task_paired.append(task_row)
+
+    summary_stats, mcnemar_results = compute_metrics_for_tasks(per_task_paired, strategy_keys)
+
+    # Cluster-stratified analysis for the 6 enterprise architectural clusters
+    cluster_reports = {}
+    for cluster_name, task_ids in ENTERPRISE_CLUSTERS.items():
+        cluster_rows = [t for t in per_task_paired if t["task"] in task_ids]
+        if cluster_rows:
+            c_stats, c_mcnemar = compute_metrics_for_tasks(cluster_rows, strategy_keys)
+            cluster_reports[cluster_name] = {
+                "tasks_count": len(cluster_rows),
+                "tasks": [t["task"] for t in cluster_rows],
+                "summary_statistics": c_stats,
+                "mcnemar_paired_tests": c_mcnemar,
+            }
+
     return {
         "analysis_schema": 2,
         "results_directory": str(path),
         "total_tasks": len(per_task_paired),
         "summary_statistics": summary_stats,
         "mcnemar_paired_tests": mcnemar_results,
+        "cluster_stratified_analysis": cluster_reports,
         "methodology_notes": [
             "Strict paired evaluation: tasks missing either arm are excluded from McNemar comparison rather than imputed as failures.",
             "Provider-reported tokens extracted directly from request_accounting without heuristic substitution.",
             "Bootstrap confidence intervals calculated over 2,000 resamples at alpha=0.05.",
+            "Stratified breakdown over 6 enterprise architectural clusters: transactional_durability, concurrency_crdts, fault_tolerance_sagas, multi_tenant_isolation, traffic_resource_pools, and coordination_consensus.",
         ],
     }
 

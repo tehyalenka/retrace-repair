@@ -128,6 +128,43 @@ class StatisticalAnalysisTests(unittest.TestCase):
             self.assertIsNone(stats["estimated_tokens"])
             self.assertEqual(stats["token_accounting_mode"], "provider_verified")
 
+    def test_cluster_stratified_analysis(self):
+        """Verify cluster-stratified metrics are computed across architectural clusters."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            # Create a task in transactional_durability
+            wal_task = {
+                "rows": [
+                    {"condition": "resample", "success": True, "heldout": {"passed": True}, "live_calls": 1},
+                    {"condition": "counterfactual_replay", "success": True, "heldout": {"passed": True}, "live_calls": 2},
+                ]
+            }
+            # Create a task in coordination_consensus
+            hash_task = {
+                "rows": [
+                    {"condition": "resample", "success": False, "heldout": {"passed": False}, "live_calls": 1},
+                    {"condition": "counterfactual_replay", "success": True, "heldout": {"passed": True}, "live_calls": 2},
+                ]
+            }
+            (tmp_path / "enterprise_wal_replay-live.json").write_text(json.dumps(wal_task), encoding="utf-8")
+            (tmp_path / "enterprise_consistent_hash_ring-live.json").write_text(json.dumps(hash_task), encoding="utf-8")
+
+            report = analyze_directory(str(tmp_path))
+            self.assertIn("cluster_stratified_analysis", report)
+            clusters = report["cluster_stratified_analysis"]
+            self.assertIn("transactional_durability", clusters)
+            self.assertIn("coordination_consensus", clusters)
+
+            wal_cluster = clusters["transactional_durability"]
+            self.assertEqual(wal_cluster["tasks_count"], 1)
+            self.assertIn("enterprise_wal_replay", wal_cluster["tasks"])
+            self.assertEqual(wal_cluster["summary_statistics"]["resample"]["heldout_pass_rate"], 1.0)
+
+            hash_cluster = clusters["coordination_consensus"]
+            self.assertEqual(hash_cluster["tasks_count"], 1)
+            self.assertEqual(hash_cluster["summary_statistics"]["resample"]["heldout_pass_rate"], 0.0)
+            self.assertEqual(hash_cluster["summary_statistics"]["counterfactual_replay"]["heldout_pass_rate"], 1.0)
+
     def test_manifest_lifecycle_run_and_evidence_seal(self):
         """Test the two-record lifecycle: run-manifest before execution and evidence-manifest after."""
         with tempfile.TemporaryDirectory() as tmp:

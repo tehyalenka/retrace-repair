@@ -6,14 +6,14 @@ from rwlock import FairReadWriteLock
 class Public(unittest.TestCase):
     def test_concurrent_readers(self):
         lock = FairReadWriteLock()
-        self.assertTrue(lock.acquire_read())
-        self.assertTrue(lock.acquire_read())
+        self.assertTrue(lock.acquire_read(timeout=0.5))
+        self.assertTrue(lock.acquire_read(timeout=0.5))
         lock.release_read()
         lock.release_read()
 
     def test_writer_starvation_prevention(self):
         lock = FairReadWriteLock()
-        lock.acquire_read() # Active reader holds lock
+        self.assertTrue(lock.acquire_read(timeout=0.5)) # Active reader holds lock
 
         writer_started = threading.Event()
         writer_acquired = threading.Event()

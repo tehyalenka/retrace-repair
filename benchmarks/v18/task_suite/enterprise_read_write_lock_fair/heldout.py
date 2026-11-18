@@ -6,7 +6,7 @@ from rwlock import FairReadWriteLock
 class Heldout(unittest.TestCase):
     def test_writer_mutual_exclusion(self):
         lock = FairReadWriteLock()
-        lock.acquire_write()
+        self.assertTrue(lock.acquire_write(timeout=0.5))
 
         other_reader_acquired = [False]
         def reader():
@@ -21,12 +21,12 @@ class Heldout(unittest.TestCase):
 
     def test_context_managers(self):
         lock = FairReadWriteLock()
-        with lock.read_lock() as ctx:
+        with lock.read_lock(timeout=0.5) as ctx:
             self.assertIsNotNone(ctx)
-            with lock.read_lock() as ctx2:
+            with lock.read_lock(timeout=0.5) as ctx2:
                 self.assertIsNotNone(ctx2)
 
-        with lock.write_lock() as wctx:
+        with lock.write_lock(timeout=0.5) as wctx:
             self.assertIsNotNone(wctx)
 
     def test_release_underflow_raises_runtime_error(self):
@@ -38,7 +38,7 @@ class Heldout(unittest.TestCase):
 
     def test_acquisition_timeout(self):
         lock = FairReadWriteLock()
-        lock.acquire_write()
+        self.assertTrue(lock.acquire_write(timeout=0.5))
         self.assertFalse(lock.acquire_write(timeout=0.05))
         self.assertFalse(lock.acquire_read(timeout=0.05))
         lock.release_write()

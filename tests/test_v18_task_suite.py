@@ -53,3 +53,35 @@ class TaskSuiteTests(unittest.TestCase):
                 self.assertFalse(row['initial_public_pass'])
                 self.assertTrue(row['solution_public_pass'])
                 self.assertTrue(row['solution_heldout_pass'])
+
+    def test_fixture_isolation_no_heldout_or_solution_leakage(self):
+        """Formally prove that held-out tests and reference solutions cannot leak into agent workspace."""
+        import tempfile
+        from pathlib import Path
+        from benchmarks.v18.task_suite_runner import ROOT, fixture
+
+        items = tasks()
+        for item in items:
+            with tempfile.TemporaryDirectory() as tmp:
+                repo_dir = Path(tmp) / item["id"]
+                fixture(item, repo_dir)
+
+                # 1. No heldout files or solution directories exist in workspace
+                all_relative_files = [str(p.relative_to(repo_dir)) for p in repo_dir.rglob("*")]
+                self.assertFalse(any("heldout" in f.lower() for f in all_relative_files),
+                                 f"Leakage detected: heldout test file found in {item['id']}")
+                self.assertFalse(any("solution" in f.lower() for f in all_relative_files),
+                                 f"Leakage detected: solution file/dir found in {item['id']}")
+
+                # 2. None of the heldout verifier content appears in any workspace file
+                heldout_text = (ROOT / item["heldout_verifier"]).read_text(encoding="utf-8").strip()
+                for p in repo_dir.rglob("*.py"):
+                    content = p.read_text(encoding="utf-8")
+                    self.assertNotIn(heldout_text, content,
+                                     f"Leakage detected: heldout verifier body found in {p}")
+
+                # 3. Public test fixture exists strictly under tests/test_public.py
+                public_test = repo_dir / "tests" / "test_public.py"
+                self.assertTrue(public_test.exists())
+                public_text = (ROOT / item["public_verifier"]).read_text(encoding="utf-8")
+                self.assertEqual(public_test.read_text(encoding="utf-8"), public_text)

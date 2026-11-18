@@ -45,9 +45,12 @@ def verify(repo, source):
         test.write_text(source,encoding='utf-8')
         env=os.environ.copy()
         env['PYTHONPATH']=str(repo)
-        result=subprocess.run([sys.executable,'-m','unittest','discover','-s',tmp,
-                               '-p','test_suite_fixture.py'],cwd=repo,env=env,
-                              capture_output=True,text=True,timeout=15)
+        try:
+            result=subprocess.run([sys.executable,'-m','unittest','discover','-s',tmp,
+                                   '-p','test_suite_fixture.py'],cwd=repo,env=env,
+                                  capture_output=True,text=True,timeout=15)
+        except subprocess.TimeoutExpired:
+            return False
         # A successful exit with zero discovered tests is not verification.
         output = result.stderr + "\n" + result.stdout
         match = re.search(r"^Ran (\d+) tests? in ", output, re.MULTILINE)

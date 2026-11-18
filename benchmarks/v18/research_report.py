@@ -11,6 +11,52 @@ ARMS = SUPPORTED_ARMS
 CATEGORIES = ('bugfix', 'feature', 'refactor', 'multifile', 'regression', 'enterprise')
 
 
+ENTERPRISE_CLUSTERS = {
+    "transactional_durability": [
+        "enterprise_wal_replay",
+        "enterprise_two_phase_commit",
+        "enterprise_event_sourcing_aggregate",
+        "enterprise_order_atomicity",
+        "enterprise_ledger_exactly_once",
+        "enterprise_bank_transfer",
+    ],
+    "concurrency_crdts": [
+        "enterprise_distributed_lock_lease",
+        "enterprise_optimistic_concurrency_doc",
+        "enterprise_read_write_lock_fair",
+        "enterprise_crdt_pn_counter",
+        "enterprise_idempotent_event_consumer",
+    ],
+    "fault_tolerance_sagas": [
+        "enterprise_dead_letter_retry",
+        "enterprise_cache_stampede_mutex",
+        "enterprise_bulkhead_isolation",
+        "enterprise_outbox_publisher",
+        "enterprise_saga_coordinator",
+        "enterprise_circuit_breaker",
+    ],
+    "multi_tenant_isolation": [
+        "enterprise_secret_rotation_vault",
+        "enterprise_tenant_rate_limiter",
+        "enterprise_audit_log_tamper_evident",
+        "enterprise_rbac_policy_evaluator",
+        "enterprise_tenant_cache",
+    ],
+    "traffic_resource_pools": [
+        "enterprise_sliding_window_rate_limiter",
+        "enterprise_connection_pool",
+        "enterprise_token_bucket_burst",
+        "enterprise_adaptive_concurrency_limiter",
+        "enterprise_rate_limiter_token_bucket",
+    ],
+    "coordination_consensus": [
+        "enterprise_consistent_hash_ring",
+        "enterprise_leader_epoch_election",
+        "enterprise_replicated_state_machine",
+    ],
+}
+
+
 def _blocked(row):
     return any(h.get('failure_stage') == 'model_request' and
                h.get('failure_category') == 'provider_error'
@@ -170,6 +216,22 @@ def summarize(records):
                                     'completed': sum(r['status'] == 'completed' for r in rows),
                                     'pending': sum(r['status'] == 'pending' for r in rows),
                                     'combined_pass': sum(r['combined'] is True for r in rows)})
+
+    by_cluster = []
+    for cluster_name, task_ids in ENTERPRISE_CLUSTERS.items():
+        for arm in arms_in_records:
+            rows = [r for r in records if r['task'] in task_ids and r['arm'] == arm]
+            if rows:
+                by_cluster.append({
+                    'cluster': cluster_name,
+                    'arm': arm,
+                    'completed': sum(r['status'] == 'completed' for r in rows),
+                    'pending': sum(r['status'] == 'pending' for r in rows),
+                    'public_pass': sum(r['public'] is True for r in rows if r['status'] == 'completed'),
+                    'heldout_pass': sum(r['heldout'] is True for r in rows if r['status'] == 'completed'),
+                    'combined_pass': sum(r['combined'] is True for r in rows if r['status'] == 'completed'),
+                })
+
     by_key = defaultdict(dict)
     for r in records:
         by_key[(r['task'], r['repetition'])][r['arm']] = r
@@ -187,7 +249,7 @@ def summarize(records):
             pair['both_pass' if xp and yp else 'a_only' if xp else 'b_only' if yp else 'neither_pass'] += 1
         pairs[a + '_vs_' + b] = pair
     return {'strategies': totals, 'resource_usage': resource_usage,
-            'categories': by_category, 'paired': pairs,
+            'categories': by_category, 'clusters': by_cluster, 'paired': pairs,
             'scope': {'tasks': len(set(r['task'] for r in records)), 'evaluations': len(records),
                       'completed': sum(r['status'] == 'completed' for r in records),
                       'pending': sum(r['status'] == 'pending' for r in records),
@@ -259,19 +321,6 @@ def markdown_report(data):
             f"{display(usage['observed_completion_tokens'])} |"
         )
 
-        def display(value):
-            return 'N/A' if value is None else str(value)
-
-        lines.append(
-            f"| {arm} | "
-            f"{usage['http_known_evaluations']} | "
-            f"{usage['http_unknown_evaluations']} | "
-            f"{display(usage['known_http_requests'])} | "
-            f"{usage['token_observed_evaluations']} | "
-            f"{display(usage['observed_prompt_tokens'])} | "
-            f"{display(usage['observed_completion_tokens'])} |"
-        )
-
     lines += ['', 'HTTP request counts include durable reservations when available. '
               'Reservations conservatively count attempts and do not prove that every '
               'request reached the provider.', '',
@@ -289,6 +338,13 @@ def markdown_report(data):
               '|---|---|---:|---:|---:|']
     for r in data['categories']:
         lines.append(f"| {r['category']} | {r['arm']} | {r['completed']} | {r['pending']} | {r['combined_pass']} |")
+
+    if data.get('clusters'):
+        lines += ['', '## Enterprise architectural cluster breakdown', '',
+                  '| Architectural Cluster | Strategy | Completed | Pending | Public pass | Heldout pass | Combined pass |',
+                  '|---|---|---:|---:|---:|---:|---:|']
+        for r in data['clusters']:
+            lines.append(f"| {r['cluster']} | {r['arm']} | {r['completed']} | {r['pending']} | {r['public_pass']} | {r['heldout_pass']} | {r['combined_pass']} |")
     lines += ['', '## Paired comparisons (combined pass)', '',
               '| Comparison | Eligible pairs | Both pass | First only | Second only | Neither |',
               '|---|---:|---:|---:|---:|---:|']

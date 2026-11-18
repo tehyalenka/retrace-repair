@@ -21,7 +21,7 @@ class FairReadWriteLock:
                         return False
                     self._cond.wait(timeout=rem)
                 else:
-                    self._cond.wait()
+                    self._cond.wait(timeout=1.0)
             self._readers += 1
             return True
 
@@ -45,7 +45,7 @@ class FairReadWriteLock:
                             return False
                         self._cond.wait(timeout=rem)
                     else:
-                        self._cond.wait()
+                        self._cond.wait(timeout=1.0)
                 self._writer = True
                 return True
             finally:
