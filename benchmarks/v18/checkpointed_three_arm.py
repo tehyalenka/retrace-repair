@@ -44,6 +44,35 @@ class ProviderBlocked(RuntimeError):
                 self.is_transient = False
 
 
+def normalize_content_for_replay(content: str) -> str:
+    """Normalize ephemeral paths and test runtimes across checkpoint resumption."""
+    content = re.sub(r'File\s+\"[^\"]+/(tests/[^\"]+)\"', r'File "\1"', content)
+    content = re.sub(r'/(?:private/)?var/folders/[^\s\"]+/codepilot-[^\s\"/]+', '[TEMP_REPO]', content)
+    content = re.sub(r'/tmp/codepilot-[^\s\"/]+', '[TEMP_REPO]', content)
+    content = re.sub(r'Ran (\d+) tests? in [0-9.]+s', r'Ran \1 tests in X.XXXs', content)
+    return content
+
+
+def requests_equivalent(r1: dict, r2: dict) -> bool:
+    """Compare two request payloads allowing for ephemeral temp paths and runtime variance."""
+    if r1 == r2:
+        return True
+    if r1.get("options") != r2.get("options"):
+        return False
+    m1 = r1.get("messages", [])
+    m2 = r2.get("messages", [])
+    if len(m1) != len(m2):
+        return False
+    for msg1, msg2 in zip(m1, m2):
+        if msg1.get("role") != msg2.get("role"):
+            return False
+        c1 = normalize_content_for_replay(msg1.get("content", ""))
+        c2 = normalize_content_for_replay(msg2.get("content", ""))
+        if c1 != c2:
+            return False
+    return True
+
+
 class BenchmarkBudgetExceeded(RuntimeError):
     """An arm exhausted its durable HTTP request allowance."""
 
@@ -177,7 +206,7 @@ def evaluate(trace_path, output, offline=False, repetitions=1, attempts=3, heldo
                     }
                     if i < len(saved):
                         previous = saved[i]
-                        if previous["request"] != request:
+                        if not requests_equivalent(previous["request"], request):
                             raise ValueError("Saved model request differs from replay request")
                         response = previous["response"]
                         origin = "checkpoint_replay"
