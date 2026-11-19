@@ -194,6 +194,7 @@ def ask_model(messages, model=None, base_url=None, json_mode=None, temperature=N
         "model": model,
         "messages": messages,
         "temperature": temperature,
+        "max_tokens": int(os.environ.get("CODEPILOT_MAX_TOKENS", "8192")),
     }
     if seed is not None:
         payload["seed"] = int(seed)
@@ -865,11 +866,13 @@ def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verific
                 record["failure_stage"] = None if record["passed"] else stage
                 record["failure_category"] = None if record["passed"] else "test_failure"
             except (ValueError, SyntaxError, KeyError, json.JSONDecodeError, OSError, LLMAPIError) as exc:
+                is_json_err = (stage == "edit_json" or "Invalid edit JSON" in str(exc) or isinstance(exc, json.JSONDecodeError))
+                actual_stage = "edit_json" if is_json_err else stage
                 record = {"attempt": attempt, "changed_files": [], "passed": False, "output": str(exc),
-                          "failure_stage": stage,
+                          "failure_stage": actual_stage,
                           "status_code": getattr(exc, "status_code", None),
                           "failure_category": ("provider_error" if isinstance(exc, LLMAPIError)
-                                               else "malformed_edit_json" if stage == "edit_json"
+                                               else "malformed_edit_json" if is_json_err
                                                else "provider_error" if stage == "model_request"
                                                else "edit_validation_error" if stage == "edit_validation"
                                                else "execution_error")}

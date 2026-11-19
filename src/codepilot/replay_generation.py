@@ -80,6 +80,8 @@ def generate_replay_candidates(
             if candidates:
                 # If at least one candidate succeeded, proceed with available candidates
                 break
+            if index + 1 < candidate_count:
+                continue
             raise exc
 
         candidates.append(parsed["edits"])
