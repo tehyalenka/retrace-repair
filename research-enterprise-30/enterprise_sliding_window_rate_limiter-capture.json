@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_sliding_window_rate_limiter",
+  "task": "Implement sliding-window log rate limiter with sub-second timestamps, preventing boundary burst leakage across fixed window boundaries.",
+  "repo_sha256": "73f63ef8c0b483e8cc2c1840de7f0287c41da791a582900d012fccf5eb6e2c30",
+  "verifier_sha256": "293d45088ec88949211403615efdd4d1702a842f8c05c452f8fc6512c0ae63e3",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement sliding-window log rate limiter with sub-second timestamps, preventing boundary burst leakage across fixed window boundaries.\n\nRepository map:\nsliding_limiter.py | imports: time | symbols: __init__, allow, SlidingWindowLogLimiter\ntests/test_public.py | imports: sliding_limiter, unittest | symbols: test_requests_within_limit, test_sliding_window_boundary_burst_prevented, Public\n\nSelected source context:\n### sliding_limiter.py\nimport time\n\nclass SlidingWindowLogLimiter:\n    def __init__(self, max_requests=5, window_seconds=60.0):\n        self.max_requests = max_requests\n        self.window_seconds = window_seconds\n        self.buckets = {} # key -> dict(window_start, count)\n\n    def allow(self, key, now=None):\n        now = time.time() if now is None else now\n        \n        # Buggy repo: Uses fixed window discretization instead of true sliding window log!\n        # This causes the 2x burst vulnerability at window boundaries (e.g. 5 requests at t=59, 5 at t=61).\n        window_start = int(now / self.window_seconds) * self.window_seconds\n        if key not in self.buckets or self.buckets[key][\"window_start\"] != window_start:\n            self.buckets[key] = {\"window_start\": window_start, \"count\": 0}\n\n        if self.buckets[key][\"count\"] < self.max_requests:\n            self.buckets[key][\"count\"] += 1\n            return True, self.buckets[key][\"count\"]\n\n        return False, self.buckets[key][\"count\"]\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"sliding_limiter.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass SlidingWindowLogLimiter:\\n    def __init__(self, max_requests=5, window_seconds=60.0):\\n        self.max_requests = max_requests\\n        self.window_seconds = window_seconds\\n        self.buckets = {} # key -> dict(window_start, count)\\n\\n    def allow(self, key, now=None):\\n        now = time.time() if now is None else now\\n        \\n        # Buggy repo: Uses fixed window discretization instead of true sliding window log!\\n        # This causes the 2x burst vulnerability at window boundaries (e.g. 5 requests at t=59, 5 at t=61).\\n        window_start = int(now / self.window_seconds) * self.window_seconds\\n        if key not in self.buckets or self.buckets[key][\\\"window_start\\\"] != window_start:\\n            self.buckets[key] = {\\\"window_start\\\": window_start, \\\"count\\\": 0}\\n\\n        if self.buckets[key][\\\"count\\\"] < self.max_requests:\\n            self.buckets[key][\\\"count\\\"] += 1\\n            return True, self.buckets[key][\\\"count\\\"]\\n\\n        return False, self.buckets[key][\\\"count\\\"]\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "sliding_limiter.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_requests_within_limit (test_public.Public.test_requests_within_limit) ... ok\ntest_sliding_window_boundary_burst_prevented (test_public.Public.test_sliding_window_boundary_burst_prevented) ... FAIL\n\n======================================================================\nFAIL: test_sliding_window_boundary_burst_prevented (test_public.Public.test_sliding_window_boundary_burst_prevented)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-4xbtyrwy/repo/tests/test_public.py\", line 25, in test_sliding_window_boundary_burst_prevented\n    self.assertFalse(allowed, \"Allowed burst exceeding sliding rate across boundary!\")\nAssertionError: True is not false : Allowed burst exceeding sliding rate across boundary!\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.099
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

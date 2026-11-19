@@ -1,0 +1,1022 @@
+[
+  {
+    "task": "enterprise_order_atomicity",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_ledger_exactly_once",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_tenant_cache",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_bank_transfer",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_circuit_breaker",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 4,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_saga_coordinator",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 4,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_rate_limiter_token_bucket",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_wal_replay",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_two_phase_commit",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_event_sourcing_aggregate",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_distributed_lock_lease",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_optimistic_concurrency_doc",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_read_write_lock_fair",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_crdt_pn_counter",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_idempotent_event_consumer",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_dead_letter_retry",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_cache_stampede_mutex",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_bulkhead_isolation",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_outbox_publisher",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_secret_rotation_vault",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_tenant_rate_limiter",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_audit_log_tamper_evident",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_rbac_policy_evaluator",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_sliding_window_rate_limiter",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_connection_pool",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_token_bucket_burst",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_adaptive_concurrency_limiter",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_consistent_hash_ring",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_leader_epoch_election",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "task": "enterprise_replicated_state_machine",
+    "category": "enterprise",
+    "arms": [
+      {
+        "condition": "resample",
+        "repetition": 1,
+        "public_pass": false,
+        "heldout_pass": false,
+        "combined_pass": false,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "feedback",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 1,
+        "status": "completed"
+      },
+      {
+        "condition": "counterfactual_replay",
+        "repetition": 1,
+        "public_pass": true,
+        "heldout_pass": true,
+        "combined_pass": true,
+        "live_calls": 2,
+        "status": "completed"
+      }
+    ],
+    "pending": []
+  }
+]

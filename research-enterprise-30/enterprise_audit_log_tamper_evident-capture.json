@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_audit_log_tamper_evident",
+  "task": "Implement tamper-evident cryptographic hash-chain audit log with SHA-256 prev_hash verification, pinpointing sequence discontinuity and record tampering.",
+  "repo_sha256": "ab416d5a9200cfb9cf936972956a56eb7b4940dd88bfd7a59d1439831d9a49e0",
+  "verifier_sha256": "88055a343051a8999012f9dd107d17398cdc8c6ce50bb09f4e56ac9477050a53",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement tamper-evident cryptographic hash-chain audit log with SHA-256 prev_hash verification, pinpointing sequence discontinuity and record tampering.\n\nRepository map:\naudit_log.py | imports: hashlib, json, time | symbols: __init__, _calc_hash, append, verify_integrity, TamperEvidentAuditLog\ntests/test_public.py | imports: audit_log, unittest | symbols: test_valid_chain_verifies, test_chain_linkage_tampering_detected, Public\n\nSelected source context:\n### audit_log.py\nimport hashlib\nimport json\nimport time\n\nclass TamperEvidentAuditLog:\n    GENESIS_HASH = \"0\" * 64\n\n    def __init__(self):\n        self.chain = []\n\n    def _calc_hash(self, seq, timestamp, actor, action, details, prev_hash):\n        content = json.dumps({\n            \"seq\": seq,\n            \"timestamp\": timestamp,\n            \"actor\": actor,\n            \"action\": action,\n            \"details\": details,\n            \"prev_hash\": prev_hash\n        }, sort_keys=True)\n        return hashlib.sha256(content.encode('utf-8')).hexdigest()\n\n    def append(self, actor, action, details, now=None):\n        now = time.time() if now is None else now\n        seq = len(self.chain) + 1\n        prev_hash = self.chain[-1][\"hash\"] if self.chain else self.GENESIS_HASH\n        h = self._calc_hash(seq, now, actor, action, details, prev_hash)\n        rec = {\n            \"seq\": seq,\n            \"timestamp\": now,\n            \"actor\": actor,\n            \"action\": action,\n            \"details\": details,\n            \"prev_hash\": prev_hash,\n            \"hash\": h\n        }\n        self.chain.append(rec)\n        return dict(rec)\n\n    def verify_integrity(self):\n        # Buggy repo: checks ONLY internal record hash, but DOES NOT check chain linkage (prev_hash)!\n        # If a record is inserted or deleted, it does NOT detect the broken hash chain!\n        for rec in self.chain:\n            expected_h = self._calc_hash(\n                rec[\"seq\"], rec[\"timestamp\"], rec[\"actor\"], rec[\"action\"], rec[\"details\"], rec[\"prev_hash\"]\n            )\n            if rec[\"hash\"] != expected_h:\n                return False, f\"Hash mismatch at seq {rec['seq']}\", rec[\"seq\"]\n        return True, None, None\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"audit_log.py\", \"operation\": \"modify\", \"content\": \"import hashlib\\nimport json\\nimport time\\n\\nclass TamperEvidentAuditLog:\\n    GENESIS_HASH = \\\"0\\\" * 64\\n\\n    def __init__(self):\\n        self.chain = []\\n\\n    def _calc_hash(self, seq, timestamp, actor, action, details, prev_hash):\\n        content = json.dumps({\\n            \\\"seq\\\": seq,\\n            \\\"timestamp\\\": timestamp,\\n            \\\"actor\\\": actor,\\n            \\\"action\\\": action,\\n            \\\"details\\\": details,\\n            \\\"prev_hash\\\": prev_hash\\n        }, sort_keys=True)\\n        return hashlib.sha256(content.encode('utf-8')).hexdigest()\\n\\n    def append(self, actor, action, details, now=None):\\n        now = time.time() if now is None else now\\n        seq = len(self.chain) + 1\\n        prev_hash = self.chain[-1][\\\"hash\\\"] if self.chain else self.GENESIS_HASH\\n        h = self._calc_hash(seq, now, actor, action, details, prev_hash)\\n        rec = {\\n            \\\"seq\\\": seq,\\n            \\\"timestamp\\\": now,\\n            \\\"actor\\\": actor,\\n            \\\"action\\\": action,\\n            \\\"details\\\": details,\\n            \\\"prev_hash\\\": prev_hash,\\n            \\\"hash\\\": h\\n        }\\n        self.chain.append(rec)\\n        return dict(rec)\\n\\n    def verify_integrity(self):\\n        # Buggy repo: checks ONLY internal record hash, but DOES NOT check chain linkage (prev_hash)!\\n        # If a record is inserted or deleted, it does NOT detect the broken hash chain!\\n        for rec in self.chain:\\n            expected_h = self._calc_hash(\\n                rec[\\\"seq\\\"], rec[\\\"timestamp\\\"], rec[\\\"actor\\\"], rec[\\\"action\\\"], rec[\\\"details\\\"], rec[\\\"prev_hash\\\"]\\n            )\\n            if rec[\\\"hash\\\"] != expected_h:\\n                return False, f\\\"Hash mismatch at seq {rec['seq']}\\\", rec[\\\"seq\\\"]\\n        return True, None, None\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "audit_log.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_chain_linkage_tampering_detected (test_public.Public.test_chain_linkage_tampering_detected) ... FAIL\ntest_valid_chain_verifies (test_public.Public.test_valid_chain_verifies) ... ok\n\n======================================================================\nFAIL: test_chain_linkage_tampering_detected (test_public.Public.test_chain_linkage_tampering_detected)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-lo9d3tms/repo/tests/test_public.py\", line 28, in test_chain_linkage_tampering_detected\n    self.assertIn(\"Chain linkage broken\", err)\nAssertionError: 'Chain linkage broken' not found in 'Hash mismatch at seq 2'\n\n----------------------------------------------------------------------\nRan 2 tests in 0.002s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.197
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

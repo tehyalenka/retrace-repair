@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="330" viewBox="0 0 780 330">
+<rect width="100%" height="100%" fill="white"/>
+<text x="25" y="30" font-family="sans-serif" font-size="18" font-weight="bold">Evaluation coverage by strategy</text>
+<text x="25" y="93" font-family="sans-serif" font-size="14">resample</text>
+<rect x="170.0" y="75" width="360.0" height="26" fill="#2563eb"/>
+<text x="350.0" y="93" text-anchor="middle" fill="white" font-family="sans-serif" font-size="12">30</text>
+<rect x="530.0" y="75" width="180.0" height="26" fill="#9ca3af"/>
+<text x="620.0" y="93" text-anchor="middle" fill="white" font-family="sans-serif" font-size="12">15</text>
+<text x="25" y="158" font-family="sans-serif" font-size="14">feedback</text>
+<rect x="170.0" y="140" width="360.0" height="26" fill="#2563eb"/>
+<text x="350.0" y="158" text-anchor="middle" fill="white" font-family="sans-serif" font-size="12">30</text>
+<rect x="530.0" y="140" width="180.0" height="26" fill="#9ca3af"/>
+<text x="620.0" y="158" text-anchor="middle" fill="white" font-family="sans-serif" font-size="12">15</text>
+<text x="25" y="223" font-family="sans-serif" font-size="14">counterfactual_replay</text>
+<rect x="170.0" y="205" width="360.0" height="26" fill="#2563eb"/>
+<text x="350.0" y="223" text-anchor="middle" fill="white" font-family="sans-serif" font-size="12">30</text>
+<rect x="530.0" y="205" width="180.0" height="26" fill="#9ca3af"/>
+<text x="620.0" y="223" text-anchor="middle" fill="white" font-family="sans-serif" font-size="12">15</text>
+<rect x="25" y="284" width="13" height="13" fill="#2563eb"/>
+<text x="43" y="295" font-family="sans-serif" font-size="12">completed</text>
+<rect x="185" y="284" width="13" height="13" fill="#f59e0b"/>
+<text x="203" y="295" font-family="sans-serif" font-size="12">pending</text>
+<rect x="345" y="284" width="13" height="13" fill="#ef4444"/>
+<text x="363" y="295" font-family="sans-serif" font-size="12">blocked legacy</text>
+<rect x="505" y="284" width="13" height="13" fill="#9ca3af"/>
+<text x="523" y="295" font-family="sans-serif" font-size="12">missing</text>
+</svg>

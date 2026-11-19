@@ -1,0 +1,424 @@
+{
+  "schema": 1,
+  "settings": {
+    "trace_sha256": "d8e3ac25e2d6d06c0b13fb738f5d290840a92f6bc1c1e06e78a03870bbb6cdf8",
+    "offline": false,
+    "repetitions": 1,
+    "attempts": 2,
+    "repo_sha256": "4f0361167ce4cf8a5d1833b2431fde372335703ef1cb092aab56b90c0d2e3fbf",
+    "verifier_sha256": "53202e9a1d89584af4a60725016f1318ab85020a72d0d3c685da40a4c1fdaa2c",
+    "counterfactual_policy": "counterfactual_replay",
+    "active_arms": [
+      [
+        "resample",
+        false,
+        "standard"
+      ],
+      [
+        "feedback",
+        true,
+        "standard"
+      ],
+      [
+        "counterfactual_replay",
+        true,
+        "counterfactual_replay"
+      ]
+    ],
+    "heldout_sha256": "6992c41a7853a49a98b4d0b980e2a72b06dcbed8c1b123c23068eb49737b3911",
+    "model_provenance": {
+      "execution": "live_provider",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "temperature": 0.0,
+      "json_mode": false,
+      "max_retries": 3,
+      "format_retries": 2,
+      "endpoint": "https://api.groq.com/openai/v1"
+    }
+  },
+  "rows": [
+    {
+      "key": "1:resample",
+      "repetition": 1,
+      "condition": "resample",
+      "success": false,
+      "history": [
+        {
+          "attempt": 1,
+          "changed_files": [
+            "authorization.py",
+            "storage.py"
+          ],
+          "reasoning_summary": "Replayed known failed implementation",
+          "passed": false,
+          "tests_run": 2,
+          "output": "\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... FAIL\n\n======================================================================\nFAIL: test_tenant_isolation (test_public.Public.test_tenant_isolation)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-ij5r9tlh/repo/tests/test_public.py\", line 8, in test_tenant_isolation\n    self.assertFalse(a.can_read('beta','user','doc'))\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 2 tests in 0.002s\n\nFAILED (failures=1)\n",
+          "smoke_tests_passed": false,
+          "smoke_tests_run": 2,
+          "failure_stage": "smoke_tests",
+          "failure_category": "test_failure",
+          "repair_attempt": false,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 0.158
+        },
+        {
+          "attempt": 2,
+          "changed_files": [
+            "authorization.py"
+          ],
+          "reasoning_summary": "Fixed cross-tenant cache leakage by including tenant in cache key, added strict type and value validation for all inputs, ensured cache consistency on permission updates, and added defensive checks for invalid identities.",
+          "passed": false,
+          "tests_run": 2,
+          "output": "\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ERROR\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... ok\n\n======================================================================\nERROR: test_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-ij5r9tlh/repo/tests/test_public.py\", line 11, in test_invalid_identity_returns_false\n    self.assertIs(a.can_read('','user','doc'), False)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-ij5r9tlh/repo/authorization.py\", line 57, in can_read\n    self._validate_str(\"tenant\", tenant)\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-ij5r9tlh/repo/authorization.py\", line 11, in _validate_str\n    raise ValueError(f\"{name} must be a non\u2011empty string\")\nValueError: tenant must be a non\u2011empty string\n\n----------------------------------------------------------------------\nRan 2 tests in 0.002s\n\nFAILED (errors=1)\n",
+          "smoke_tests_passed": false,
+          "smoke_tests_run": 2,
+          "failure_stage": "smoke_tests",
+          "failure_category": "test_failure",
+          "repair_attempt": true,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 22.506
+        }
+      ],
+      "heldout": {
+        "passed": false,
+        "tests_run": 7,
+        "output": "\ntest_denial_first_does_not_poison_other_tenant (test_codepilot_verification.Heldout.test_denial_first_does_not_poison_other_tenant) ... ok\ntest_fail_closed (test_codepilot_verification.Heldout.test_fail_closed) ... ERROR\ntest_grant_invalidates_negative_cache (test_codepilot_verification.Heldout.test_grant_invalidates_negative_cache) ... ok\ntest_resource_and_user_isolation (test_codepilot_verification.Heldout.test_resource_and_user_isolation) ... ok\ntest_revoke_invalidates_cache (test_codepilot_verification.Heldout.test_revoke_invalidates_cache) ... ok\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ERROR\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... ok\n\n======================================================================\nERROR: test_fail_closed (test_codepilot_verification.Heldout.test_fail_closed)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-zcyhecma/repo/tests/test_codepilot_verification.py\", line 19, in test_fail_closed\n    a=Authorization(connect());self.assertIs(a.can_read('','u','r'), False)\n                                             ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-zcyhecma/repo/authorization.py\", line 57, in can_read\n    self._validate_str(\"tenant\", tenant)\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-zcyhecma/repo/authorization.py\", line 11, in _validate_str\n    raise ValueError(f\"{name} must be a non\u2011empty string\")\nValueError: tenant must be a non\u2011empty string\n\n======================================================================\nERROR: test_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-zcyhecma/repo/tests/test_public.py\", line 11, in test_invalid_identity_returns_false\n    self.assertIs(a.can_read('','user','doc'), False)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-zcyhecma/repo/authorization.py\", line 57, in can_read\n    self._validate_str(\"tenant\", tenant)\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-zcyhecma/repo/authorization.py\", line 11, in _validate_str\n    raise ValueError(f\"{name} must be a non\u2011empty string\")\nValueError: tenant must be a non\u2011empty string\n\n----------------------------------------------------------------------\nRan 7 tests in 0.009s\n\nFAILED (errors=2)\n"
+      },
+      "calls": [
+        {
+          "origin": "captured_initial",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Repair tenant-scoped authorization cache isolation and revocation freshness without allowing cross-tenant access.\n\nRepository map:\nauthorization.py | imports:  | symbols: __init__, set_permission, can_read, Authorization\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: authorization, storage, unittest | symbols: test_tenant_isolation, test_invalid_identity_returns_false, Public\n\nSelected source context:\n### authorization.py\nclass Authorization:\n def __init__(self,db):self.db=db;self.cache={}\n def set_permission(self,tenant,user,resource,allowed):\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\n  self.db.commit()\n def can_read(self,tenant,user,resource):\n  key=(user,resource)\n  if key not in self.cache:\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\n   self.cache[key]=bool(row and row[0])\n  return self.cache[key]\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n d=sqlite3.connect(':memory:')\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\n return d\n"
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.7,
+              "seed": 142
+            }
+          },
+          "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"authorization.py\", \"operation\": \"modify\", \"content\": \"class Authorization:\\n def __init__(self,db):self.db=db;self.cache={}\\n def set_permission(self,tenant,user,resource,allowed):\\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\\n  self.db.commit()\\n def can_read(self,tenant,user,resource):\\n  key=(user,resource)\\n  if key not in self.cache:\\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\\n   self.cache[key]=bool(row and row[0])\\n  return self.cache[key]\\n\"}, {\"path\": \"storage.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\n\\ndef connect():\\n d=sqlite3.connect(':memory:')\\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\\n return d\\n\"}]}"
+        },
+        {
+          "origin": "live",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Repair tenant-scoped authorization cache isolation and revocation freshness without allowing cross-tenant access.\n\nRepository map:\nauthorization.py | imports:  | symbols: __init__, set_permission, can_read, Authorization\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: authorization, storage, unittest | symbols: test_tenant_isolation, test_invalid_identity_returns_false, Public\n\nSelected source context:\n### authorization.py\nclass Authorization:\n def __init__(self,db):self.db=db;self.cache={}\n def set_permission(self,tenant,user,resource,allowed):\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\n  self.db.commit()\n def can_read(self,tenant,user,resource):\n  key=(user,resource)\n  if key not in self.cache:\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\n   self.cache[key]=bool(row and row[0])\n  return self.cache[key]\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n d=sqlite3.connect(':memory:')\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\n return d\n"
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.7,
+              "seed": 142
+            }
+          },
+          "response": "{\"reasoning_summary\":\"Fixed cross-tenant cache leakage by including tenant in cache key, added strict type and value validation for all inputs, ensured cache consistency on permission updates, and added defensive checks for invalid identities.\", \"edits\":[{\"path\":\"authorization.py\",\"operation\":\"modify\",\"content\":\"class Authorization:\\n    def __init__(self, db):\\n        # Expect a DB connection supporting execute/commit\\n        self.db = db\\n        # Cache is now tenant\u2011scoped: (tenant, user, resource) -> bool\\n        self.cache: dict[tuple[str, str, str], bool] = {}\\n\\n    @staticmethod\\n    def _validate_str(name: str, value) -> None:\\n        if not isinstance(value, str) or value == \\\"\\\":\\n            raise ValueError(f\\\"{name} must be a non\u2011empty string\\\")\\n        # Reject booleans masquerading as strings (bool is subclass of int, not str, but guard anyway)\\n        if isinstance(value, bool):\\n            raise ValueError(f\\\"{name} must not be a boolean\\\")\\n\\n    @staticmethod\\n    def _validate_allowed(allowed) -> None:\\n        # Must be an explicit bool, not an int or other type\\n        if type(allowed) is not bool:\\n            raise ValueError(\\\"allowed must be a boolean value\\\")\\n\\n    def set_permission(self, tenant, user, resource, allowed):\\n        \\\"\\\"\\\"Create or update a permission.\\n\\n        Parameters\\n        ----------\\n        tenant: str \u2013 non\u2011empty tenant identifier.\\n        user: str \u2013 non\u2011empty user identifier.\\n        resource: str \u2013 non\u2011empty resource identifier.\\n        allowed: bool \u2013 whether the user may read the resource.\\n        \\\"\\\"\\\"\\n        # Validate inputs defensively\\n        self._validate_str(\\\"tenant\\\", tenant)\\n        self._validate_str(\\\"user\\\", user)\\n        self._validate_str(\\\"resource\\\", resource)\\n        self._validate_allowed(allowed)\\n\\n        # Persist the permission atomically\\n        self.db.execute(\\n            \\\"INSERT INTO permissions VALUES (?,?,?,?) \\\"\\n            \\\"ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed\\\",\\n            (tenant, user, resource, int(allowed)),\\n        )\\n        self.db.commit()\\n\\n        # Update cache for the exact key to guarantee freshness\\n        cache_key = (tenant, user, resource)\\n        self.cache[cache_key] = allowed\\n\\n    def can_read(self, tenant, user, resource):\\n        \\\"\\\"\\\"Return True if *user* is allowed to read *resource* within *tenant*.\\n\\n        Returns False for unknown tenants/users/resources or when the permission\\n        does not exist. Raises ValueError for malformed identifiers.\\n        \\\"\\\"\\\"\\n        # Validate inputs defensively \u2013 same rules as set_permission (except allowed)\\n        self._validate_str(\\\"tenant\\\", tenant)\\n        self._validate_str(\\\"user\\\", user)\\n        self._validate_str(\\\"resource\\\", resource)\\n\\n        cache_key = (tenant, user, resource)\\n        if cache_key not in self.cache:\\n            row = self.db.execute(\\n                \\\"SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?\\\",\\n                (tenant, user, resource),\\n            ).fetchone()\\n            # row[0] is stored as INTEGER 0/1; convert to bool safely\\n            self.cache[cache_key] = bool(row and row[0])\\n        return self.cache[cache_key]\\n\"}]}"
+        }
+      ],
+      "live_calls": 1,
+      "completion_origins": {
+        "captured_initial": 1,
+        "checkpoint_replay": 0,
+        "scripted": 0,
+        "live": 1
+      },
+      "request_accounting": {
+        "logical_calls": 1,
+        "http_requests": 2,
+        "http_failures": 1,
+        "prompt_tokens": 834,
+        "completion_tokens": 1069,
+        "usage_reports": 1
+      }
+    },
+    {
+      "key": "1:feedback",
+      "repetition": 1,
+      "condition": "feedback",
+      "success": true,
+      "history": [
+        {
+          "attempt": 1,
+          "changed_files": [
+            "authorization.py",
+            "storage.py"
+          ],
+          "reasoning_summary": "Replayed known failed implementation",
+          "passed": false,
+          "tests_run": 2,
+          "output": "\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... FAIL\n\n======================================================================\nFAIL: test_tenant_isolation (test_public.Public.test_tenant_isolation)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-4q6w_ovs/repo/tests/test_public.py\", line 8, in test_tenant_isolation\n    self.assertFalse(a.can_read('beta','user','doc'))\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 2 tests in 0.002s\n\nFAILED (failures=1)\n",
+          "smoke_tests_passed": false,
+          "smoke_tests_run": 2,
+          "failure_stage": "smoke_tests",
+          "failure_category": "test_failure",
+          "repair_attempt": false,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 0.263
+        },
+        {
+          "attempt": 2,
+          "changed_files": [
+            "authorization.py"
+          ],
+          "reasoning_summary": "Fixed cross-tenant cache leakage by including tenant in cache key, added cache invalidation on permission changes, added strict input validation, and wrapped DB writes in atomic transaction context.",
+          "passed": true,
+          "tests_run": 2,
+          "output": "\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.003s\n\nOK\n",
+          "smoke_tests_passed": true,
+          "smoke_tests_run": 2,
+          "verification_passed": true,
+          "verification_output": "\ntest_invalid_identity_returns_false (test_codepilot_verification.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_codepilot_verification.Public.test_tenant_isolation) ... ok\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.002s\n\nOK\n",
+          "failure_stage": null,
+          "failure_category": null,
+          "repair_attempt": true,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 3.368
+        }
+      ],
+      "heldout": {
+        "passed": true,
+        "tests_run": 7,
+        "output": "\ntest_denial_first_does_not_poison_other_tenant (test_codepilot_verification.Heldout.test_denial_first_does_not_poison_other_tenant) ... ok\ntest_fail_closed (test_codepilot_verification.Heldout.test_fail_closed) ... ok\ntest_grant_invalidates_negative_cache (test_codepilot_verification.Heldout.test_grant_invalidates_negative_cache) ... ok\ntest_resource_and_user_isolation (test_codepilot_verification.Heldout.test_resource_and_user_isolation) ... ok\ntest_revoke_invalidates_cache (test_codepilot_verification.Heldout.test_revoke_invalidates_cache) ... ok\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.003s\n\nOK\n"
+      },
+      "calls": [
+        {
+          "origin": "checkpoint_replay",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Repair tenant-scoped authorization cache isolation and revocation freshness without allowing cross-tenant access.\n\nRepository map:\nauthorization.py | imports:  | symbols: __init__, set_permission, can_read, Authorization\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: authorization, storage, unittest | symbols: test_tenant_isolation, test_invalid_identity_returns_false, Public\n\nSelected source context:\n### authorization.py\nclass Authorization:\n def __init__(self,db):self.db=db;self.cache={}\n def set_permission(self,tenant,user,resource,allowed):\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\n  self.db.commit()\n def can_read(self,tenant,user,resource):\n  key=(user,resource)\n  if key not in self.cache:\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\n   self.cache[key]=bool(row and row[0])\n  return self.cache[key]\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n d=sqlite3.connect(':memory:')\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\n return d\n"
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.0,
+              "seed": null
+            }
+          },
+          "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"authorization.py\", \"operation\": \"modify\", \"content\": \"class Authorization:\\n def __init__(self,db):self.db=db;self.cache={}\\n def set_permission(self,tenant,user,resource,allowed):\\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\\n  self.db.commit()\\n def can_read(self,tenant,user,resource):\\n  key=(user,resource)\\n  if key not in self.cache:\\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\\n   self.cache[key]=bool(row and row[0])\\n  return self.cache[key]\\n\"}, {\"path\": \"storage.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\n\\ndef connect():\\n d=sqlite3.connect(':memory:')\\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\\n return d\\n\"}]}"
+        },
+        {
+          "origin": "live",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Repair tenant-scoped authorization cache isolation and revocation freshness without allowing cross-tenant access.\n\nRepository map:\nauthorization.py | imports:  | symbols: __init__, set_permission, can_read, Authorization\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: authorization, storage, unittest | symbols: test_tenant_isolation, test_invalid_identity_returns_false, Public\n\nSelected source context:\n### authorization.py\nclass Authorization:\n def __init__(self,db):self.db=db;self.cache={}\n def set_permission(self,tenant,user,resource,allowed):\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\n  self.db.commit()\n def can_read(self,tenant,user,resource):\n  key=(user,resource)\n  if key not in self.cache:\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\n   self.cache[key]=bool(row and row[0])\n  return self.cache[key]\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n d=sqlite3.connect(':memory:')\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\n return d\n"
+              },
+              {
+                "role": "assistant",
+                "content": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"authorization.py\", \"operation\": \"modify\", \"content\": \"class Authorization:\\n def __init__(self,db):self.db=db;self.cache={}\\n def set_permission(self,tenant,user,resource,allowed):\\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\\n  self.db.commit()\\n def can_read(self,tenant,user,resource):\\n  key=(user,resource)\\n  if key not in self.cache:\\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\\n   self.cache[key]=bool(row and row[0])\\n  return self.cache[key]\\n\"}, {\"path\": \"storage.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\n\\ndef connect():\\n d=sqlite3.connect(':memory:')\\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\\n return d\\n\"}]}"
+              },
+              {
+                "role": "user",
+                "content": "Tests/validation failed:\nFailure stage: smoke_tests\nFailure category: test_failure\nFiles changed: authorization.py, storage.py\nFailure details (truncated):\n\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... FAIL\n\n======================================================================\nFAIL: test_tenant_isolation (test_public.Public.test_tenant_isolation)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-4q6w_ovs/repo/tests/test_public.py\", line 8, in test_tenant_isolation\n    self.assertFalse(a.can_read('beta','user','doc'))\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 2 tests in 0.002s\n\nFAILED (failures=1)\n\nIMPORTANT: Each retry starts from the ORIGINAL repository snapshot, not the previous attempt. Files created in a previous attempt do not exist now. Return a COMPLETE replacement edit batch: use operation=create for newly introduced files (even if created in the prior failed attempt), and operation=modify for files originally present. Enforce all defensive invariants: strictly validate parameter types (reject `bool` for numeric parameters), wrap state mutations in atomic transactions with full rollback on any failure, reject conflicting idempotency keys with ValueError, and fail-closed on tenant isolation. Include every file needed for the working feature, not just the file that failed. Return valid JSON only, with complete file contents."
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.0,
+              "seed": null
+            }
+          },
+          "response": "{\"reasoning_summary\":\"Fixed cross-tenant cache leakage by including tenant in cache key, added cache invalidation on permission changes, added strict input validation, and wrapped DB writes in atomic transaction context.\",\"edits\":[{\"path\":\"authorization.py\",\"operation\":\"modify\",\"content\":\"class Authorization:\\n    def __init__(self, db):\\n        # Expect a sqlite3.Connection instance\\n        self.db = db\\n        # Cache keyed by (tenant, user, resource) to avoid cross\u2011tenant leakage\\n        self.cache: dict[tuple[str, str, str], bool] = {}\\n\\n    def _validate_identity(self, tenant: str, user: str, resource: str) -> bool:\\n        \\\"\\\"\\\"Return True if the identity components are valid strings.\\n        Empty strings are considered invalid and result in a safe\u2011closed False.\\n        \\\"\\\"\\\"\\n        if not isinstance(tenant, str) or not isinstance(user, str) or not isinstance(resource, str):\\n            return False\\n        if tenant == \\\"\\\" or user == \\\"\\\" or resource == \\\"\\\":\\n            return False\\n        return True\\n\\n    def set_permission(self, tenant, user, resource, allowed):\\n        # Strict type validation \u2013 tenant, user, resource must be non\u2011empty strings\\n        if not self._validate_identity(tenant, user, resource):\\n            raise ValueError(\\\"tenant, user, and resource must be non\u2011empty strings\\\")\\n        # allowed must be a boolean; reject ints/floats/other types (including bool subclassing int)\\n        if type(allowed) is not bool:\\n            raise ValueError(\\\"allowed flag must be a bool\\\")\\n        # Perform the write atomically; rollback on any error\\n        try:\\n            with self.db:\\n                self.db.execute(\\n                    \\\"INSERT INTO permissions (tenant, user, resource, allowed) VALUES (?,?,?,?) \\\"\\n                    \\\"ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed\\\",\\n                    (tenant, user, resource, int(allowed)),\\n                )\\n        except Exception as exc:\\n            # Ensure no partial state remains; re\u2011raise for caller awareness\\n            raise exc\\n        # Invalidate any cached decision for this exact tuple\\n        cache_key = (tenant, user, resource)\\n        self.cache.pop(cache_key, None)\\n\\n    def can_read(self, tenant, user, resource):\\n        # Fail\u2011closed on malformed identity \u2013 return False rather than raise (tests expect this)\\n        if not self._validate_identity(tenant, user, resource):\\n            return False\\n        cache_key = (tenant, user, resource)\\n        if cache_key not in self.cache:\\n            row = self.db.execute(\\n                \\\"SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?\\\",\\n                (tenant, user, resource),\\n            ).fetchone()\\n            # row may be None; treat missing permission as disallowed\\n            self.cache[cache_key] = bool(row and row[0])\\n        return self.cache[cache_key]\\n\"}]}"
+        }
+      ],
+      "live_calls": 1,
+      "completion_origins": {
+        "captured_initial": 0,
+        "checkpoint_replay": 1,
+        "scripted": 0,
+        "live": 1
+      },
+      "request_accounting": {
+        "logical_calls": 1,
+        "http_requests": 1,
+        "http_failures": 0,
+        "prompt_tokens": 1446,
+        "completion_tokens": 1216,
+        "usage_reports": 1
+      }
+    },
+    {
+      "key": "1:counterfactual_replay",
+      "repetition": 1,
+      "condition": "counterfactual_replay",
+      "success": false,
+      "history": [
+        {
+          "attempt": 1,
+          "changed_files": [
+            "authorization.py",
+            "storage.py"
+          ],
+          "reasoning_summary": "Replayed known failed implementation",
+          "passed": false,
+          "tests_run": 2,
+          "output": "\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... FAIL\n\n======================================================================\nFAIL: test_tenant_isolation (test_public.Public.test_tenant_isolation)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-cumxgxas/repo/tests/test_public.py\", line 8, in test_tenant_isolation\n    self.assertFalse(a.can_read('beta','user','doc'))\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 2 tests in 0.018s\n\nFAILED (failures=1)\n",
+          "smoke_tests_passed": false,
+          "smoke_tests_run": 2,
+          "failure_stage": "smoke_tests",
+          "failure_category": "test_failure",
+          "repair_attempt": false,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 0.293
+        },
+        {
+          "attempt": 2,
+          "changed_files": [],
+          "passed": false,
+          "tests_run": 4,
+          "output": "Candidate 0: \ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ERROR\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... ok\ntest_invalid_identity_returns_false (test_retrace_public.Public.test_invalid_identity_returns_false) ... ERROR\ntest_tenant_isolation (test_retrace_public.Public.test_tenant_isolation) ... ok\n\n======================================================================\nERROR: test_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/tests/test_public.py\", line 11, in test_invalid_identity_returns_false\n    self.assertIs(a.can_read('','user','doc'), False)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/authorization.py\", line 95, in can_read\n    tenant = self._validate_nonempty_str(tenant, \"tenant\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/authorization.py\", line 40, in _validate_nonempty_str\n    raise ValueError(f\"{name} must be a non\u2011empty string\")\nValueError: tenant must be a non\u2011empty string\n\n======================================================================\nERROR: test_invalid_identity_returns_false (test_retrace_public.Public.test_invalid_identity_returns_false)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/tests/test_retrace_public.py\", line 11, in test_invalid_identity_returns_false\n    self.assertIs(a.can_read('','user','doc'), False)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/authorization.py\", line 95, in can_read\n    tenant = self._validate_nonempty_str(tenant, \"tenant\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/authorization.py\", line 40, in _validate_nonempty_str\n    raise ValueError(f\"{name} must be a non\u2011empty string\")\nValueError: tenant must be a non\u2011empty string\n\n----------------------------------------------------------------------\nRan 4 tests in 0.004s\n\nFAILED (errors=2)\n",
+          "failure_stage": "counterfactual_replay",
+          "failure_category": "test_failure",
+          "replay": {
+            "selected_index": null,
+            "selected_edits": null,
+            "candidates": [
+              [
+                {
+                  "path": "authorization.py",
+                  "operation": "modify",
+                  "content": "\"\"\"Authorization module with tenant-scoped permission caching and strict defensive checks.\n\nThe Authorization class provides methods to set permissions and query read access while ensuring:\n- Tenant isolation: cache keys include tenant, and empty/invalid tenants raise ValueError.\n- Strict type validation: all inputs are validated; booleans are only accepted where explicitly required.\n- Transactional atomicity: permission writes are performed inside a SQLite transaction that rolls back on any error.\n- Cache consistency: the cache is refreshed immediately after a successful permission update.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport sqlite3\nfrom typing import Any, Tuple\n\n\nclass Authorization:\n    \"\"\"Manage per\u2011tenant read permissions with an in\u2011memory cache.\n\n    Parameters\n    ----------\n    db: sqlite3.Connection\n        An open SQLite connection containing a ``permissions`` table with the\n        schema ``(tenant TEXT, user TEXT, resource TEXT, allowed INTEGER)`` and a\n        primary key on ``(tenant, user, resource)``.\n    \"\"\"\n\n    def __init__(self, db: sqlite3.Connection) -> None:\n        if not isinstance(db, sqlite3.Connection):\n            raise ValueError(\"db must be a sqlite3.Connection instance\")\n        self.db: sqlite3.Connection = db\n        # Cache key is a tuple (tenant, user, resource) \u2192 bool\n        self.cache: dict[Tuple[str, str, str], bool] = {}\n\n    # ---------------------------------------------------------------------\n    # Internal validation helpers\n    # ---------------------------------------------------------------------\n    @staticmethod\n    def _validate_nonempty_str(value: Any, name: str) -> str:\n        if not isinstance(value, str) or value == \"\":\n            raise ValueError(f\"{name} must be a non\u2011empty string\")\n        return value\n\n    @staticmethod\n    def _validate_bool(value: Any, name: str) -> bool:\n        # Explicitly reject integers (including bool) that are not bool\n        if type(value) is not bool:\n            raise ValueError(f\"{name} must be a bool\")\n        return value\n\n    # ---------------------------------------------------------------------\n    # Public API\n    # ---------------------------------------------------------------------\n    def set_permission(\n        self,\n        tenant: Any,\n        user: Any,\n        resource: Any,\n        allowed: Any,\n    ) -> None:\n        \"\"\"Create or update a permission record.\n\n        The operation is performed atomically; on any failure the transaction\n        is rolled back and the in\u2011memory cache remains unchanged.\n        \"\"\"\n        tenant = self._validate_nonempty_str(tenant, \"tenant\")\n        user = self._validate_nonempty_str(user, \"user\")\n        resource = self._validate_nonempty_str(resource, \"resource\")\n        allowed = self._validate_bool(allowed, \"allowed\")\n\n        # SQLite connections act as context managers that commit on success\n        # and rollback on exception.\n        try:\n            with self.db:\n                self.db.execute(\n                    \"\"\"\n                    INSERT INTO permissions (tenant, user, resource, allowed)\n                    VALUES (?, ?, ?, ?)\n                    ON CONFLICT(tenant, user, resource) DO UPDATE SET allowed=excluded.allowed\n                    \"\"\",\n                    (tenant, user, resource, int(allowed)),\n                )\n        except Exception as exc:\n            # Ensure the caller sees a clean error without partial state.\n            raise ValueError(f\"Failed to set permission: {exc}\") from exc\n\n        # Update cache to reflect the new state.\n        cache_key = (tenant, user, resource)\n        self.cache[cache_key] = allowed\n\n    def can_read(self, tenant: Any, user: Any, resource: Any) -> bool:\n        \"\"\"Return ``True`` if *user* may read *resource* under *tenant*.\n\n        Results are cached per tenant to avoid cross\u2011tenant leakage.\n        \"\"\"\n        tenant = self._validate_nonempty_str(tenant, \"tenant\")\n        user = self._validate_nonempty_str(user, \"user\")\n        resource = self._validate_nonempty_str(resource, \"resource\")\n\n        cache_key = (tenant, user, resource)\n        if cache_key not in self.cache:\n            row = self.db.execute(\n                \"SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?\",\n                (tenant, user, resource),\n            ).fetchone()\n            # ``allowed`` is stored as 0/1 integer; treat missing row as False.\n            self.cache[cache_key] = bool(row and row[0])\n        return self.cache[cache_key]\n"
+                }
+              ]
+            ],
+            "generation_records": [
+              {
+                "candidate_index": 0,
+                "raw_answer": "{\"reasoning_summary\":\"Fixed cross-tenant cache leakage by keying cache with tenant and added strict type validation, transactional safety, and cache update on permission changes.\", \"edits\":[{\"path\":\"authorization.py\",\"operation\":\"modify\",\"content\":\"\\\"\\\"\\\"Authorization module with tenant-scoped permission caching and strict defensive checks.\\n\\nThe Authorization class provides methods to set permissions and query read access while ensuring:\\n- Tenant isolation: cache keys include tenant, and empty/invalid tenants raise ValueError.\\n- Strict type validation: all inputs are validated; booleans are only accepted where explicitly required.\\n- Transactional atomicity: permission writes are performed inside a SQLite transaction that rolls back on any error.\\n- Cache consistency: the cache is refreshed immediately after a successful permission update.\\n\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport sqlite3\\nfrom typing import Any, Tuple\\n\\n\\nclass Authorization:\\n    \\\"\\\"\\\"Manage per\u2011tenant read permissions with an in\u2011memory cache.\\n\\n    Parameters\\n    ----------\\n    db: sqlite3.Connection\\n        An open SQLite connection containing a ``permissions`` table with the\\n        schema ``(tenant TEXT, user TEXT, resource TEXT, allowed INTEGER)`` and a\\n        primary key on ``(tenant, user, resource)``.\\n    \\\"\\\"\\\"\\n\\n    def __init__(self, db: sqlite3.Connection) -> None:\\n        if not isinstance(db, sqlite3.Connection):\\n            raise ValueError(\\\"db must be a sqlite3.Connection instance\\\")\\n        self.db: sqlite3.Connection = db\\n        # Cache key is a tuple (tenant, user, resource) \u2192 bool\\n        self.cache: dict[Tuple[str, str, str], bool] = {}\\n\\n    # ---------------------------------------------------------------------\\n    # Internal validation helpers\\n    # ---------------------------------------------------------------------\\n    @staticmethod\\n    def _validate_nonempty_str(value: Any, name: str) -> str:\\n        if not isinstance(value, str) or value == \\\"\\\":\\n            raise ValueError(f\\\"{name} must be a non\u2011empty string\\\")\\n        return value\\n\\n    @staticmethod\\n    def _validate_bool(value: Any, name: str) -> bool:\\n        # Explicitly reject integers (including bool) that are not bool\\n        if type(value) is not bool:\\n            raise ValueError(f\\\"{name} must be a bool\\\")\\n        return value\\n\\n    # ---------------------------------------------------------------------\\n    # Public API\\n    # ---------------------------------------------------------------------\\n    def set_permission(\\n        self,\\n        tenant: Any,\\n        user: Any,\\n        resource: Any,\\n        allowed: Any,\\n    ) -> None:\\n        \\\"\\\"\\\"Create or update a permission record.\\n\\n        The operation is performed atomically; on any failure the transaction\\n        is rolled back and the in\u2011memory cache remains unchanged.\\n        \\\"\\\"\\\"\\n        tenant = self._validate_nonempty_str(tenant, \\\"tenant\\\")\\n        user = self._validate_nonempty_str(user, \\\"user\\\")\\n        resource = self._validate_nonempty_str(resource, \\\"resource\\\")\\n        allowed = self._validate_bool(allowed, \\\"allowed\\\")\\n\\n        # SQLite connections act as context managers that commit on success\\n        # and rollback on exception.\\n        try:\\n            with self.db:\\n                self.db.execute(\\n                    \\\"\\\"\\\"\\n                    INSERT INTO permissions (tenant, user, resource, allowed)\\n                    VALUES (?, ?, ?, ?)\\n                    ON CONFLICT(tenant, user, resource) DO UPDATE SET allowed=excluded.allowed\\n                    \\\"\\\"\\\",\\n                    (tenant, user, resource, int(allowed)),\\n                )\\n        except Exception as exc:\\n            # Ensure the caller sees a clean error without partial state.\\n            raise ValueError(f\\\"Failed to set permission: {exc}\\\") from exc\\n\\n        # Update cache to reflect the new state.\\n        cache_key = (tenant, user, resource)\\n        self.cache[cache_key] = allowed\\n\\n    def can_read(self, tenant: Any, user: Any, resource: Any) -> bool:\\n        \\\"\\\"\\\"Return ``True`` if *user* may read *resource* under *tenant*.\\n\\n        Results are cached per tenant to avoid cross\u2011tenant leakage.\\n        \\\"\\\"\\\"\\n        tenant = self._validate_nonempty_str(tenant, \\\"tenant\\\")\\n        user = self._validate_nonempty_str(user, \\\"user\\\")\\n        resource = self._validate_nonempty_str(resource, \\\"resource\\\")\\n\\n        cache_key = (tenant, user, resource)\\n        if cache_key not in self.cache:\\n            row = self.db.execute(\\n                \\\"SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?\\\",\\n                (tenant, user, resource),\\n            ).fetchone()\\n            # ``allowed`` is stored as 0/1 integer; treat missing row as False.\\n            self.cache[cache_key] = bool(row and row[0])\\n        return self.cache[cache_key]\\n\"}]}",
+                "reasoning_summary": "Fixed cross-tenant cache leakage by keying cache with tenant and added strict type validation, transactional safety, and cache update on permission changes.",
+                "format_retries_used": 0
+              }
+            ],
+            "replay_results": [
+              {
+                "candidate_index": 0,
+                "passed": false,
+                "changed_files": [
+                  "authorization.py"
+                ],
+                "failure_stage": "smoke_tests",
+                "tests_run": 4,
+                "output": "\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ERROR\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... ok\ntest_invalid_identity_returns_false (test_retrace_public.Public.test_invalid_identity_returns_false) ... ERROR\ntest_tenant_isolation (test_retrace_public.Public.test_tenant_isolation) ... ok\n\n======================================================================\nERROR: test_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/tests/test_public.py\", line 11, in test_invalid_identity_returns_false\n    self.assertIs(a.can_read('','user','doc'), False)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/authorization.py\", line 95, in can_read\n    tenant = self._validate_nonempty_str(tenant, \"tenant\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/authorization.py\", line 40, in _validate_nonempty_str\n    raise ValueError(f\"{name} must be a non\u2011empty string\")\nValueError: tenant must be a non\u2011empty string\n\n======================================================================\nERROR: test_invalid_identity_returns_false (test_retrace_public.Public.test_invalid_identity_returns_false)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/tests/test_retrace_public.py\", line 11, in test_invalid_identity_returns_false\n    self.assertIs(a.can_read('','user','doc'), False)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/authorization.py\", line 95, in can_read\n    tenant = self._validate_nonempty_str(tenant, \"tenant\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/retrace-replay-smeum07p/repo/authorization.py\", line 40, in _validate_nonempty_str\n    raise ValueError(f\"{name} must be a non\u2011empty string\")\nValueError: tenant must be a non\u2011empty string\n\n----------------------------------------------------------------------\nRan 4 tests in 0.004s\n\nFAILED (errors=2)\n"
+              }
+            ],
+            "selection": {
+              "selected_index": null,
+              "passing_indices": [],
+              "candidates_evaluated": 1,
+              "selection_reason": "no_candidate_passed"
+            },
+            "model_requests": 1,
+            "test_executions": 1
+          },
+          "repair_attempt": true,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 4.787
+        }
+      ],
+      "heldout": {
+        "passed": false,
+        "tests_run": 7,
+        "output": "\ntest_denial_first_does_not_poison_other_tenant (test_codepilot_verification.Heldout.test_denial_first_does_not_poison_other_tenant) ... FAIL\ntest_fail_closed (test_codepilot_verification.Heldout.test_fail_closed) ... FAIL\ntest_grant_invalidates_negative_cache (test_codepilot_verification.Heldout.test_grant_invalidates_negative_cache) ... FAIL\ntest_resource_and_user_isolation (test_codepilot_verification.Heldout.test_resource_and_user_isolation) ... ok\ntest_revoke_invalidates_cache (test_codepilot_verification.Heldout.test_revoke_invalidates_cache) ... FAIL\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... FAIL\n\n======================================================================\nFAIL: test_denial_first_does_not_poison_other_tenant (test_codepilot_verification.Heldout.test_denial_first_does_not_poison_other_tenant)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-755dqnis/repo/tests/test_codepilot_verification.py\", line 7, in test_denial_first_does_not_poison_other_tenant\n    self.assertFalse(a.can_read('B','u','r'));self.assertTrue(a.can_read('A','u','r'))\n                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n\n======================================================================\nFAIL: test_fail_closed (test_codepilot_verification.Heldout.test_fail_closed)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-755dqnis/repo/tests/test_codepilot_verification.py\", line 20, in test_fail_closed\n    with self.assertRaises(ValueError):a.set_permission('','u','r',True)\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_grant_invalidates_negative_cache (test_codepilot_verification.Heldout.test_grant_invalidates_negative_cache)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-755dqnis/repo/tests/test_codepilot_verification.py\", line 14, in test_grant_invalidates_negative_cache\n    a.set_permission('A','u','r',True);self.assertTrue(a.can_read('A','u','r'))\n                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: False is not true\n\n======================================================================\nFAIL: test_revoke_invalidates_cache (test_codepilot_verification.Heldout.test_revoke_invalidates_cache)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-755dqnis/repo/tests/test_codepilot_verification.py\", line 11, in test_revoke_invalidates_cache\n    self.assertFalse(a.can_read('A','u','r'))\nAssertionError: True is not false\n\n======================================================================\nFAIL: test_tenant_isolation (test_public.Public.test_tenant_isolation)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-755dqnis/repo/tests/test_public.py\", line 8, in test_tenant_isolation\n    self.assertFalse(a.can_read('beta','user','doc'))\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 7 tests in 0.005s\n\nFAILED (failures=5)\n"
+      },
+      "calls": [
+        {
+          "origin": "checkpoint_replay",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Repair tenant-scoped authorization cache isolation and revocation freshness without allowing cross-tenant access.\n\nRepository map:\nauthorization.py | imports:  | symbols: __init__, set_permission, can_read, Authorization\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: authorization, storage, unittest | symbols: test_tenant_isolation, test_invalid_identity_returns_false, Public\n\nSelected source context:\n### authorization.py\nclass Authorization:\n def __init__(self,db):self.db=db;self.cache={}\n def set_permission(self,tenant,user,resource,allowed):\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\n  self.db.commit()\n def can_read(self,tenant,user,resource):\n  key=(user,resource)\n  if key not in self.cache:\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\n   self.cache[key]=bool(row and row[0])\n  return self.cache[key]\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n d=sqlite3.connect(':memory:')\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\n return d\n"
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.0,
+              "seed": null
+            }
+          },
+          "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"authorization.py\", \"operation\": \"modify\", \"content\": \"class Authorization:\\n def __init__(self,db):self.db=db;self.cache={}\\n def set_permission(self,tenant,user,resource,allowed):\\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\\n  self.db.commit()\\n def can_read(self,tenant,user,resource):\\n  key=(user,resource)\\n  if key not in self.cache:\\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\\n   self.cache[key]=bool(row and row[0])\\n  return self.cache[key]\\n\"}, {\"path\": \"storage.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\n\\ndef connect():\\n d=sqlite3.connect(':memory:')\\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\\n return d\\n\"}]}"
+        },
+        {
+          "origin": "live",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Repair tenant-scoped authorization cache isolation and revocation freshness without allowing cross-tenant access.\n\nRepository map:\nauthorization.py | imports:  | symbols: __init__, set_permission, can_read, Authorization\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: authorization, storage, unittest | symbols: test_tenant_isolation, test_invalid_identity_returns_false, Public\n\nSelected source context:\n### authorization.py\nclass Authorization:\n def __init__(self,db):self.db=db;self.cache={}\n def set_permission(self,tenant,user,resource,allowed):\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\n  self.db.commit()\n def can_read(self,tenant,user,resource):\n  key=(user,resource)\n  if key not in self.cache:\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\n   self.cache[key]=bool(row and row[0])\n  return self.cache[key]\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n d=sqlite3.connect(':memory:')\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\n return d\n"
+              },
+              {
+                "role": "assistant",
+                "content": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"authorization.py\", \"operation\": \"modify\", \"content\": \"class Authorization:\\n def __init__(self,db):self.db=db;self.cache={}\\n def set_permission(self,tenant,user,resource,allowed):\\n  self.db.execute('INSERT INTO permissions VALUES (?,?,?,?) ON CONFLICT(tenant,user,resource) DO UPDATE SET allowed=excluded.allowed',(tenant,user,resource,int(bool(allowed))))\\n  self.db.commit()\\n def can_read(self,tenant,user,resource):\\n  key=(user,resource)\\n  if key not in self.cache:\\n   row=self.db.execute('SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?',(tenant,user,resource)).fetchone()\\n   self.cache[key]=bool(row and row[0])\\n  return self.cache[key]\\n\"}, {\"path\": \"storage.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\n\\ndef connect():\\n d=sqlite3.connect(':memory:')\\n d.execute('CREATE TABLE permissions (tenant TEXT, user TEXT, resource TEXT, allowed INTEGER, PRIMARY KEY(tenant,user,resource))')\\n return d\\n\"}]}"
+              },
+              {
+                "role": "user",
+                "content": "Tests/validation failed:\nFailure stage: smoke_tests\nFailure category: test_failure\nFiles changed: authorization.py, storage.py\nFailure details (truncated):\n\ntest_invalid_identity_returns_false (test_public.Public.test_invalid_identity_returns_false) ... ok\ntest_tenant_isolation (test_public.Public.test_tenant_isolation) ... FAIL\n\n======================================================================\nFAIL: test_tenant_isolation (test_public.Public.test_tenant_isolation)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-cumxgxas/repo/tests/test_public.py\", line 8, in test_tenant_isolation\n    self.assertFalse(a.can_read('beta','user','doc'))\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 2 tests in 0.018s\n\nFAILED (failures=1)\n\nIMPORTANT: Each retry starts from the ORIGINAL repository snapshot, not the previous attempt. Files created in a previous attempt do not exist now. Return a COMPLETE replacement edit batch: use operation=create for newly introduced files (even if created in the prior failed attempt), and operation=modify for files originally present. Enforce all defensive invariants: strictly validate parameter types (reject `bool` for numeric parameters), wrap state mutations in atomic transactions with full rollback on any failure, reject conflicting idempotency keys with ValueError, and fail-closed on tenant isolation. Include every file needed for the working feature, not just the file that failed. Return valid JSON only, with complete file contents.\n\nGenerate repair candidate 1 of 2. Produce one complete, independently applicable edit batch. Ensure rigorous enterprise contract safety: strict type checks (explicitly reject booleans where numbers/integers are expected), full rollback on write failures or trigger aborts, idempotency conflict verification, and fail-closed tenant boundaries. Consider alternative implementation choices while satisfying the original task and test requirements. Return only the required JSON response."
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.7
+            }
+          },
+          "response": "{\"reasoning_summary\":\"Fixed cross-tenant cache leakage by keying cache with tenant and added strict type validation, transactional safety, and cache update on permission changes.\", \"edits\":[{\"path\":\"authorization.py\",\"operation\":\"modify\",\"content\":\"\\\"\\\"\\\"Authorization module with tenant-scoped permission caching and strict defensive checks.\\n\\nThe Authorization class provides methods to set permissions and query read access while ensuring:\\n- Tenant isolation: cache keys include tenant, and empty/invalid tenants raise ValueError.\\n- Strict type validation: all inputs are validated; booleans are only accepted where explicitly required.\\n- Transactional atomicity: permission writes are performed inside a SQLite transaction that rolls back on any error.\\n- Cache consistency: the cache is refreshed immediately after a successful permission update.\\n\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport sqlite3\\nfrom typing import Any, Tuple\\n\\n\\nclass Authorization:\\n    \\\"\\\"\\\"Manage per\u2011tenant read permissions with an in\u2011memory cache.\\n\\n    Parameters\\n    ----------\\n    db: sqlite3.Connection\\n        An open SQLite connection containing a ``permissions`` table with the\\n        schema ``(tenant TEXT, user TEXT, resource TEXT, allowed INTEGER)`` and a\\n        primary key on ``(tenant, user, resource)``.\\n    \\\"\\\"\\\"\\n\\n    def __init__(self, db: sqlite3.Connection) -> None:\\n        if not isinstance(db, sqlite3.Connection):\\n            raise ValueError(\\\"db must be a sqlite3.Connection instance\\\")\\n        self.db: sqlite3.Connection = db\\n        # Cache key is a tuple (tenant, user, resource) \u2192 bool\\n        self.cache: dict[Tuple[str, str, str], bool] = {}\\n\\n    # ---------------------------------------------------------------------\\n    # Internal validation helpers\\n    # ---------------------------------------------------------------------\\n    @staticmethod\\n    def _validate_nonempty_str(value: Any, name: str) -> str:\\n        if not isinstance(value, str) or value == \\\"\\\":\\n            raise ValueError(f\\\"{name} must be a non\u2011empty string\\\")\\n        return value\\n\\n    @staticmethod\\n    def _validate_bool(value: Any, name: str) -> bool:\\n        # Explicitly reject integers (including bool) that are not bool\\n        if type(value) is not bool:\\n            raise ValueError(f\\\"{name} must be a bool\\\")\\n        return value\\n\\n    # ---------------------------------------------------------------------\\n    # Public API\\n    # ---------------------------------------------------------------------\\n    def set_permission(\\n        self,\\n        tenant: Any,\\n        user: Any,\\n        resource: Any,\\n        allowed: Any,\\n    ) -> None:\\n        \\\"\\\"\\\"Create or update a permission record.\\n\\n        The operation is performed atomically; on any failure the transaction\\n        is rolled back and the in\u2011memory cache remains unchanged.\\n        \\\"\\\"\\\"\\n        tenant = self._validate_nonempty_str(tenant, \\\"tenant\\\")\\n        user = self._validate_nonempty_str(user, \\\"user\\\")\\n        resource = self._validate_nonempty_str(resource, \\\"resource\\\")\\n        allowed = self._validate_bool(allowed, \\\"allowed\\\")\\n\\n        # SQLite connections act as context managers that commit on success\\n        # and rollback on exception.\\n        try:\\n            with self.db:\\n                self.db.execute(\\n                    \\\"\\\"\\\"\\n                    INSERT INTO permissions (tenant, user, resource, allowed)\\n                    VALUES (?, ?, ?, ?)\\n                    ON CONFLICT(tenant, user, resource) DO UPDATE SET allowed=excluded.allowed\\n                    \\\"\\\"\\\",\\n                    (tenant, user, resource, int(allowed)),\\n                )\\n        except Exception as exc:\\n            # Ensure the caller sees a clean error without partial state.\\n            raise ValueError(f\\\"Failed to set permission: {exc}\\\") from exc\\n\\n        # Update cache to reflect the new state.\\n        cache_key = (tenant, user, resource)\\n        self.cache[cache_key] = allowed\\n\\n    def can_read(self, tenant: Any, user: Any, resource: Any) -> bool:\\n        \\\"\\\"\\\"Return ``True`` if *user* may read *resource* under *tenant*.\\n\\n        Results are cached per tenant to avoid cross\u2011tenant leakage.\\n        \\\"\\\"\\\"\\n        tenant = self._validate_nonempty_str(tenant, \\\"tenant\\\")\\n        user = self._validate_nonempty_str(user, \\\"user\\\")\\n        resource = self._validate_nonempty_str(resource, \\\"resource\\\")\\n\\n        cache_key = (tenant, user, resource)\\n        if cache_key not in self.cache:\\n            row = self.db.execute(\\n                \\\"SELECT allowed FROM permissions WHERE tenant=? AND user=? AND resource=?\\\",\\n                (tenant, user, resource),\\n            ).fetchone()\\n            # ``allowed`` is stored as 0/1 integer; treat missing row as False.\\n            self.cache[cache_key] = bool(row and row[0])\\n        return self.cache[cache_key]\\n\"}]}"
+        }
+      ],
+      "live_calls": 1,
+      "completion_origins": {
+        "captured_initial": 0,
+        "checkpoint_replay": 1,
+        "scripted": 0,
+        "live": 1
+      },
+      "request_accounting": {
+        "logical_calls": 2,
+        "http_requests": 2,
+        "http_failures": 1,
+        "prompt_tokens": 1529,
+        "completion_tokens": 1537,
+        "usage_reports": 1
+      }
+    }
+  ],
+  "pending": {},
+  "notice": "Contains prompts and model-generated code; review before sharing."
+}

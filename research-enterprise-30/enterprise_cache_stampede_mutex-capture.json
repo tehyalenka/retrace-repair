@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_cache_stampede_mutex",
+  "task": "Implement cache stampede prevention with single-flight mutex coalescing, ensuring exactly one backend loader executes during concurrent cache misses.",
+  "repo_sha256": "f2b3dfd314978294c9481d358ac1ba57f9d77c01e5f1dbbf49911d1dafdbc5c4",
+  "verifier_sha256": "26fb1f1748103321dc4d34fb51f2c651417b1dbcc4435a74ef63851c27fd7a1e",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement cache stampede prevention with single-flight mutex coalescing, ensuring exactly one backend loader executes during concurrent cache misses.\n\nRepository map:\nstampede_cache.py | imports: threading, time | symbols: __init__, get_or_compute, StampedeCache\ntests/test_public.py | imports: stampede_cache, threading, time, unittest | symbols: test_single_call_caches_value, test_single_flight_coalescing_under_concurrency, loader, slow_loader, worker, Public\n\nSelected source context:\n### stampede_cache.py\nimport threading\nimport time\n\nclass StampedeCache:\n    def __init__(self):\n        self.cache = {} # key -> (value, expires_at)\n        self.lock = threading.Lock()\n\n    def get_or_compute(self, key, loader, ttl_seconds, now=None):\n        now = time.time() if now is None else now\n        \n        # Buggy repo: no single-flight coalescing\n        # Whenever cache is empty or expired, EVERY caller calls loader() directly!\n        with self.lock:\n            if key in self.cache:\n                val, expires_at = self.cache[key]\n                if expires_at > now:\n                    return val\n\n        # Thundering herd bug: loader() executed outside lock without single-flight protection\n        val = loader()\n\n        with self.lock:\n            self.cache[key] = (val, now + ttl_seconds)\n        return val\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"stampede_cache.py\", \"operation\": \"modify\", \"content\": \"import threading\\nimport time\\n\\nclass StampedeCache:\\n    def __init__(self):\\n        self.cache = {} # key -> (value, expires_at)\\n        self.lock = threading.Lock()\\n\\n    def get_or_compute(self, key, loader, ttl_seconds, now=None):\\n        now = time.time() if now is None else now\\n        \\n        # Buggy repo: no single-flight coalescing\\n        # Whenever cache is empty or expired, EVERY caller calls loader() directly!\\n        with self.lock:\\n            if key in self.cache:\\n                val, expires_at = self.cache[key]\\n                if expires_at > now:\\n                    return val\\n\\n        # Thundering herd bug: loader() executed outside lock without single-flight protection\\n        val = loader()\\n\\n        with self.lock:\\n            self.cache[key] = (val, now + ttl_seconds)\\n        return val\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "stampede_cache.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_single_call_caches_value (test_public.Public.test_single_call_caches_value) ... ok\ntest_single_flight_coalescing_under_concurrency (test_public.Public.test_single_flight_coalescing_under_concurrency) ... FAIL\n\n======================================================================\nFAIL: test_single_flight_coalescing_under_concurrency (test_public.Public.test_single_flight_coalescing_under_concurrency)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-o0v25rs5/repo/tests/test_public.py\", line 54, in test_single_flight_coalescing_under_concurrency\n    self.assertEqual(loader_calls[0], 1, \"Cache stampede occurred! Multiple loaders executed!\")\nAssertionError: 5 != 1 : Cache stampede occurred! Multiple loaders executed!\n\n----------------------------------------------------------------------\nRan 2 tests in 0.059s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.195
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

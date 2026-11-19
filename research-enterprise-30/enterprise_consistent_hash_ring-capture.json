@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_consistent_hash_ring",
+  "task": "Implement consistent hash ring with virtual nodes, guaranteeing deterministic lookup and minimal key relocation on cluster topology changes.",
+  "repo_sha256": "ae0db74cf7dd16fec0f9c7367f5152e18d70fa9db53072e3c9300ac8460d485a",
+  "verifier_sha256": "026ee34674064ce367852d81f8e4ed5833b6720399433ed7c6f26ae382ccc4d1",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement consistent hash ring with virtual nodes, guaranteeing deterministic lookup and minimal key relocation on cluster topology changes.\n\nRepository map:\nhash_ring.py | imports: hashlib | symbols: __init__, add_node, remove_node, get_node, ConsistentHashRing\ntests/test_public.py | imports: hash_ring, unittest | symbols: test_consistent_key_lookup, test_minimal_key_relocation_on_node_addition, Public\n\nSelected source context:\n### hash_ring.py\nimport hashlib\n\nclass ConsistentHashRing:\n    def __init__(self, vnodes=50):\n        self.vnodes = vnodes\n        self.nodes = []\n\n    def add_node(self, node):\n        if node not in self.nodes:\n            self.nodes.append(node)\n            self.nodes.sort()\n\n    def remove_node(self, node):\n        if node in self.nodes:\n            self.nodes.remove(node)\n\n    def get_node(self, key):\n        if not self.nodes:\n            raise KeyError(\"No nodes in ring\")\n        \n        # Buggy repo: Naive modulo hashing!\n        # Causes catastrophic ~75% key churn when adding a 4th node to a 3-node ring!\n        h = int(hashlib.md5(key.encode('utf-8')).hexdigest(), 16)\n        return self.nodes[h % len(self.nodes)]\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"hash_ring.py\", \"operation\": \"modify\", \"content\": \"import hashlib\\n\\nclass ConsistentHashRing:\\n    def __init__(self, vnodes=50):\\n        self.vnodes = vnodes\\n        self.nodes = []\\n\\n    def add_node(self, node):\\n        if node not in self.nodes:\\n            self.nodes.append(node)\\n            self.nodes.sort()\\n\\n    def remove_node(self, node):\\n        if node in self.nodes:\\n            self.nodes.remove(node)\\n\\n    def get_node(self, key):\\n        if not self.nodes:\\n            raise KeyError(\\\"No nodes in ring\\\")\\n        \\n        # Buggy repo: Naive modulo hashing!\\n        # Causes catastrophic ~75% key churn when adding a 4th node to a 3-node ring!\\n        h = int(hashlib.md5(key.encode('utf-8')).hexdigest(), 16)\\n        return self.nodes[h % len(self.nodes)]\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "hash_ring.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_consistent_key_lookup (test_public.Public.test_consistent_key_lookup) ... ok\ntest_minimal_key_relocation_on_node_addition (test_public.Public.test_minimal_key_relocation_on_node_addition) ... FAIL\n\n======================================================================\nFAIL: test_minimal_key_relocation_on_node_addition (test_public.Public.test_minimal_key_relocation_on_node_addition)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-8r8zeu3k/repo/tests/test_public.py\", line 33, in test_minimal_key_relocation_on_node_addition\n    self.assertLess(relocation_fraction, 0.40, f\"Excessive key relocation: {relocation_fraction:.2%}\")\nAssertionError: 0.735 not less than 0.4 : Excessive key relocation: 73.50%\n\n----------------------------------------------------------------------\nRan 2 tests in 0.002s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.13
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

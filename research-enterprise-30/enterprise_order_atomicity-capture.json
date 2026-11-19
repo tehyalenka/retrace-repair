@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_order_atomicity",
+  "task": "Repair transactional order placement with idempotent retries, stock reservation, atomic outbox writes, and rollback on failure. Reject invalid quantities with ValueError. Reusing an idempotency key with a different order payload must raise ValueError without changing inventory, orders, or outbox records.",
+  "repo_sha256": "13f17c86ab591405c24e7b7f49b620745da4e672dc0d2505f0d2922b5bb2bfc4",
+  "verifier_sha256": "7533999c30b3486a64bf1176bfe26ebfda45ba13fc630ef00aef09962735b4ea",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Repair transactional order placement with idempotent retries, stock reservation, atomic outbox writes, and rollback on failure. Reject invalid quantities with ValueError. Reusing an idempotency key with a different order payload must raise ValueError without changing inventory, orders, or outbox records.\n\nRepository map:\norders.py | imports: sqlite3, storage | symbols: __init__, seed, place, available, event_count, OrderService\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: orders, storage, unittest | symbols: test_idempotent_retry, test_zero_quantity_rejected_without_side_effects, test_conflicting_idempotency_key_rejected, Public\n\nSelected source context:\n### orders.py\nimport sqlite3\nfrom storage import connect\n\nclass OrderService:\n    def __init__(self, db): self.db=db\n    def seed(self,sku,qty): self.db.execute('INSERT INTO stock VALUES (?,?)',(sku,qty));self.db.commit()\n    def place(self,request_id,sku,qty):\n        if qty<=0: raise ValueError('quantity must be positive')\n        row=self.db.execute('SELECT available FROM stock WHERE sku=?',(sku,)).fetchone()\n        if not row or row[0]<qty: return False\n        self.db.execute('UPDATE stock SET available=available-? WHERE sku=?',(qty,sku))\n        self.db.execute('INSERT OR REPLACE INTO orders VALUES (?,?,?,?)',(request_id,sku,qty,'placed'))\n        self.db.execute('INSERT OR REPLACE INTO outbox VALUES (?,?,?)',(request_id,'order_placed',sku))\n        self.db.commit()\n        return True\n    def available(self,sku): return self.db.execute('SELECT available FROM stock WHERE sku=?',(sku,)).fetchone()[0]\n    def event_count(self): return self.db.execute('SELECT count(*) FROM outbox').fetchone()[0]\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n    db = sqlite3.connect(':memory:')\n    db.execute('CREATE TABLE stock (sku TEXT PRIMARY KEY, available INTEGER NOT NULL CHECK(available>=0))')\n    db.execute('CREATE TABLE orders (request_id TEXT PRIMARY KEY, sku TEXT NOT NULL, qty INTEGER NOT NULL, status TEXT NOT NULL)')\n    db.execute('CREATE TABLE outbox (event_id TEXT PRIMARY KEY, kind TEXT NOT NULL, payload TEXT NOT NULL)')\n    return db\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"orders.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\nfrom storage import connect\\n\\nclass OrderService:\\n    def __init__(self, db): self.db=db\\n    def seed(self,sku,qty): self.db.execute('INSERT INTO stock VALUES (?,?)',(sku,qty));self.db.commit()\\n    def place(self,request_id,sku,qty):\\n        if qty<=0: raise ValueError('quantity must be positive')\\n        row=self.db.execute('SELECT available FROM stock WHERE sku=?',(sku,)).fetchone()\\n        if not row or row[0]<qty: return False\\n        self.db.execute('UPDATE stock SET available=available-? WHERE sku=?',(qty,sku))\\n        self.db.execute('INSERT OR REPLACE INTO orders VALUES (?,?,?,?)',(request_id,sku,qty,'placed'))\\n        self.db.execute('INSERT OR REPLACE INTO outbox VALUES (?,?,?)',(request_id,'order_placed',sku))\\n        self.db.commit()\\n        return True\\n    def available(self,sku): return self.db.execute('SELECT available FROM stock WHERE sku=?',(sku,)).fetchone()[0]\\n    def event_count(self): return self.db.execute('SELECT count(*) FROM outbox').fetchone()[0]\\n\"}, {\"path\": \"storage.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\n\\ndef connect():\\n    db = sqlite3.connect(':memory:')\\n    db.execute('CREATE TABLE stock (sku TEXT PRIMARY KEY, available INTEGER NOT NULL CHECK(available>=0))')\\n    db.execute('CREATE TABLE orders (request_id TEXT PRIMARY KEY, sku TEXT NOT NULL, qty INTEGER NOT NULL, status TEXT NOT NULL)')\\n    db.execute('CREATE TABLE outbox (event_id TEXT PRIMARY KEY, kind TEXT NOT NULL, payload TEXT NOT NULL)')\\n    return db\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "orders.py",
+      "storage.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 3,
+    "output": "\ntest_conflicting_idempotency_key_rejected (test_public.Public.test_conflicting_idempotency_key_rejected) ... FAIL\ntest_idempotent_retry (test_public.Public.test_idempotent_retry) ... FAIL\ntest_zero_quantity_rejected_without_side_effects (test_public.Public.test_zero_quantity_rejected_without_side_effects) ... ok\n\n======================================================================\nFAIL: test_conflicting_idempotency_key_rejected (test_public.Public.test_conflicting_idempotency_key_rejected)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-_97yjq6a/repo/tests/test_public.py\", line 30, in test_conflicting_idempotency_key_rejected\n    with self.assertRaises(ValueError):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_idempotent_retry (test_public.Public.test_idempotent_retry)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-_97yjq6a/repo/tests/test_public.py\", line 13, in test_idempotent_retry\n    self.assertEqual(s.available('A'), 3)\nAssertionError: 1 != 3\n\n----------------------------------------------------------------------\nRan 3 tests in 0.020s\n\nFAILED (failures=2)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 3,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.273
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

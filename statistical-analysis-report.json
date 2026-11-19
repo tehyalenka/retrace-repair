@@ -1,113 +1,794 @@
 {
   "analysis_schema": 2,
-  "results_directory": "research-full-suite-22",
-  "total_tasks": 22,
+  "results_directory": "research-enterprise-30",
+  "total_tasks": 30,
   "summary_statistics": {
     "resample": {
-      "tasks_evaluated": 22,
-      "public_pass_rate": 0.95,
+      "tasks_evaluated": 30,
+      "public_pass_rate": 0.73,
       "public_pass_95ci": [
-        0.86,
-        1.0
+        0.57,
+        0.9
       ],
-      "heldout_pass_rate": 0.68,
+      "heldout_pass_rate": 0.43,
       "heldout_pass_95ci": [
-        0.5,
-        0.86
+        0.27,
+        0.6
       ],
-      "mean_tokens_per_task": 1131.59,
+      "mean_tokens_per_task": 3008.27,
       "tokens_95ci": [
-        841.86,
-        1461.73
+        2627.9,
+        3621.3
       ],
-      "provider_reported_tokens": 24895,
+      "provider_reported_tokens": 90248,
       "estimated_tokens": null,
       "token_accounting_mode": "provider_verified",
-      "tokens_per_heldout_success": 1659.7,
-      "total_live_calls": 23
+      "tokens_per_heldout_success": 6942.2,
+      "total_live_calls": 31
     },
     "feedback": {
-      "tasks_evaluated": 22,
-      "public_pass_rate": 1.0,
+      "tasks_evaluated": 30,
+      "public_pass_rate": 0.83,
       "public_pass_95ci": [
-        1.0,
-        1.0
+        0.7,
+        0.93
       ],
-      "heldout_pass_rate": 0.68,
+      "heldout_pass_rate": 0.43,
       "heldout_pass_95ci": [
-        0.5,
-        0.86
+        0.27,
+        0.6
       ],
-      "mean_tokens_per_task": 2042.73,
+      "mean_tokens_per_task": 4116.27,
       "tokens_95ci": [
-        1192.36,
-        3486.5
+        3581.67,
+        4852.57
       ],
-      "provider_reported_tokens": 44940,
+      "provider_reported_tokens": 123488,
       "estimated_tokens": null,
       "token_accounting_mode": "provider_verified",
-      "tokens_per_heldout_success": 2996.0,
-      "total_live_calls": 24
+      "tokens_per_heldout_success": 9499.1,
+      "total_live_calls": 32
     },
-    "counterfactual": {
-      "tasks_evaluated": 22,
-      "public_pass_rate": 0.95,
+    "counterfactual_replay": {
+      "tasks_evaluated": 30,
+      "public_pass_rate": 0.83,
       "public_pass_95ci": [
-        0.86,
-        1.0
+        0.67,
+        0.97
       ],
-      "heldout_pass_rate": 0.68,
+      "heldout_pass_rate": 0.47,
       "heldout_pass_95ci": [
-        0.5,
-        0.86
+        0.3,
+        0.63
       ],
-      "mean_tokens_per_task": 1520.41,
+      "mean_tokens_per_task": 7429.33,
       "tokens_95ci": [
-        1181.27,
-        1898.23
+        6103.13,
+        9255.3
       ],
-      "provider_reported_tokens": 33449,
+      "provider_reported_tokens": 222880,
       "estimated_tokens": null,
       "token_accounting_mode": "provider_verified",
-      "tokens_per_heldout_success": 2229.9,
-      "total_live_calls": 22
+      "tokens_per_heldout_success": 15920.0,
+      "total_live_calls": 57
     }
   },
   "mcnemar_paired_tests": {
     "resample_vs_feedback": {
-      "paired_evaluable_tasks": 22,
+      "paired_evaluable_tasks": 30,
       "dropped_missing_strategy_tasks": [],
-      "resample_only_pass": 0,
-      "feedback_only_pass": 0,
-      "both_pass_or_both_fail": 22,
+      "resample_only_pass": 5,
+      "feedback_only_pass": 5,
+      "both_pass_or_both_fail": 20,
       "exact_p_value": 1.0,
       "significant_at_05": false,
       "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
     },
-    "feedback_vs_counterfactual": {
-      "paired_evaluable_tasks": 22,
+    "feedback_vs_counterfactual_replay": {
+      "paired_evaluable_tasks": 30,
       "dropped_missing_strategy_tasks": [],
-      "feedback_only_pass": 0,
-      "counterfactual_only_pass": 0,
-      "both_pass_or_both_fail": 22,
+      "feedback_only_pass": 3,
+      "counterfactual_replay_only_pass": 4,
+      "both_pass_or_both_fail": 23,
       "exact_p_value": 1.0,
       "significant_at_05": false,
       "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
     },
-    "resample_vs_counterfactual": {
-      "paired_evaluable_tasks": 22,
+    "resample_vs_counterfactual_replay": {
+      "paired_evaluable_tasks": 30,
       "dropped_missing_strategy_tasks": [],
-      "resample_only_pass": 0,
-      "counterfactual_only_pass": 0,
-      "both_pass_or_both_fail": 22,
+      "resample_only_pass": 2,
+      "counterfactual_replay_only_pass": 3,
+      "both_pass_or_both_fail": 25,
       "exact_p_value": 1.0,
       "significant_at_05": false,
       "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+    }
+  },
+  "cluster_stratified_analysis": {
+    "transactional_durability": {
+      "tasks_count": 6,
+      "tasks": [
+        "enterprise_bank_transfer",
+        "enterprise_event_sourcing_aggregate",
+        "enterprise_ledger_exactly_once",
+        "enterprise_order_atomicity",
+        "enterprise_two_phase_commit",
+        "enterprise_wal_replay"
+      ],
+      "summary_statistics": {
+        "resample": {
+          "tasks_evaluated": 6,
+          "public_pass_rate": 1.0,
+          "public_pass_95ci": [
+            1.0,
+            1.0
+          ],
+          "heldout_pass_rate": 0.33,
+          "heldout_pass_95ci": [
+            0.0,
+            0.67
+          ],
+          "mean_tokens_per_task": 2870.0,
+          "tokens_95ci": [
+            2311.17,
+            3656.67
+          ],
+          "provider_reported_tokens": 17220,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 8610.0,
+          "total_live_calls": 6
+        },
+        "feedback": {
+          "tasks_evaluated": 6,
+          "public_pass_rate": 0.83,
+          "public_pass_95ci": [
+            0.5,
+            1.0
+          ],
+          "heldout_pass_rate": 0.5,
+          "heldout_pass_95ci": [
+            0.17,
+            0.83
+          ],
+          "mean_tokens_per_task": 4707.0,
+          "tokens_95ci": [
+            3572.33,
+            6068.33
+          ],
+          "provider_reported_tokens": 28242,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 9414.0,
+          "total_live_calls": 7
+        },
+        "counterfactual_replay": {
+          "tasks_evaluated": 6,
+          "public_pass_rate": 1.0,
+          "public_pass_95ci": [
+            1.0,
+            1.0
+          ],
+          "heldout_pass_rate": 0.33,
+          "heldout_pass_95ci": [
+            0.0,
+            0.67
+          ],
+          "mean_tokens_per_task": 6065.0,
+          "tokens_95ci": [
+            4431.5,
+            7622.5
+          ],
+          "provider_reported_tokens": 36390,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 18195.0,
+          "total_live_calls": 9
+        }
+      },
+      "mcnemar_paired_tests": {
+        "resample_vs_feedback": {
+          "paired_evaluable_tasks": 6,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 0,
+          "feedback_only_pass": 1,
+          "both_pass_or_both_fail": 5,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "feedback_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 6,
+          "dropped_missing_strategy_tasks": [],
+          "feedback_only_pass": 1,
+          "counterfactual_replay_only_pass": 0,
+          "both_pass_or_both_fail": 5,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "resample_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 6,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 0,
+          "counterfactual_replay_only_pass": 0,
+          "both_pass_or_both_fail": 6,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        }
+      }
+    },
+    "concurrency_crdts": {
+      "tasks_count": 5,
+      "tasks": [
+        "enterprise_crdt_pn_counter",
+        "enterprise_distributed_lock_lease",
+        "enterprise_idempotent_event_consumer",
+        "enterprise_optimistic_concurrency_doc",
+        "enterprise_read_write_lock_fair"
+      ],
+      "summary_statistics": {
+        "resample": {
+          "tasks_evaluated": 5,
+          "public_pass_rate": 0.8,
+          "public_pass_95ci": [
+            0.4,
+            1.0
+          ],
+          "heldout_pass_rate": 0.6,
+          "heldout_pass_95ci": [
+            0.2,
+            1.0
+          ],
+          "mean_tokens_per_task": 2697.4,
+          "tokens_95ci": [
+            2495.2,
+            2895.8
+          ],
+          "provider_reported_tokens": 13487,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 4495.7,
+          "total_live_calls": 5
+        },
+        "feedback": {
+          "tasks_evaluated": 5,
+          "public_pass_rate": 1.0,
+          "public_pass_95ci": [
+            1.0,
+            1.0
+          ],
+          "heldout_pass_rate": 0.6,
+          "heldout_pass_95ci": [
+            0.2,
+            1.0
+          ],
+          "mean_tokens_per_task": 3516.8,
+          "tokens_95ci": [
+            3143.2,
+            3933.4
+          ],
+          "provider_reported_tokens": 17584,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 5861.3,
+          "total_live_calls": 5
+        },
+        "counterfactual_replay": {
+          "tasks_evaluated": 5,
+          "public_pass_rate": 1.0,
+          "public_pass_95ci": [
+            1.0,
+            1.0
+          ],
+          "heldout_pass_rate": 0.6,
+          "heldout_pass_95ci": [
+            0.2,
+            1.0
+          ],
+          "mean_tokens_per_task": 5079.6,
+          "tokens_95ci": [
+            3603.4,
+            6574.6
+          ],
+          "provider_reported_tokens": 25398,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 8466.0,
+          "total_live_calls": 7
+        }
+      },
+      "mcnemar_paired_tests": {
+        "resample_vs_feedback": {
+          "paired_evaluable_tasks": 5,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 1,
+          "feedback_only_pass": 1,
+          "both_pass_or_both_fail": 3,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "feedback_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 5,
+          "dropped_missing_strategy_tasks": [],
+          "feedback_only_pass": 0,
+          "counterfactual_replay_only_pass": 0,
+          "both_pass_or_both_fail": 5,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "resample_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 5,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 1,
+          "counterfactual_replay_only_pass": 1,
+          "both_pass_or_both_fail": 3,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        }
+      }
+    },
+    "fault_tolerance_sagas": {
+      "tasks_count": 6,
+      "tasks": [
+        "enterprise_bulkhead_isolation",
+        "enterprise_cache_stampede_mutex",
+        "enterprise_circuit_breaker",
+        "enterprise_dead_letter_retry",
+        "enterprise_outbox_publisher",
+        "enterprise_saga_coordinator"
+      ],
+      "summary_statistics": {
+        "resample": {
+          "tasks_evaluated": 6,
+          "public_pass_rate": 0.83,
+          "public_pass_95ci": [
+            0.5,
+            1.0
+          ],
+          "heldout_pass_rate": 0.5,
+          "heldout_pass_95ci": [
+            0.17,
+            0.83
+          ],
+          "mean_tokens_per_task": 3112.33,
+          "tokens_95ci": [
+            2717.17,
+            3440.83
+          ],
+          "provider_reported_tokens": 18674,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 6224.7,
+          "total_live_calls": 6
+        },
+        "feedback": {
+          "tasks_evaluated": 6,
+          "public_pass_rate": 1.0,
+          "public_pass_95ci": [
+            1.0,
+            1.0
+          ],
+          "heldout_pass_rate": 0.17,
+          "heldout_pass_95ci": [
+            0.0,
+            0.5
+          ],
+          "mean_tokens_per_task": 5298.17,
+          "tokens_95ci": [
+            3670.83,
+            8199.33
+          ],
+          "provider_reported_tokens": 31789,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 31789.0,
+          "total_live_calls": 7
+        },
+        "counterfactual_replay": {
+          "tasks_evaluated": 6,
+          "public_pass_rate": 0.67,
+          "public_pass_95ci": [
+            0.33,
+            1.0
+          ],
+          "heldout_pass_rate": 0.33,
+          "heldout_pass_95ci": [
+            0.0,
+            0.67
+          ],
+          "mean_tokens_per_task": 12085.33,
+          "tokens_95ci": [
+            6995.5,
+            17963.5
+          ],
+          "provider_reported_tokens": 72512,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 36256.0,
+          "total_live_calls": 16
+        }
+      },
+      "mcnemar_paired_tests": {
+        "resample_vs_feedback": {
+          "paired_evaluable_tasks": 6,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 2,
+          "feedback_only_pass": 0,
+          "both_pass_or_both_fail": 4,
+          "exact_p_value": 0.5,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "feedback_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 6,
+          "dropped_missing_strategy_tasks": [],
+          "feedback_only_pass": 1,
+          "counterfactual_replay_only_pass": 2,
+          "both_pass_or_both_fail": 3,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "resample_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 6,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 1,
+          "counterfactual_replay_only_pass": 0,
+          "both_pass_or_both_fail": 5,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        }
+      }
+    },
+    "multi_tenant_isolation": {
+      "tasks_count": 5,
+      "tasks": [
+        "enterprise_audit_log_tamper_evident",
+        "enterprise_rbac_policy_evaluator",
+        "enterprise_secret_rotation_vault",
+        "enterprise_tenant_cache",
+        "enterprise_tenant_rate_limiter"
+      ],
+      "summary_statistics": {
+        "resample": {
+          "tasks_evaluated": 5,
+          "public_pass_rate": 0.6,
+          "public_pass_95ci": [
+            0.2,
+            1.0
+          ],
+          "heldout_pass_rate": 0.4,
+          "heldout_pass_95ci": [
+            0.0,
+            0.8
+          ],
+          "mean_tokens_per_task": 2694.0,
+          "tokens_95ci": [
+            2289.8,
+            3007.8
+          ],
+          "provider_reported_tokens": 13470,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 6735.0,
+          "total_live_calls": 5
+        },
+        "feedback": {
+          "tasks_evaluated": 5,
+          "public_pass_rate": 1.0,
+          "public_pass_95ci": [
+            1.0,
+            1.0
+          ],
+          "heldout_pass_rate": 0.8,
+          "heldout_pass_95ci": [
+            0.4,
+            1.0
+          ],
+          "mean_tokens_per_task": 3659.0,
+          "tokens_95ci": [
+            3149.8,
+            4073.2
+          ],
+          "provider_reported_tokens": 18295,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 4573.8,
+          "total_live_calls": 5
+        },
+        "counterfactual_replay": {
+          "tasks_evaluated": 5,
+          "public_pass_rate": 0.8,
+          "public_pass_95ci": [
+            0.4,
+            1.0
+          ],
+          "heldout_pass_rate": 0.6,
+          "heldout_pass_95ci": [
+            0.2,
+            1.0
+          ],
+          "mean_tokens_per_task": 6900.2,
+          "tokens_95ci": [
+            4920.0,
+            8140.4
+          ],
+          "provider_reported_tokens": 34501,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 11500.3,
+          "total_live_calls": 9
+        }
+      },
+      "mcnemar_paired_tests": {
+        "resample_vs_feedback": {
+          "paired_evaluable_tasks": 5,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 0,
+          "feedback_only_pass": 2,
+          "both_pass_or_both_fail": 3,
+          "exact_p_value": 0.5,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "feedback_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 5,
+          "dropped_missing_strategy_tasks": [],
+          "feedback_only_pass": 1,
+          "counterfactual_replay_only_pass": 0,
+          "both_pass_or_both_fail": 4,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "resample_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 5,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 0,
+          "counterfactual_replay_only_pass": 1,
+          "both_pass_or_both_fail": 4,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        }
+      }
+    },
+    "traffic_resource_pools": {
+      "tasks_count": 5,
+      "tasks": [
+        "enterprise_adaptive_concurrency_limiter",
+        "enterprise_connection_pool",
+        "enterprise_rate_limiter_token_bucket",
+        "enterprise_sliding_window_rate_limiter",
+        "enterprise_token_bucket_burst"
+      ],
+      "summary_statistics": {
+        "resample": {
+          "tasks_evaluated": 5,
+          "public_pass_rate": 0.6,
+          "public_pass_95ci": [
+            0.2,
+            1.0
+          ],
+          "heldout_pass_rate": 0.4,
+          "heldout_pass_95ci": [
+            0.0,
+            0.8
+          ],
+          "mean_tokens_per_task": 4028.0,
+          "tokens_95ci": [
+            2411.6,
+            6987.4
+          ],
+          "provider_reported_tokens": 20140,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 10070.0,
+          "total_live_calls": 6
+        },
+        "feedback": {
+          "tasks_evaluated": 5,
+          "public_pass_rate": 0.4,
+          "public_pass_95ci": [
+            0.0,
+            0.8
+          ],
+          "heldout_pass_rate": 0.0,
+          "heldout_pass_95ci": [
+            0.0,
+            0.0
+          ],
+          "mean_tokens_per_task": 3472.6,
+          "tokens_95ci": [
+            3031.4,
+            3821.6
+          ],
+          "provider_reported_tokens": 17363,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": null,
+          "total_live_calls": 5
+        },
+        "counterfactual_replay": {
+          "tasks_evaluated": 5,
+          "public_pass_rate": 0.8,
+          "public_pass_95ci": [
+            0.4,
+            1.0
+          ],
+          "heldout_pass_rate": 0.4,
+          "heldout_pass_95ci": [
+            0.0,
+            0.8
+          ],
+          "mean_tokens_per_task": 6779.4,
+          "tokens_95ci": [
+            6255.0,
+            7228.2
+          ],
+          "provider_reported_tokens": 33897,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 16948.5,
+          "total_live_calls": 10
+        }
+      },
+      "mcnemar_paired_tests": {
+        "resample_vs_feedback": {
+          "paired_evaluable_tasks": 5,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 2,
+          "feedback_only_pass": 0,
+          "both_pass_or_both_fail": 3,
+          "exact_p_value": 0.5,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "feedback_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 5,
+          "dropped_missing_strategy_tasks": [],
+          "feedback_only_pass": 0,
+          "counterfactual_replay_only_pass": 2,
+          "both_pass_or_both_fail": 3,
+          "exact_p_value": 0.5,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "resample_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 5,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 0,
+          "counterfactual_replay_only_pass": 0,
+          "both_pass_or_both_fail": 5,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        }
+      }
+    },
+    "coordination_consensus": {
+      "tasks_count": 3,
+      "tasks": [
+        "enterprise_consistent_hash_ring",
+        "enterprise_leader_epoch_election",
+        "enterprise_replicated_state_machine"
+      ],
+      "summary_statistics": {
+        "resample": {
+          "tasks_evaluated": 3,
+          "public_pass_rate": 0.33,
+          "public_pass_95ci": [
+            0.0,
+            1.0
+          ],
+          "heldout_pass_rate": 0.33,
+          "heldout_pass_95ci": [
+            0.0,
+            1.0
+          ],
+          "mean_tokens_per_task": 2419.0,
+          "tokens_95ci": [
+            2261.0,
+            2565.0
+          ],
+          "provider_reported_tokens": 7257,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 7257.0,
+          "total_live_calls": 3
+        },
+        "feedback": {
+          "tasks_evaluated": 3,
+          "public_pass_rate": 0.67,
+          "public_pass_95ci": [
+            0.0,
+            1.0
+          ],
+          "heldout_pass_rate": 0.67,
+          "heldout_pass_95ci": [
+            0.0,
+            1.0
+          ],
+          "mean_tokens_per_task": 3405.0,
+          "tokens_95ci": [
+            3104.0,
+            3891.0
+          ],
+          "provider_reported_tokens": 10215,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 5107.5,
+          "total_live_calls": 3
+        },
+        "counterfactual_replay": {
+          "tasks_evaluated": 3,
+          "public_pass_rate": 0.67,
+          "public_pass_95ci": [
+            0.0,
+            1.0
+          ],
+          "heldout_pass_rate": 0.67,
+          "heldout_pass_95ci": [
+            0.0,
+            1.0
+          ],
+          "mean_tokens_per_task": 6727.33,
+          "tokens_95ci": [
+            6071.0,
+            7231.0
+          ],
+          "provider_reported_tokens": 20182,
+          "estimated_tokens": null,
+          "token_accounting_mode": "provider_verified",
+          "tokens_per_heldout_success": 10091.0,
+          "total_live_calls": 6
+        }
+      },
+      "mcnemar_paired_tests": {
+        "resample_vs_feedback": {
+          "paired_evaluable_tasks": 3,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 0,
+          "feedback_only_pass": 1,
+          "both_pass_or_both_fail": 2,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "feedback_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 3,
+          "dropped_missing_strategy_tasks": [],
+          "feedback_only_pass": 0,
+          "counterfactual_replay_only_pass": 0,
+          "both_pass_or_both_fail": 3,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        },
+        "resample_vs_counterfactual_replay": {
+          "paired_evaluable_tasks": 3,
+          "dropped_missing_strategy_tasks": [],
+          "resample_only_pass": 0,
+          "counterfactual_replay_only_pass": 1,
+          "both_pass_or_both_fail": 2,
+          "exact_p_value": 1.0,
+          "significant_at_05": false,
+          "conclusion": "No statistically significant divergence observed (inconclusive / identical held-out outcomes)"
+        }
+      }
     }
   },
   "methodology_notes": [
     "Strict paired evaluation: tasks missing either arm are excluded from McNemar comparison rather than imputed as failures.",
     "Provider-reported tokens extracted directly from request_accounting without heuristic substitution.",
-    "Bootstrap confidence intervals calculated over 2,000 resamples at alpha=0.05."
+    "Bootstrap confidence intervals calculated over 2,000 resamples at alpha=0.05.",
+    "Stratified breakdown over 6 enterprise architectural clusters: transactional_durability, concurrency_crdts, fault_tolerance_sagas, multi_tenant_isolation, traffic_resource_pools, and coordination_consensus."
   ]
 }

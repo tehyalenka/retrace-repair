@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_tenant_rate_limiter",
+  "task": "Implement hierarchical multi-tenant rate limiter enforcing per-tenant tier quotas alongside global limits to prevent noisy-neighbor starvation.",
+  "repo_sha256": "fc9c69c6d8c5e523ab5e7fcca2e3036f260e460e02793d498acda0d434df543c",
+  "verifier_sha256": "7a32d5a369e5fbf21adc219a586e3d7eab414a7cbab5f0c98bd97af6c03d0fae",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement hierarchical multi-tenant rate limiter enforcing per-tenant tier quotas alongside global limits to prevent noisy-neighbor starvation.\n\nRepository map:\ntenant_limiter.py | imports: time | symbols: __init__, allow_request, HierarchicalTenantRateLimiter\ntests/test_public.py | imports: tenant_limiter, unittest | symbols: test_tenant_under_tier_limit_allowed, test_tenant_exceeding_tier_quota_rejected, Public\n\nSelected source context:\n### tenant_limiter.py\nimport time\n\nclass HierarchicalTenantRateLimiter:\n    TIERS = {\n        \"free\": 5.0,        # 5 tokens/sec\n        \"standard\": 20.0,   # 20 tokens/sec\n        \"enterprise\": 100.0 # 100 tokens/sec\n    }\n\n    def __init__(self, global_limit=150.0):\n        self.global_limit = global_limit\n        self.global_tokens = global_limit\n        self.global_last_refill = None\n        self.tenant_buckets = {} # tenant_id -> (tokens, last_refill)\n\n    def allow_request(self, tenant_id, tier, now=None):\n        now = time.time() if now is None else now\n        if self.global_last_refill is None:\n            self.global_last_refill = now\n        \n        # Refill global\n        elapsed = now - self.global_last_refill\n        self.global_tokens = min(self.global_limit, self.global_tokens + elapsed * self.global_limit)\n        self.global_last_refill = now\n\n        # Buggy repo: checks ONLY global tokens, completely ignores tenant tier limits!\n        # Free-tier tenant can burst and exhaust quota unrestricted!\n        if self.global_tokens >= 1.0:\n            self.global_tokens -= 1.0\n            return True, 0.0\n        \n        retry_after = (1.0 - self.global_tokens) / self.global_limit\n        return False, retry_after\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"tenant_limiter.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass HierarchicalTenantRateLimiter:\\n    TIERS = {\\n        \\\"free\\\": 5.0,        # 5 tokens/sec\\n        \\\"standard\\\": 20.0,   # 20 tokens/sec\\n        \\\"enterprise\\\": 100.0 # 100 tokens/sec\\n    }\\n\\n    def __init__(self, global_limit=150.0):\\n        self.global_limit = global_limit\\n        self.global_tokens = global_limit\\n        self.global_last_refill = None\\n        self.tenant_buckets = {} # tenant_id -> (tokens, last_refill)\\n\\n    def allow_request(self, tenant_id, tier, now=None):\\n        now = time.time() if now is None else now\\n        if self.global_last_refill is None:\\n            self.global_last_refill = now\\n        \\n        # Refill global\\n        elapsed = now - self.global_last_refill\\n        self.global_tokens = min(self.global_limit, self.global_tokens + elapsed * self.global_limit)\\n        self.global_last_refill = now\\n\\n        # Buggy repo: checks ONLY global tokens, completely ignores tenant tier limits!\\n        # Free-tier tenant can burst and exhaust quota unrestricted!\\n        if self.global_tokens >= 1.0:\\n            self.global_tokens -= 1.0\\n            return True, 0.0\\n        \\n        retry_after = (1.0 - self.global_tokens) / self.global_limit\\n        return False, retry_after\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "tenant_limiter.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_tenant_exceeding_tier_quota_rejected (test_public.Public.test_tenant_exceeding_tier_quota_rejected) ... FAIL\ntest_tenant_under_tier_limit_allowed (test_public.Public.test_tenant_under_tier_limit_allowed) ... ok\n\n======================================================================\nFAIL: test_tenant_exceeding_tier_quota_rejected (test_public.Public.test_tenant_exceeding_tier_quota_rejected)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-qkkhbmd8/repo/tests/test_public.py\", line 20, in test_tenant_exceeding_tier_quota_rejected\n    self.assertFalse(allowed6)\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.119
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

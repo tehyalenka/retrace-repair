@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_distributed_lock_lease",
+  "task": "Implement a lease-based distributed lock manager with monotonic fencing tokens and heartbeat lease renewal, rejecting expired lease operations and stale owner releases.",
+  "repo_sha256": "8fa4238edc8ed575a301150c09d8591301f04b17a3572cd8f68444ce42093d13",
+  "verifier_sha256": "e68ed61451533ddca5611a63d98c4fcd90676e1730fbe2d6763d859a1e927d65",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement a lease-based distributed lock manager with monotonic fencing tokens and heartbeat lease renewal, rejecting expired lease operations and stale owner releases.\n\nRepository map:\nlock.py | imports: time | symbols: __init__, acquire, renew, release, DistributedLockManager\ntests/test_public.py | imports: lock, unittest | symbols: test_acquire_and_renew, test_expired_lease_cannot_renew_and_allows_reacquire, Public\n\nSelected source context:\n### lock.py\nimport time\n\nclass DistributedLockManager:\n    def __init__(self):\n        self.locks = {} # resource_id -> dict(owner, expires_at, fencing_token)\n\n    def acquire(self, resource_id, owner_id, ttl_seconds, now=None):\n        now = time.time() if now is None else now\n        # Buggy repo: Static fencing token = 1, and doesn't check expiration properly\n        if resource_id in self.locks:\n            current = self.locks[resource_id]\n            if current[\"owner\"] != owner_id:\n                return False, None\n        \n        self.locks[resource_id] = {\n            \"owner\": owner_id,\n            \"expires_at\": now + ttl_seconds,\n            \"fencing_token\": 1 # Bug: fixed token\n        }\n        return True, 1\n\n    def renew(self, resource_id, owner_id, ttl_seconds, now=None):\n        now = time.time() if now is None else now\n        # Bug: Does not check if the lease already expired!\n        if resource_id in self.locks:\n            self.locks[resource_id][\"expires_at\"] = now + ttl_seconds\n            return True\n        return False\n\n    def release(self, resource_id, owner_id, now=None):\n        # Bug: Stale owner can release anytime\n        if resource_id in self.locks:\n            del self.locks[resource_id]\n            return True\n        return False\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"lock.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass DistributedLockManager:\\n    def __init__(self):\\n        self.locks = {} # resource_id -> dict(owner, expires_at, fencing_token)\\n\\n    def acquire(self, resource_id, owner_id, ttl_seconds, now=None):\\n        now = time.time() if now is None else now\\n        # Buggy repo: Static fencing token = 1, and doesn't check expiration properly\\n        if resource_id in self.locks:\\n            current = self.locks[resource_id]\\n            if current[\\\"owner\\\"] != owner_id:\\n                return False, None\\n        \\n        self.locks[resource_id] = {\\n            \\\"owner\\\": owner_id,\\n            \\\"expires_at\\\": now + ttl_seconds,\\n            \\\"fencing_token\\\": 1 # Bug: fixed token\\n        }\\n        return True, 1\\n\\n    def renew(self, resource_id, owner_id, ttl_seconds, now=None):\\n        now = time.time() if now is None else now\\n        # Bug: Does not check if the lease already expired!\\n        if resource_id in self.locks:\\n            self.locks[resource_id][\\\"expires_at\\\"] = now + ttl_seconds\\n            return True\\n        return False\\n\\n    def release(self, resource_id, owner_id, now=None):\\n        # Bug: Stale owner can release anytime\\n        if resource_id in self.locks:\\n            del self.locks[resource_id]\\n            return True\\n        return False\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "lock.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_acquire_and_renew (test_public.Public.test_acquire_and_renew) ... ok\ntest_expired_lease_cannot_renew_and_allows_reacquire (test_public.Public.test_expired_lease_cannot_renew_and_allows_reacquire) ... FAIL\n\n======================================================================\nFAIL: test_expired_lease_cannot_renew_and_allows_reacquire (test_public.Public.test_expired_lease_cannot_renew_and_allows_reacquire)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-dkuk_fp1/repo/tests/test_public.py\", line 22, in test_expired_lease_cannot_renew_and_allows_reacquire\n    self.assertFalse(lm.renew(\"res1\", \"worker-A\", ttl_seconds=5.0, now=106.0))\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.088
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}
