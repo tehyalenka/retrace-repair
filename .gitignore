@@ -86,6 +86,8 @@ research-enterprise-v2/
 !research-enterprise-replay/**
 !research-enterprise-30/
 !research-enterprise-30/**
+!research-enterprise-30-qwen/
+!research-enterprise-30-qwen/**
 research-evaluation-*/
 v30-pilot-results/
 v31-pilot-results/
