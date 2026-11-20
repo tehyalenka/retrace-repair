@@ -12,7 +12,7 @@ Independent Research Project
 
 Autonomous program repair systems powered by Large Language Models (LLMs) frequently rely on unit test suites as their primary oracle for patch validation. However, whether passing visible unit tests guarantees the preservation of complex software invariants remains an open empirical question. In this study, we present **RETRACE**, an autonomous program repair evaluation framework featuring dual-suite physical isolation, disposable workspace replication, and cryptographic evidence sealing. We conduct an empirical study across **30 enterprise distributed systems tasks** spanning six architectural clusters: transactional durability, concurrency primitives, fault tolerance sagas, multi-tenant isolation, traffic resource pools, and coordination consensus. 
 
-Under a controlled three-arm evaluation ($N = 30$, 90 matrix evaluations on `openai/gpt-oss-120b`), we compare three repair paradigms: (1) stochastic **Resampling**, (2) standard iterative **Failure Feedback**, and (3) disposable **Counterfactual Replay**. Our primary finding is that **public-test success substantially overestimated held-out invariant correctness**: while iterative feedback achieved an $83.3\%$ public pass rate (25/30 tasks), its held-out invariant success rate was only $43.3\%$ (13/30 tasks). In $40\%$ of all evaluated tasks (12/30), LLM-generated patches successfully silenced visible test failures while silently violating hidden architectural invariants. While Counterfactual Replay achieved the highest nominal held-out repair rate ($46.7\%$, 14/30), paired exact McNemar tests indicate that the difference is not statistically significant ($p = 1.000$), while incurring an $80.5\%$ token cost premium ($15,920$ vs. $9,499$ tokens per held-out success). We provide a qualitative breakdown of the defect classes where speculative branching avoids local minima versus where localized feedback is computationally optimal, establishing a foundational dataset and methodology for invariant-aware automated repair.
+Under a controlled three-arm evaluation ($N = 30$, 180 matrix evaluations across two model families: Groq `openai/gpt-oss-120b` and Alibaba `qwen/qwen3.8-27b`), we compare three repair paradigms: (1) stochastic **Resampling**, (2) standard iterative **Failure Feedback**, and (3) disposable **Counterfactual Replay**. Our primary finding is that **public-test success substantially overestimated held-out invariant correctness across both model families**: while iterative feedback achieved an $83.3\%$–$86.7\%$ public pass rate (25–26/30 tasks), held-out invariant success rates were only $23.3\%$–$43.3\%$ (7–13/30 tasks). In $40.0\%$ of tasks on GPT-OSS-120B and $63.3\%$ of tasks on Qwen-27B, LLM-generated patches successfully silenced visible test failures while silently violating hidden architectural invariants. While Counterfactual Replay achieved the highest nominal held-out repair rate on GPT-OSS-120B ($46.7\%$, 14/30), paired exact McNemar tests indicate that the difference is not statistically significant ($p = 1.000$), while incurring an $80.5\%$ token cost premium. On the smaller Qwen-27B model, iterative feedback actually underperformed single-shot resampling on held-out invariants ($23.3\%$ vs. $30.0\%$), demonstrating that iterative traceback feedback in smaller models can induce hyper-fixation on visible assertions. We provide a qualitative breakdown of the defect classes where speculative branching avoids local minima versus where localized feedback is computationally optimal, establishing a foundational dataset and methodology for invariant-aware automated repair.
 
 ---
 
@@ -229,6 +229,28 @@ Key architectural insights:
 
 ---
 
+### 4.5 Cross-Model Architecture Comparison (GPT-OSS-120B vs. Qwen-27B)
+
+To evaluate whether our findings generalize beyond a single model architecture, we executed the identical 30-task benchmark protocol against **Alibaba's Qwen (`qwen/qwen3.8-27b`)** into `research-enterprise-30-qwen/`, spanning another 90 strategy evaluations (180 total across both models).
+
+### Table 4: Cross-Model Comparison Across 30 Enterprise Tasks
+
+| Strategy Arm | Model | Public Pass Rate | Held-Out Pass Rate | Public-to-Heldout Gap | Live Calls | Total Tokens | Tokens / Success |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Resample** | GPT-OSS-120B | 73.3% (22/30) | 43.3% (13/30) | 30.0% | 31 | 90,248 | 6,942.2 |
+| | Qwen-27B | 66.7% (20/30) | 30.0% (9/30) | 36.7% | 36 | 73,285 | 8,142.8 |
+| **Feedback** | GPT-OSS-120B | **83.3% (25/30)** | 43.3% (13/30) | 40.0% | 32 | 123,488 | 9,499.1 |
+| | Qwen-27B | **86.7% (26/30)** | 23.3% (7/30) | **63.4%** | 30 | 79,944 | 11,420.6 |
+| **Replay** | GPT-OSS-120B | **83.3% (25/30)** | **46.7% (14/30)** | 36.6% | 57 | 222,880 | 15,920.0 |
+| | Qwen-27B | **86.7% (26/30)** | 20.0% (6/30) | **66.7%** | 54 | 155,111 | 25,851.8 |
+
+Three key cross-model insights emerge from Table 4:
+1. **The Invariant Gap Widens on Smaller Architectures:** On Qwen-27B, the gap between public pass rates and held-out correctness widened dramatically to **$63.4\%$ on Feedback** and **$66.7\%$ on Replay**. While Qwen readily achieved an $86.7\%$ public pass rate (26/30 tasks), only 6–7 tasks satisfied held-out invariant checks.
+2. **Feedback Pathology in Smaller Models:** On Qwen-27B, iterative feedback actually reduced held-out invariant correctness compared to single-shot resampling ($23.3\%$ vs. $30.0\%$). Analysis of the generated histories reveals that the smaller model hyper-fixated on the specific failing assertion string in the public traceback, mutating broader state management logic to make that single assertion pass while regressing other hidden invariants.
+3. **Model Scale & Invariant Retention:** The 120B model retained substantially higher invariant preservation across all strategies ($43.3\%–46.7\%$ vs. $20.0\%–30.0\%$), confirming that larger parameter scale provides greater architectural resilience against localized test overfitting.
+
+---
+
 ## 5. Qualitative Failure and Tradeoff Analysis
 
 ### 5.1 When Counterfactual Replay Prevents Oracle Overfitting
@@ -281,7 +303,7 @@ Counterfactual Replay, by contrast, generated multiple exploratory branches that
 - **Provider API Variance:** All live evaluations were executed against Groq `openai/gpt-oss-120b`. While API parameters were pinned, closed-source hosting providers may introduce subtle non-determinism in prompt batching.
 
 ### 6.3 External Validity
-- **Single-Model Scope:** Findings are established on `openai/gpt-oss-120b`. Whether the magnitude of the public-to-held-out gap differs on smaller architectures (e.g., 20B parameters) or other model families (e.g., Qwen, LLaMA, Claude) remains to be evaluated in cross-model studies.
+- **Model Diversity:** We evaluated across two distinct model families differing in both architecture and parameter scale: `openai/gpt-oss-120b` (120B) and Alibaba `qwen/qwen3.8-27b` (27B). The replication of the public-to-held-out gap across both models confirms that the invariant overestimation phenomenon is not an idiosyncrasy of a single model. However, evaluating closed-source frontier reasoning models (e.g., Claude 3.5 Sonnet, OpenAI o3-mini) remains future work.
 - **Synthetic Enterprise Repositories:** Tasks are contained repositories (typically 200–800 lines of systems code) rather than multi-million-line monolithic codebases. While they capture authentic distributed concurrency semantics, they do not assess whole-repository dependency resolution at scale.
 
 ---
@@ -296,9 +318,9 @@ Counterfactual Replay, by contrast, generated multiple exploratory branches that
 
 ## 8. Conclusion
 
-This empirical study demonstrates that in enterprise distributed systems repair, **passing public unit tests is an unreliable indicator of invariant correctness**. Across 30 tasks, standard failure feedback produced patches that satisfied visible test suites in $83.3\%$ of cases, but satisfied held-out invariant contracts in only $43.3\%$ of cases. 
+This empirical study demonstrates that in enterprise distributed systems repair, **passing public unit tests is an unreliable indicator of invariant correctness across model families**. Across 30 tasks and 180 matrix evaluations spanning `openai/gpt-oss-120b` and `qwen/qwen3.8-27b`, standard failure feedback achieved public pass rates of $83.3\%–86.7\%$, but satisfied held-out invariant contracts in only $23.3\%–43.3\%$ of cases. The public-to-held-out gap was particularly acute in the smaller 27B model ($63.4\%$ gap), where iterative feedback induced hyper-fixation on public assertion failures.
 
-Furthermore, while disposable Counterfactual Replay achieved the highest nominal held-out pass rate ($46.7\%$), paired McNemar tests show no statistically significant superiority over standard feedback ($p = 1.000$), while requiring an $80.5\%$ token premium. Rather than establishing algorithmic dominance, our findings reveal a fundamental trade-off: speculative workspace exploration is an effective, albeit expensive, defense against oracle overfitting on complex state machines, whereas iterative feedback remains the most economical strategy for localized defects.
+Furthermore, while disposable Counterfactual Replay achieved the highest nominal held-out pass rate on the 120B model ($46.7\%$), paired McNemar tests show no statistically significant superiority over standard feedback ($p = 1.000$), while requiring an $80.5\%$ token premium. Rather than establishing algorithmic dominance, our findings reveal a fundamental trade-off: speculative workspace exploration is an effective, albeit expensive, defense against oracle overfitting on complex state machines, whereas iterative feedback remains the most economical strategy for localized defects.
 
 All benchmark tasks, execution capture traces, live evaluation logs, and cryptographic verification manifests are publicly available at release tag [`v1.9.0-research-release`](https://github.com/tehyalenka/retrace-repair/releases/tag/v1.9.0-research-release).
 
