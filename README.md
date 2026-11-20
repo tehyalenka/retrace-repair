@@ -153,9 +153,9 @@ retrace agent examples/sample_repo \
 
 ---
 
-## Benchmark Design (45 Tasks: 30 Enterprise + 15 Algorithmic)
+## Primary Benchmark Design (30 Synthetic Enterprise Tasks)
 
-The benchmark evaluates repair policies across **30 enterprise distributed systems tasks** and **15 algorithmic tasks** grouped into 6 architectural clusters:
+The primary empirical benchmark evaluates repair policies across **30 synthetic enterprise distributed-systems tasks** grouped into 6 architectural clusters:
 
 | Category / Cluster | Count | Example Tasks | Tested Invariants & Architectural Patterns |
 | :--- | :---: | :--- | :--- |
@@ -170,15 +170,27 @@ The benchmark evaluates repair policies across **30 enterprise distributed syste
 
 ## Historical Pilot Studies & Baseline Context
 
-### Preliminary Enterprise Pilot Study (7 tasks, `research-enterprise-replay`)
-Prior to executing the 30-task benchmark, an initial exploratory pilot was run on 7 enterprise tasks:
-* In this small pilot, Counterfactual Replay exhibited **zero observed regressions relative to feedback** across the 7 observed tasks.
-* **Important Context:** However, as demonstrated in our comprehensive 30-task evaluation, scaling to a larger task bank reveals that Replay and Feedback exhibit symmetric trade-offs (4 vs. 3 discordant outcomes on GPT-OSS-120B, $p = 1.000$). The preliminary pilot result should therefore be viewed as an exploratory finding rather than a general performance guarantee.
+Prior to scaling to the primary 30-task benchmark (180 matrix evaluations), two exploratory baselines were established:
 
-### Synthetic Algorithmic Baseline (`research-full-suite-22`)
-A 22-task synthetic suite evaluating single-function algorithmic defects:
-* Resample: 68% (15/22) | Feedback: 68% (15/22) | Counterfactual: 68% (15/22)
-* Demonstrates that on simple algorithmic bugs, visible test suites align closely with held-out suites; the severe overestimation gap is uniquely pronounced in complex, stateful distributed systems.
+### 1. Synthetic Algorithmic Baseline (22 Tasks, `research-full-suite-22`)
+A preliminary 22-task suite evaluating single-function algorithmic defects (15 algorithmic tasks + 7 early enterprise prototypes):
+* **Results:** Resample: 68.2% (15/22) | Feedback: 68.2% (15/22) | Replay: 68.2% (15/22)
+* **Finding:** On simple algorithmic bugs, visible test suites align closely with held-out suites. The severe generalization gap is uniquely pronounced in stateful distributed systems.
+
+### 2. Preliminary Enterprise Pilot (7 Tasks, `research-enterprise-replay`)
+An exploratory run on 7 enterprise fixtures:
+* Counterfactual Replay exhibited zero observed regressions relative to feedback across the 7 observed tasks.
+* **Important Context:** However, scaling to the full 30-task benchmark revealed that Replay and Feedback exhibit symmetric trade-offs (4 vs. 3 discordant outcomes on GPT-OSS-120B, exact McNemar $p = 1.000$). The preliminary pilot result was an exploratory stepping stone, superseded by the frozen 30-task evaluation.
+
+---
+
+## v2.0 Controlled Ablation: Candidate Selection vs. Generation
+
+To investigate why structural AST ranking and invariant contract prompting in v2.0 did not improve held-out correctness on state machines, a pre-specified **$2 \times 2$ factorial candidate-selection ablation** was conducted on the 6 hardest fixtures (`openai/gpt-oss-120b`):
+
+* **Report:** [paper/retrace_controlled_ablation_report.md](paper/retrace_controlled_ablation_report.md)
+* **Results Figure:** [docs/retrace_final_ablation_results.png](docs/retrace_final_ablation_results.png)
+* **Key Finding:** The AST structural scorer caused **zero selection failures (`SELECTION_FAILURE = 0`)** across 12 candidate pools. Task-level divergence was driven by candidate generation under prompt conditioning (e.g., unlocking single-flight mutexes on `cache_stampede` while encountering exception convention mismatch on `circuit_breaker`). All four factorial arms achieved an identical 50.0% (3/6) held-out pass rate.
 
 ---
 
@@ -201,11 +213,12 @@ A 22-task synthetic suite evaluating single-function algorithmic defects:
 | `paper/references.bib` | **BibTeX bibliography citations** |
 | `scripts/verify_reproducibility.py` | **Zero-cost, offline cryptographic evidence verifier** |
 | `scripts/generate_results_chart.py` | **Matplotlib script for high-resolution vector charts** |
-| `src/codepilot/` | Core repair agent engine, retrieval analyzer, replay strategies, and CLI |
-| `src/retrace/` | Public package API and execution coordinator |
+| `src/retrace/` | Public package API, CLI entrypoint (`retrace agent ...`), and execution coordinator |
+| `src/codepilot/` | Internal repair engine, AST analyzers, and strategy implementations |
 | `benchmarks/v18/` | Active v1.8 benchmark suite runner, autonomous runner, research gate, and fixtures |
 | `research-enterprise-30/` | Sealed evidence for `openai/gpt-oss-120b` (65 artifacts, SHA-256 sealed) |
 | `research-enterprise-30-qwen/` | Sealed evidence for `qwen/qwen3.8-27b` (65 artifacts, SHA-256 sealed) |
+| `research-controlled-ablation/`| Sealed evidence & telemetry for the 2x2 candidate-selection ablation (12 pools) |
 | `tests/` | 279 regression tests (all passing) |
 | `LICENSE` | MIT License |
 
