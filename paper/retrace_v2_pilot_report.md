@@ -114,8 +114,20 @@ Due to the exploratory sample size ($n=6$ tasks), paired non-parametric tests ha
 
 ---
 
-## 6. Recommendations for RETRACE v2.0 Roadmap
+## 6. Pre-Specified Factorial Ablation Protocol
 
-1. **Hybrid Selection Policy:** Combine AST defensive scoring with test execution time profiling. Candidates that execute without excessive latency or lock contention should receive additional ranking weight.
-2. **Exception Hierarchy Harmonization:** Update the contract prompt to instruct models that parameter validation errors should raise `ValueError` (or subclass thereof), preventing benign `TypeError` rejections on benchmark fixtures.
-3. **Multi-Candidate Scaling:** Increasing counterfactual candidate generation from $k=2$ to $k=4$ on state machines is projected to allow the defensive AST scorer to find candidates that satisfy both structural safety and precise benchmark invariants.
+Rather than iteratively adjusting prompts or heuristic weights in response to held-out failures, the definitive next milestone is executing a controlled, pre-specified factorial ablation that isolates causal drivers.
+
+### 6.1 Core Methodological Safeguards:
+1. **Candidate Pool Caching & Counterfactual Reuse:**
+   To cleanly isolate the AST selection heuristic from generation variance, the baseline selector (Greedy) and AST selector operate on the **exact same cached candidate pool**:
+   - $\mathcal{P}_{\text{std}} = \{C_1, C_2\}$ generated under the standard prompt $\implies$ evaluated by Config 1 (Baseline Greedy) and Config 3 (AST-Only).
+   - $\mathcal{P}_{\text{inv}} = \{C'_1, C'_2\}$ generated under the invariant contract prompt $\implies$ evaluated by Config 2 (Prompt-Only Greedy) and Config 4 (Combined AST).
+   Any divergence between Config 1 and Config 3 is thereby 100% attributable to the AST ranking policy, eliminating LLM stochasticity.
+2. **Exhaustive Diagnostic Dual Evaluation:**
+   Both candidates in each pool receive visible verification and offline diagnostic held-out audit (in sealed physical isolation, invisible to selection policies). This directly disentangles:
+   - **Selection Failure:** An invariant-correct candidate existed in the pool ($H(C_1) = 1$), but the policy selected a failing candidate ($H(C_2) = 0$).
+   - **Generation Failure:** Neither candidate in the pool satisfied the invariant ($H(C_1) = 0 \land H(C_2) = 0$).
+3. **Exploratory vs. Confirmatory Partitioning:**
+   The 6 state-machine tasks serve as an exploratory diagnostic cluster. Hypotheses derived from this ablation will be tested on an untouched evaluation set without prior inspection.
+
