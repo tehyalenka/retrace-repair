@@ -31,30 +31,32 @@ To determine the causal mechanism driving this regression, we implemented and ex
 |      (Does invariant prompting improve yield?)  | Correctness Yield     | 33.3% (4/12) to 41.7% (5/12)|
 |                                                 | Task-Level Neutral    | Fixed Cache Stampede, but   |
 |                                                 |                       | drifted on Circuit Breaker  |
-| RQ4: Factorial Interaction                      | No Harmful            | Identical pass rates across |
-|      (Is there an adverse AST * Prompt effect?) | Interaction           | all 4 arms: 3/6 (50.0%)     |
+| RQ4: Factorial Interaction                      | No Aggregate           | Identical pass rates across |
+|      (Is there an adverse AST * Prompt effect?) | Interaction Observed   | all 4 arms: 3/6 (50.0%)     |
 +-------------------------------------------------------------------------------------------------------+
 ```
 
 ### Key Scientific Conclusions:
 
-1. **Rejection of the Goodhart AST Overfitting Hypothesis:**  
-   The hypothesis that the Defensive AST Scorer caused regressions by actively selecting syntactically complex, non-generalizing repairs over correct alternatives is **empirically refuted**. Across all 12 candidate pools, there was **not a single selection failure (`SELECTION_FAILURE = 0`)**. Whenever the AST selector disagreed with the greedy baseline (4 of 12 pools), both candidates shared the exact same held-out status (either both passed, e.g., in `circuit_breaker` $\mathcal{P}_{\text{std}}$, `bulkhead` $\mathcal{P}_{\text{inv}}$, `outbox` $\mathcal{P}_{\text{inv}}$, or both failed, e.g., in `cache_stampede` $\mathcal{P}_{\text{std}}$).
+1. **No Evidence of AST-Induced Selection Failure in Evaluated Sample:**  
+   The controlled ablation found no evidence of AST-induced selection failure across the six evaluated tasks. Although AST ranking changed candidate selection in four of twelve pools, these changes did not alter held-out correctness. Across all 12 candidate pools, there was **not a single selection failure (`SELECTION_FAILURE = 0`)**. Whenever the AST selector disagreed with the greedy baseline (4 of 12 pools), both candidates shared the exact same held-out status (either both passed, e.g., in `circuit_breaker` $\mathcal{P}_{\text{std}}$, `bulkhead` $\mathcal{P}_{\text{inv}}$, `outbox` $\mathcal{P}_{\text{inv}}$, or both failed, e.g., in `cache_stampede` $\mathcal{P}_{\text{std}}$).
 
 2. **Public Verification Eligibility Gate Works as Intended:**  
    In 2 out of 12 pools (`enterprise_saga_coordinator` in $\mathcal{P}_{\text{std}}$ and `enterprise_circuit_breaker` in $\mathcal{P}_{\text{inv}}$), an invalid candidate exhibited a higher AST structural score or appeared earlier in generation order, but failed public tests. The eligibility gate successfully filtered these candidates before ranking, preventing false-positive selections.
 
-3. **Prompt Specification Trade-Off (Exception Drift vs. Concurrency Invariants):**  
+3. **Prompt Specification Trade-Off & Authoritative Contract Audit:**  
    Invariant contract prompting did not degrade overall candidate quality (held-out yield increased from 33.3% to 41.7%). However, it induced a qualitative trade-off:
    - **Win:** On `enterprise_cache_stampede_mutex`, the invariant prompt guided the model to synthesize an atomic single-flight mutex (`threading.Event()` + double-checked locking), unlocking held-out correctness ($C'_0$ passed held-out tests, whereas 0/2 standard candidates passed).
-   - **Loss:** On `enterprise_circuit_breaker`, the invariant prompt instructed strict fail-closed type validation (`TypeError` for invalid parameter types, `ValueError` for out-of-bounds numbers). This defensive convention directly conflicted with the benchmark's legacy test fixture which expected `ValueError` for non-integer arguments (`assertRaises(ValueError)`), causing held-out failure on an otherwise sound implementation.
+   - **Loss & Specification Audit:** On `enterprise_circuit_breaker`, the invariant prompt instructed strict fail-closed type validation (`TypeError` for invalid parameter types, `ValueError` for out-of-bounds numbers). An audit of the authoritative ground-truth reference solution (`solution/circuit.py`) confirms that the benchmark specification explicitly requires `raise ValueError` for non-integer inputs (`raise ValueError("failure_threshold must be positive int")`). Under this authoritative specification, the invariant repair raising `TypeError` is genuinely incorrect. The regression was driven by prompt-induced exception specification mismatch rather than benchmark over-specification or AST selection bias.
 
-4. **Identical Task-Level Factorial Parity:**  
+4. **Identical Task-Level Factorial Parity & Small-Sample Uncertainty:**  
    All four factorial arms achieved an identical **3 / 6 (50.0%)** held-out pass rate:
    - Config 1 (Baseline: Standard Prompt + Greedy Selection): **3 / 6 (50.0%)**
    - Config 3 (AST-Only: Standard Prompt + AST Selection): **3 / 6 (50.0%)**
    - Config 2 (Prompt-Only: Invariant Prompt + Greedy Selection): **3 / 6 (50.0%)**
    - Config 4 (Combined: Invariant Prompt + AST Selection): **3 / 6 (50.0%)**
+   
+   With $N=6$, the 50.0% pass rate entails substantial small-sample uncertainty: the Wilson 95% score interval spans $[18.8\%, 81.2\%]$. Paired differences across all four configurations are descriptively $\Delta = 0.0$ pp. No aggregate interaction effect was observed between invariant prompting and AST selection in this six-task exploratory evaluation.
 
 ---
 
@@ -99,11 +101,12 @@ Policy AST-Ranked    |   AST-Only           |   Combined           |
      - `BOTH_PASS`: All eligible candidates pass held-out tests.
      - `PARTIAL_CORRECT`: Exactly one candidate passes held-out tests (actionable selector divergence).
      - `NONE_PASS`: No candidate in the pool passes held-out tests.
-   - **Derived Diagnostic Verdict:**
-     - `SUCCESSFUL_SELECTION`: An eligible candidate passing held-out tests was selected.
-     - `SELECTION_FAILURE`: The selector chose a failing candidate when an eligible held-out correct candidate was available in the same pool.
-     - `NO_VALID_CANDIDATE`: No candidate in the pool satisfied held-out requirements (generation failure).
-     - `NO_ELIGIBLE_CANDIDATE`: No candidate passed public verification (eligibility gate failure).
+   - **Derived Diagnostic Verdict (Pool-Level Classification across 12 Unique Pools):**
+     - `SUCCESSFUL_SELECTION`: An eligible candidate passing held-out tests was selected (6 / 12 pools, 50.0%).
+     - `SELECTION_FAILURE`: The selector chose a failing candidate when an eligible held-out correct candidate was available in the same pool (0 / 12 pools, 0.0%).
+     - `NO_VALID_CANDIDATE`: No candidate in the pool satisfied held-out requirements (candidate generation failure: 6 / 12 pools, 50.0%).
+     - `NO_ELIGIBLE_CANDIDATE`: No candidate passed public verification (eligibility gate failure: 0 / 12 pools, 0.0%).
+     *(Note: This classification applies to the 12 unique candidate pools generated in the study, rather than a count across the 24 individual policy runs).*
 
 ---
 
@@ -175,30 +178,30 @@ The AST structural heuristic never chose an incorrect candidate when an eligible
 
 However, at the task level, this net gain was balanced by a stark qualitative trade-off:
 - **The Concurrency Discovery:** On `enterprise_cache_stampede_mutex`, the standard prompt failed to prompt single-flight locking, resulting in 0/2 held-out correct candidates. The invariant prompt specifically emphasized thread-safe state synchronization and double-checked locking, prompting the model to implement a `threading.Event()` single-flight mechanism ($C'_0$), which passed all held-out concurrent load tests.
-- **The Exception Drift Penalty:** On `enterprise_circuit_breaker`, the standard prompt yielded 2/2 held-out correct candidates (100% yield). The invariant prompt instructed strict fail-closed input verification with explicit exception typing (`TypeError` for invalid parameter types, `ValueError` for out-of-bounds numbers). When the model followed this instruction:
+- **The Exception Drift Penalty & Specification Audit:** On `enterprise_circuit_breaker`, the standard prompt yielded 2/2 held-out correct candidates (100% yield). The invariant prompt instructed strict fail-closed input verification with explicit exception typing (`TypeError` for invalid parameter types, `ValueError` for out-of-bounds numbers). When the model followed this instruction:
   ```python
   if not isinstance(failure_threshold, int) or isinstance(failure_threshold, bool):
       raise TypeError("failure_threshold must be an int")
   ```
   The held-out verification test (`test_invalid_parameters_rejected`) asserted `with self.assertRaises(ValueError): CircuitBreaker(d, failure_threshold=1.5)`. The benchmark test failed with an unhandled `TypeError`, dropping held-out yield from 2/2 to 0/2.
-
-Thus, invariant prompting improved structural rigor on concurrency, but suffered from benchmark test fixture specification divergence.
+  
+  **Authoritative Specification Audit:** An independent audit of the benchmark's ground-truth solution (`solution/circuit.py`) confirmed that the reference code explicitly raises `ValueError` for non-integer arguments (`raise ValueError("failure_threshold must be positive int")`). Under this authoritative specification, the generated invariant patch was genuinely incorrect. The regression was driven by prompt-induced exception convention drift rather than benchmark over-specification or AST selection bias.
 
 ### Question 4: Is there evidence that combining invariant prompting with AST scoring produces a harmful interaction?
 
-**Answer:** **No.** There is zero evidence of an adverse interaction between invariant prompting and AST structural scoring.
+**Answer:** **No.** No aggregate interaction effect was observed between invariant prompting and AST selection in this six-task exploratory evaluation.
 
 In the factorial summary:
-- Config 1 (Baseline: Standard + Greedy): **3 / 6 (50.0%)**
-- Config 3 (AST-Only: Standard + AST): **3 / 6 (50.0%)**
-- Config 2 (Prompt-Only: Invariant + Greedy): **3 / 6 (50.0%)**
-- Config 4 (Combined: Invariant + AST): **3 / 6 (50.0%)**
+- Config 1 (Baseline: Standard + Greedy): **3 / 6 (50.0%)** [Wilson 95% CI: 18.8% to 81.2%]
+- Config 3 (AST-Only: Standard + AST): **3 / 6 (50.0%)** [Wilson 95% CI: 18.8% to 81.2%]
+- Config 2 (Prompt-Only: Invariant + Greedy): **3 / 6 (50.0%)** [Wilson 95% CI: 18.8% to 81.2%]
+- Config 4 (Combined: Invariant + AST): **3 / 6 (50.0%)** [Wilson 95% CI: 18.8% to 81.2%]
 
 In Configuration 4 (Invariant Prompt + AST Selection), the AST selector chose $C'_1$ on `bulkhead_isolation` (AST 179.20 vs 165.58) and $C'_1$ on `outbox_publisher` (AST 199.28 vs 180.20). In both instances, the selected patch passed held-out tests. In the remaining four tasks, the AST selector chose the exact same candidate as the greedy selector.
 
 The regression observed in the pilot (where Replay held-out dropped from 2/6 to 1/6) was driven by:
-1. The exception drift on `enterprise_circuit_breaker`, which was caused purely by the invariant prompt's exception convention, not by AST scoring.
-2. The feedback strategy's public test regressions in the pilot, which stemmed from multi-turn feedback prompt drift.
+1. The exception drift on `enterprise_circuit_breaker`, which was caused purely by candidate generation under the invariant prompt, not by AST scoring.
+2. The feedback strategy's public test regressions in the pilot, which stemmed from multi-turn feedback prompt drift in the adaptive runner.
 
 ---
 
