@@ -1,7 +1,7 @@
-# RETRACE v2.0 Pilot Evaluation Report
+# RETRACE v2.0 Exploratory Pilot Evaluation Report
 ## Defensive AST Structural Scoring & Invariant Contract Prompting on Enterprise State Machines
 
-**Study Status:** Completed Experimental Pilot  
+**Study Status:** Exploratory Six-Task Pilot (Investigative Diagnosis)  
 **Target Fixture Cluster:** 6 Hardest Enterprise Distributed State-Machine Tasks (Fault Tolerance & Sagas)  
 **Evaluator Model:** `openai/gpt-oss-120b` (Provider: Groq, Temp=0.0/0.7, Attempts=2, Seed=142)  
 **Evidence Sealed Directory:** `research-v2-pilot/` (Cryptographic Evidence Manifest: 17 artifacts, SHA-256 sealed)  
@@ -13,11 +13,11 @@
 
 In RETRACE v1.9, the 30-task enterprise benchmark revealed a critical vulnerability across all three repair strategies: models frequently produce patches that satisfy visible public tests by implementing shallow workarounds, but fail held-out invariant suites (the *Public-to-Held-Out Generalization Gap*).
 
-For RETRACE v2.0, we developed **Option 1**:
+For RETRACE v2.0, we explored **Option 1**:
 1. **Defensive AST Structural Quality Scorer:** An automated, syntax-tree analysis engine (`score_candidate_defense`) that evaluates candidate patches without running held-out tests. It rewards explicit parameter validation (`isinstance`, boundary checks, rejecting boolean subtypes), transactional atomicity (`try/finally`, rollback handlers), and strict type enforcement, while penalizing swallowed exceptions (`except ...: pass`) and code bloat.
 2. **Invariant Contract Prompting:** System and candidate generation prompts augmented with strict defensive programming rules: fail-closed entrypoint validation, state machine conservation (no premature probation resets), atomic reverse saga compensations, and zero swallowed exceptions.
 
-We evaluated RETRACE v2.0 across the **6 hardest distributed state-machine tasks** in the benchmark:
+We evaluated these modifications on the **6 hardest distributed state-machine tasks** in the benchmark:
 - `enterprise_circuit_breaker`
 - `enterprise_saga_coordinator`
 - `enterprise_dead_letter_retry`
@@ -25,11 +25,14 @@ We evaluated RETRACE v2.0 across the **6 hardest distributed state-machine tasks
 - `enterprise_bulkhead_isolation`
 - `enterprise_outbox_publisher`
 
-### Key Highlights:
+### Central Research Observation:
+> The pilot revealed a divergence between visible-test performance and held-out correctness. Task-level failures suggest that structural candidate-ranking heuristics may favor syntactically defensive repairs that violate behavioral contracts. A factorial ablation is required to isolate the contribution of structural scoring and invariant prompting.
+
+### Descriptive Pilot Highlights:
 - **Replay Public Verification Pass Rate Jumped to 100% (+33.3 percentage points):** In v1.9, Counterfactual Replay passed visible tests on 4/6 tasks (66.7%). Under v2.0, Replay achieved a perfect 6/6 (100.0%) public pass rate.
 - **Novel Invariant Discovery on Mutex Concurrency (`enterprise_cache_stampede_mutex`):** In v1.9, Replay failed both public and held-out tests (`pub=False, held=False`). In v2.0, the AST defensive scorer penalized un-synchronized branches and prioritized a single-flight mutex with atomic double-checked locking, resulting in a **held-out victory (`pub=True, held=True`)**.
-- **Resample Benefits from Invariant Contracts:** Resample public pass rate improved from 83.3% (5/6) to 100.0% (6/6), maintaining a 50.0% held-out pass rate across the 6 tasks.
-- **Feedback Regression Under High Complexity:** Standard failure-feedback degraded from 100% to 50.0% public pass rate (3/6) and 0.0% held-out pass rate, demonstrating that raw traceback feedback often misleads the model into local, non-generalizing fixes on complex state machines.
+- **Overall Held-Out Success Declined (6/18 $\to$ 4/18):** Replay held-out success decreased from 2/6 to 1/6, and feedback decreased from 1/6 to 0/6, indicating that structural heuristics may introduce unintended behavioral biases.
+- **Resample Maintained Generalization:** Resample public pass rate improved from 83.3% (5/6) to 100.0% (6/6), maintaining a 50.0% held-out pass rate across the 6 tasks.
 
 ---
 
