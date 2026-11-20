@@ -6,6 +6,7 @@ from pathlib import Path
 
 from benchmarks.v18.candidate_selection_ablation import (
     CandidatePool,
+    NO_ELIGIBLE_CANDIDATE,
     NO_VALID_CANDIDATE,
     SELECTION_FAILURE,
     SUCCESSFUL_SELECTION,
@@ -113,6 +114,43 @@ class TestCandidateSelectionAblation(unittest.TestCase):
         greedy_idx = select_greedy(pool)
         diag = diagnose_selection(pool, greedy_idx)
         self.assertEqual(diag["verdict"], NO_VALID_CANDIDATE)
+
+    def test_synthetic_no_eligible_candidate_scenario(self):
+        """When a candidate passes held-out tests but fails visible public tests,
+
+        neither selector should select it, and diagnosis should be NO_ELIGIBLE_CANDIDATE.
+        """
+        pool = CandidatePool(task_id="synthetic_ineligible_task", prompt_condition="standard")
+
+        # C0: Fails public tests, but passes held-out tests
+        pool.add_candidate(
+            candidate_index=0,
+            edits=[{"path": "foo.py", "operation": "modify", "content": "x = 1"}],
+            public_result={"passed": False, "output": "FAIL: smoke test failed"},
+            heldout_result={"passed": True, "output": "OK"},
+        )
+        # C1: Fails public tests and fails held-out tests
+        pool.add_candidate(
+            candidate_index=1,
+            edits=[{"path": "foo.py", "operation": "modify", "content": "x = 2"}],
+            public_result={"passed": False, "output": "FAIL: smoke test failed"},
+            heldout_result={"passed": False, "output": "FAIL"},
+        )
+
+        # Neither selector should select an ineligible candidate
+        greedy_idx = select_greedy(pool)
+        self.assertIsNone(greedy_idx)
+        ast_idx = select_ast_ranked(pool)
+        self.assertIsNone(ast_idx)
+
+        # Diagnosis should specifically identify NO_ELIGIBLE_CANDIDATE
+        greedy_diag = diagnose_selection(pool, greedy_idx)
+        self.assertEqual(greedy_diag["verdict"], NO_ELIGIBLE_CANDIDATE)
+        self.assertFalse(greedy_diag["selected_heldout"])
+
+        ast_diag = diagnose_selection(pool, ast_idx)
+        self.assertEqual(ast_diag["verdict"], NO_ELIGIBLE_CANDIDATE)
+        self.assertFalse(ast_diag["selected_heldout"])
 
     def test_pool_serialization(self):
         """Ensure CandidatePool serializes and reloads deterministically."""

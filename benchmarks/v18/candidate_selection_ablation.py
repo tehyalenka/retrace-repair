@@ -30,6 +30,7 @@ from codepilot.agent import run_verification
 # ---------------------------------------------------------------------------
 SUCCESSFUL_SELECTION = "SUCCESSFUL_SELECTION"
 SELECTION_FAILURE = "SELECTION_FAILURE"
+NO_ELIGIBLE_CANDIDATE = "NO_ELIGIBLE_CANDIDATE"
 NO_VALID_CANDIDATE = "NO_VALID_CANDIDATE"
 
 
@@ -134,11 +135,14 @@ def diagnose_selection(pool: CandidatePool, selected_index: Optional[int]) -> Di
     Rules:
     - SUCCESSFUL_SELECTION: The selected candidate satisfies held-out tests.
     - SELECTION_FAILURE: At least one eligible candidate satisfies held-out tests,
-      but the selected candidate fails (or no candidate was selected).
-    - NO_VALID_CANDIDATE: Neither candidate in the eligible pool satisfies held-out tests.
+      but the selected candidate fails (or an ineligible/no candidate was selected).
+    - NO_ELIGIBLE_CANDIDATE: At least one candidate in the pool satisfies held-out tests,
+      but failed visible public smoke tests and was therefore ineligible for selection.
+    - NO_VALID_CANDIDATE: Neither candidate in the pool satisfies held-out tests (generation failure).
     """
     eligible = [c for c in pool.candidates if c.get("public_passed")]
     has_valid_eligible = any(c.get("heldout_passed") for c in eligible)
+    has_any_heldout_pass = any(c.get("heldout_passed") for c in pool.candidates)
 
     if selected_index is not None:
         selected_candidate = next(
@@ -153,7 +157,26 @@ def diagnose_selection(pool: CandidatePool, selected_index: Optional[int]) -> Di
                 "explanation": "Selected candidate satisfies held-out invariant contract.",
             }
 
-    # If selected candidate failed or None was selected:
+    # If no eligible candidate existed in the pool:
+    if not eligible:
+        if has_any_heldout_pass:
+            return {
+                "verdict": NO_ELIGIBLE_CANDIDATE,
+                "selected_index": None,
+                "selected_heldout": False,
+                "explanation": (
+                    "A candidate in the pool satisfied held-out invariants, but failed visible verification "
+                    "smoke tests and was therefore ineligible for selection."
+                ),
+            }
+        return {
+            "verdict": NO_VALID_CANDIDATE,
+            "selected_index": None,
+            "selected_heldout": False,
+            "explanation": "No candidate in the pool passed visible smoke tests or held-out tests.",
+        }
+
+    # If selected candidate failed or None was selected, but an eligible passing candidate existed:
     if has_valid_eligible:
         return {
             "verdict": SELECTION_FAILURE,
