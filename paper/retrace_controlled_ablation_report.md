@@ -197,6 +197,31 @@ In the factorial summary:
 - Config 2 (Prompt-Only: Invariant + Greedy): **3 / 6 (50.0%)** [Wilson 95% CI: 18.8% to 81.2%]
 - Config 4 (Combined: Invariant + AST): **3 / 6 (50.0%)** [Wilson 95% CI: 18.8% to 81.2%]
 
+#### Paired Task-Level Discordance & Transition Analysis:
+
+To avoid confounding paired within-task transitions with independent binomial samples, we evaluate exact paired discordance across the six fixtures ($N=6$):
+
+```
+                        PAIRED TASK TRANSITION MATRICES (N=6)
+      1. Baseline vs. AST-Only (Config 1 vs Config 3)      2. Baseline vs. Prompt-Only (Config 1 vs Config 2)
+                 Config 3 (AST)                                       Config 2 (Prompt)
+                 Pass       Fail                                      Pass       Fail
+  Config 1 Pass    3          0                        Config 1 Pass    2          1
+  (Greedy) Fail    0          3                        (Greedy) Fail    1          2
+  -> Discordant Pairs: b = 0, c = 0                    -> Discordant Pairs: b = 1, c = 1
+  -> Paired Difference: Δ = 0.0 pp                     -> Paired Difference: Δ = 0.0 pp
+  -> Exact McNemar Test: p = 1.0 (Zero Discordance)    -> Exact McNemar Test: p = 1.0 (Balanced Transition)
+```
+
+1. **Config 1 vs. Config 3 (Isolating AST Selection on Identical Pools):**  
+   Zero discordant pairs ($b=0, c=0$). Both selectors produced identical held-out outcomes on all 6 tasks ($a=3$ passing tasks: `circuit_breaker`, `bulkhead`, `outbox`; $d=3$ failing tasks: `saga`, `dead_letter`, `cache_stampede`). The observed paired difference is $\Delta = 0.0$ pp with zero within-sample variance between selected repairs.
+
+2. **Config 1 vs. Config 2 (Isolating Prompt Condition on Identical Greedy Selector):**  
+   Exactly two discordant tasks ($b=1, c=1$):
+   - $b=1$: `enterprise_circuit_breaker` passed in Config 1, but failed in Config 2 (prompt-induced exception drift).
+   - $c=1$: `enterprise_cache_stampede_mutex` failed in Config 1, but passed in Config 2 (concurrency invariant discovery).
+   The two transitions exactly offset each other, yielding an observed paired difference of $\Delta = 0.0$ pp (exact two-tailed McNemar $p = 1.0$).
+
 In Configuration 4 (Invariant Prompt + AST Selection), the AST selector chose $C'_1$ on `bulkhead_isolation` (AST 179.20 vs 165.58) and $C'_1$ on `outbox_publisher` (AST 199.28 vs 180.20). In both instances, the selected patch passed held-out tests. In the remaining four tasks, the AST selector chose the exact same candidate as the greedy selector.
 
 The regression observed in the pilot (where Replay held-out dropped from 2/6 to 1/6) was driven by:
