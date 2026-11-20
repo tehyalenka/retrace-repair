@@ -12,7 +12,7 @@ Independent Research Project
 
 Autonomous program repair systems powered by Large Language Models (LLMs) frequently rely on unit test suites as their primary oracle for patch validation. However, whether passing visible unit tests guarantees the preservation of complex software invariants remains an open empirical question. In this study, we present **RETRACE**, an autonomous program repair evaluation framework featuring dual-suite physical isolation, disposable workspace replication, and cryptographic evidence sealing. We conduct an empirical study across **30 enterprise distributed systems tasks** spanning six architectural clusters: transactional durability, concurrency primitives, fault tolerance sagas, multi-tenant isolation, traffic resource pools, and coordination consensus. 
 
-Under a controlled three-arm evaluation ($N = 30$, 180 matrix evaluations across two model families: Groq `openai/gpt-oss-120b` and Alibaba `qwen/qwen3.8-27b`), we compare three repair paradigms: (1) stochastic **Resampling**, (2) standard iterative **Failure Feedback**, and (3) disposable **Counterfactual Replay**. Our primary finding is that **public-test success substantially overestimated held-out invariant correctness across both model families**: while iterative feedback achieved an $83.3\%$–$86.7\%$ public pass rate (25–26/30 tasks), held-out invariant success rates were only $23.3\%$–$43.3\%$ (7–13/30 tasks). In $40.0\%$ of tasks on GPT-OSS-120B and $63.3\%$ of tasks on Qwen-27B, LLM-generated patches successfully silenced visible test failures while silently violating hidden architectural invariants. While Counterfactual Replay achieved the highest nominal held-out repair rate on GPT-OSS-120B ($46.7\%$, 14/30), paired exact McNemar tests indicate that the difference is not statistically significant ($p = 1.000$), while incurring an $80.5\%$ token cost premium. On the smaller Qwen-27B model, iterative feedback actually underperformed single-shot resampling on held-out invariants ($23.3\%$ vs. $30.0\%$), demonstrating that iterative traceback feedback in smaller models can induce hyper-fixation on visible assertions. We provide a qualitative breakdown of the defect classes where speculative branching avoids local minima versus where localized feedback is computationally optimal, establishing a foundational dataset and methodology for invariant-aware automated repair.
+Under a controlled three-arm evaluation ($N = 30$, 180 matrix evaluations across two model families: Groq `openai/gpt-oss-120b` and Alibaba `qwen/qwen3.8-27b`), we compare three repair paradigms: (1) stochastic **Resampling**, (2) standard iterative **Failure Feedback**, and (3) disposable **Counterfactual Replay**. Our primary finding is that **public-test success substantially overestimated held-out invariant correctness across both model families**: while iterative feedback achieved an $83.3\%$–$86.7\%$ public pass rate (25–26/30 tasks), held-out invariant success rates were only $23.3\%$–$43.3\%$ (7–13/30 tasks). In $40.0$ percentage points of tasks on GPT-OSS-120B (12/30) and $63.3$ percentage points on Qwen-27B (19/30), LLM-generated patches successfully silenced visible test failures while silently violating hidden architectural invariants. While Counterfactual Replay achieved the highest nominal held-out repair rate on GPT-OSS-120B ($46.7\%$, 14/30), paired exact McNemar tests indicate that the difference is not statistically significant ($p = 1.000$), while incurring an $80.5\%$ token cost premium. Crucially, a non-significant McNemar test does not establish equivalence between strategies; rather, it indicates bounded statistical power at $N = 30$. On the smaller Qwen-27B model, iterative feedback actually underperformed single-shot resampling on held-out invariants ($23.3\%$ vs. $30.0\%$), demonstrating that iterative traceback feedback in smaller models can induce hyper-fixation on visible assertions. We provide a qualitative breakdown of the defect classes where speculative branching avoids local minima versus where localized feedback is computationally optimal, establishing a foundational dataset and methodology for invariant-aware automated repair.
 
 ---
 
@@ -114,18 +114,31 @@ For every task, three strategies were evaluated under identical task description
 2. **Feedback (Standard Agentic Baseline):** An iterative loop allowing up to two attempts at temperature $T = 0.0$. Attempt 1 replays the deterministic failure; Attempt 2 receives full public test failure tracebacks.
 3. **Counterfactual Replay (RETRACE Arm):** Generates candidate patches, evaluates each in a disposable sandbox against visible tests, and selects the optimal candidate.
 
-### 3.4 Evaluated Model & Execution Parameters
-- **Model:** Groq `openai/gpt-oss-120b` (context window: 8,192 completion tokens).
-- **Format Retries:** Bounded to 2 retries on malformed JSON edits.
-- **Rate-Limit Handling:** Autonomous interval backoff (240s) with durable checkpointing.
+### 3.4 Experimental Configuration & Execution Parameters
+
+To ensure rigorous reproducibility and comparability across model families, all evaluations operated under the standardized protocol detailed in Table 1.
+
+#### Table 1: Standardized Experimental Configuration Across All Evaluation Arms
+
+| Dimension | Specification | Implementation & Operational Rules |
+| :--- | :--- | :--- |
+| **Evaluated Models** | `openai/gpt-oss-120b`<br>`qwen/qwen3.8-27b` | Hosted on Groq Cloud API; pinned model identifiers recorded in signed manifest envelopes. |
+| **Attempt Budget ($K$)** | $K = 2$ attempts | Resample uses 1 attempt; Feedback uses up to 2 sequential attempts; Replay uses up to 2 candidate branches. |
+| **Sampling Temperature** | $T = 0.7$ (Resample)<br>$T = 0.0$ (Feedback & Replay) | Resample evaluates stochastic variation; Feedback and Replay evaluate deterministic local reasoning. |
+| **Random Seed Base** | Pinned integer seed: $42$ | Seed forwarded to provider endpoints for request reproducibility where supported. |
+| **Format Validation** | Bounded: $\le 2$ format retries | Malformed JSON edit responses trigger structured schema re-prompts before counting as an execution failure. |
+| **Rate Limit Handling** | Autonomous daemon backoff | HTTP 429 errors trigger exponential backoff with 240s window reset and durable on-disk checkpoints. |
+| **Prompt Boundary** | Zero-leakage containment | Prompt includes task specification + public test output. `heldout.py` and `solution/` strictly quarantined. |
+| **Execution Sandbox** | Ephemeral `/tmp` copies | Candidate edits are staged in disposable temporary directories; the root benchmark directory is never mutated. |
+| **Token Accounting** | Provider-reported usage | All prompt and completion tokens are read directly from upstream API response objects and audited in live logs. |
 
 ---
 
 ## 4. Empirical Results
 
-Table 1 summarizes aggregate performance across all 30 enterprise tasks (90 total strategy evaluations).
+Table 2 summarizes aggregate performance across all 30 enterprise tasks on the baseline `openai/gpt-oss-120b` model (90 total strategy evaluations).
 
-### Table 1: Aggregate Benchmark Evaluation Summary ($N = 30$)
+### Table 2: Aggregate Benchmark Evaluation Summary ($N = 30$, `openai/gpt-oss-120b`)
 
 | Strategy Arm | Completed Tasks | Public Pass Rate | Held-Out Pass Rate | Combined Pass Rate | Live Calls | Total Tokens | Tokens / Success |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -139,11 +152,18 @@ $$\text{Combined Pass} = \text{Public Pass} \land \text{Held-Out Pass}$$
 
 ### 4.1 RQ1: The Public-to-Held-Out Invariant Gap
 
-Our central finding is that **public unit test success substantially overestimated held-out invariant correctness**.
+Our central empirical finding is that **public unit test success substantially overestimated held-out invariant correctness across all evaluated settings**.
 
-As shown in Table 1, standard Failure Feedback achieved an $83.3\%$ public pass rate (25 out of 30 tasks passed all visible tests). However, when evaluated against held-out invariant suites, only 13 of those 25 tasks passed, yielding a held-out success rate of $43.3\%$.
+<p align="center">
+  <img src="retrace_results_chart.png" alt="Public vs. Held-Out Repair Success: 30-Task Enterprise Benchmark" width="95%">
+</p>
+<p align="center">
+  <em>Figure 1: Grouped comparison of visible public unit test pass rates versus held-out invariant pass rates across three repair paradigms and two frontier model families (N = 30 tasks, 180 total evaluations). Descriptive empirical results illustrating the severe invariant overestimation gap.</em>
+</p>
 
-In **12 out of 30 tasks ($40.0\%$)**, the patch generated by Failure Feedback was green on visible CI tests but completely broken on held-out invariant checks:
+As shown in Table 2, standard Failure Feedback achieved an $83.3\%$ public pass rate (25 out of 30 tasks passed all visible tests) on `openai/gpt-oss-120b`. However, when evaluated against held-out invariant suites, only 13 of those 25 tasks passed, yielding a held-out success rate of $43.3\%$ (a drop of $40.0$ percentage points).
+
+In **12 out of 30 tasks ($40.0$ percentage points)**, the patch synthesized by Failure Feedback was green on visible CI tests but completely broken on held-out invariant checks:
 - In `enterprise_circuit_breaker`, feedback silenced test failures by resetting failure counts prematurely, violating half-open state transition limits.
 - In `enterprise_sliding_window_rate_limiter`, feedback satisfied single-threaded rate checks but leaked stale timestamps in microsecond sliding windows.
 - In `enterprise_read_write_lock_fair`, feedback resolved mutual exclusion assertions but introduced writer starvation under reader contention.
@@ -157,7 +177,7 @@ This provides clear empirical evidence that visible unit tests in enterprise dom
 
 Counterfactual Replay achieved 14 held-out successes compared to 13 for Feedback and 13 for Resample. To determine whether this observed difference indicates a systematic algorithmic advantage, we conducted exact paired two-tailed McNemar tests ($N = 30$).
 
-### Table 2: Paired Contingency Matrices & McNemar Exact Tests ($N = 30$)
+### Table 3: Paired Contingency Matrices & McNemar Exact Tests ($N = 30$, `openai/gpt-oss-120b`)
 
 | Paired Comparison | Both Pass | Both Fail | Arm 1 Only Wins | Arm 2 Only Wins | Discordant Pairs ($b+c$) | Exact $p$-value | Statistically Significant ($\alpha = 0.05$)? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -176,7 +196,7 @@ The three tasks where **Feedback succeeded but Replay failed** are:
 2. `enterprise_bulkhead_isolation` (Semaphore thread pool queuing)
 3. `enterprise_tenant_cache` (Tenant key namespace separation)
 
-Because discordant outcomes are evenly balanced ($4 \text{ vs. } 3$, $p = 1.000$), the experimental data **does not support the hypothesis that Counterfactual Replay is generally superior to Feedback**. Rather, the strategies exhibit complementary performance profiles across different failure topologies.
+**Methodological & Statistical Interpretation:** Because discordant outcomes are evenly balanced ($4 \text{ vs. } 3$, $p = 1.000$), the experimental data **does not support the hypothesis that Counterfactual Replay is generally superior to Feedback**. Crucially, in formal hypothesis testing, failing to reject the null hypothesis ($p = 1.000$) **does not prove that the two strategies are mathematically equivalent**. Rather, it demonstrates that at a benchmark sample size of $N = 30$, we lack statistical evidence of marginal superiority, bounded by the statistical power of the test. Instead of algorithmic dominance, the strategies exhibit complementary performance profiles across differing defect classes.
 
 ---
 
@@ -209,9 +229,9 @@ The marginal cost of the single additional repair gained by Replay was **$99,392
 
 ### 4.4 Cluster-Stratified Architectural Breakdown
 
-Table 3 details performance across the six architectural clusters.
+Table 4 details performance across the six architectural clusters.
 
-### Table 3: Cluster-Stratified Held-Out Success Rates
+### Table 4: Cluster-Stratified Held-Out Success Rates
 
 | Architectural Cluster | Task Count | Resample Pass | Feedback Pass | Replay Pass | Replay Live Calls | Primary Failure Mode |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
@@ -233,18 +253,20 @@ Key architectural insights:
 
 To evaluate whether our findings generalize beyond a single model architecture, we executed the identical 30-task benchmark protocol against **Alibaba's Qwen (`qwen/qwen3.8-27b`)** into `research-enterprise-30-qwen/`, spanning another 90 strategy evaluations (180 total across both models).
 
-### Table 4: Cross-Model Comparison Across 30 Enterprise Tasks
+### Table 5: Cross-Model Comparison Across 30 Enterprise Tasks
 
 | Strategy Arm | Model | Public Pass Rate | Held-Out Pass Rate | Public-to-Heldout Gap | Live Calls | Total Tokens | Tokens / Success |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Resample** | GPT-OSS-120B | 73.3% (22/30) | 43.3% (13/30) | 30.0% | 31 | 90,248 | 6,942.2 |
-| | Qwen-27B | 66.7% (20/30) | 30.0% (9/30) | 36.7% | 36 | 73,285 | 8,142.8 |
-| **Feedback** | GPT-OSS-120B | **83.3% (25/30)** | 43.3% (13/30) | 40.0% | 32 | 123,488 | 9,499.1 |
-| | Qwen-27B | **86.7% (26/30)** | 23.3% (7/30) | **63.4%** | 30 | 79,944 | 11,420.6 |
-| **Replay** | GPT-OSS-120B | **83.3% (25/30)** | **46.7% (14/30)** | 36.6% | 57 | 222,880 | 15,920.0 |
-| | Qwen-27B | **86.7% (26/30)** | 20.0% (6/30) | **66.7%** | 54 | 155,111 | 25,851.8 |
+| **Resample** | GPT-OSS-120B | 73.3% (22/30) | 43.3% (13/30) | 30.0 pp | 31 | 90,248 | 6,942.2 |
+| | Qwen-27B | 66.7% (20/30) | 30.0% (9/30) | 36.7 pp | 36 | 73,285 | 8,142.8 |
+| **Feedback** | GPT-OSS-120B | **83.3% (25/30)** | 43.3% (13/30) | 40.0 pp | 32 | 123,488 | 9,499.1 |
+| | Qwen-27B | **86.7% (26/30)** | 23.3% (7/30) | **63.3 pp** | 30 | 79,944 | 11,420.6 |
+| **Replay** | GPT-OSS-120B | **83.3% (25/30)** | **46.7% (14/30)** | 36.6 pp | 57 | 222,880 | 15,920.0 |
+| | Qwen-27B | **86.7% (26/30)** | 20.0% (6/30) | **66.7 pp** | 54 | 155,111 | 25,851.8 |
 
-Three key cross-model insights emerge from Table 4:
+*Note: All gap values are reported in percentage points ($	ext{pp} = 	ext{Public Pass Rate} - 	ext{Held-Out Pass Rate}$). For Qwen-27B Feedback, the exact fraction is 26/30 - 7/30 = 19/30 = 63.33%, reported consistently as 63.3 pp.*
+
+Three key cross-model insights emerge from Table 5:
 1. **The Invariant Gap Widens on Smaller Architectures:** On Qwen-27B, the gap between public pass rates and held-out correctness widened dramatically to **$63.4\%$ on Feedback** and **$66.7\%$ on Replay**. While Qwen readily achieved an $86.7\%$ public pass rate (26/30 tasks), only 6–7 tasks satisfied held-out invariant checks.
 2. **Feedback Pathology in Smaller Models:** On Qwen-27B, iterative feedback actually reduced held-out invariant correctness compared to single-shot resampling ($23.3\%$ vs. $30.0\%$). Analysis of the generated histories reveals that the smaller model hyper-fixated on the specific failing assertion string in the public traceback, mutating broader state management logic to make that single assertion pass while regressing other hidden invariants.
 3. **Model Scale & Invariant Retention:** The 120B model retained substantially higher invariant preservation across all strategies ($43.3\%–46.7\%$ vs. $20.0\%–30.0\%$), confirming that larger parameter scale provides greater architectural resilience against localized test overfitting.
@@ -291,22 +313,21 @@ Counterfactual Replay, by contrast, generated multiple exploratory branches that
 
 ---
 
-## 6. Threats to Validity
+## 6. Threats to Validity & Methodological Boundaries
 
-### 6.1 Construct Validity
-- **Held-Out Oracle Completeness:** While our held-out suites were hardened by multi-operator mutation testing (killing $81.7\%$ of mutants), held-out tests are not a formal proof of correctness. Residual bugs could survive both suites.
-- **Task Authoring Bias:** All tasks were constructed to represent distributed systems patterns. To mitigate author bias, public tests were designed strictly to mimic typical developer unit tests, while held-out tests were isolated in separate modules before repair execution.
+To support critical academic scrutiny, we delineate four explicit boundaries governing the interpretation and generalizability of our findings.
 
-### 6.2 Internal Validity
-- **Deterministic Initial Replay:** All runs began with an identical, deterministically replayed failure edit to ensure controlled starting conditions.
-- **Temperature Asymmetry:** In accordance with standard agentic repair literature, Resample was evaluated at $T = 0.7$ to enable stochastic exploration, whereas Feedback and Replay repairs were evaluated at $T = 0.0$ to test deterministic refinement.
-- **Provider API Variance:** All live evaluations were executed against Groq `openai/gpt-oss-120b`. While API parameters were pinned, closed-source hosting providers may introduce subtle non-determinism in prompt batching.
+### 6.1 Synthetic Enterprise Benchmark Realism
+While the 30 tasks in RETRACE were carefully modeled after canonical enterprise distributed systems patterns (e.g., Write-Ahead Logging, Two-Phase Commit, CRDTs, fair reader-writer locks, and distributed circuit breakers), they remain curated benchmark fixtures rather than multi-million-line legacy enterprise monoliths. Each fixture comprises 200-800 lines of Python code with focused dependency boundaries. Although this containment allows controlled mutation hardening and deterministic oracle isolation, real-world distributed regressions may exhibit broader multi-service propagation and ambiguous specification ambiguity that are not captured in self-contained repositories.
 
-### 6.3 External Validity
-- **Model Diversity:** We evaluated across two distinct model families differing in both architecture and parameter scale: `openai/gpt-oss-120b` (120B) and Alibaba `qwen/qwen3.8-27b` (27B). The replication of the public-to-held-out gap across both models confirms that the invariant overestimation phenomenon is not an idiosyncrasy of a single model. However, evaluating closed-source frontier reasoning models (e.g., Claude 3.5 Sonnet, OpenAI o3-mini) remains future work.
-- **Synthetic Enterprise Repositories:** Tasks are contained repositories (typically 200–800 lines of systems code) rather than multi-million-line monolithic codebases. While they capture authentic distributed concurrency semantics, they do not assess whole-repository dependency resolution at scale.
+### 6.2 Sample Size and Statistical Power (N = 30)
+The enterprise benchmark comprises 30 tasks evaluated across three arms and two model families (180 total live runs). While this matrix is substantially larger than prior pilot studies, a sample size of N = 30 inherently limits the statistical power of paired tests such as McNemar's exact test. For example, the observed 4 vs. 3 discordant split between Replay and Feedback on GPT-OSS-120B yields an exact p = 1.000. As emphasized in Section 4.2, failing to reject the null hypothesis does **not** prove algorithmic equivalence; it merely indicates that the observed difference is indistinguishable from random variation at this sample size. Detecting smaller effect sizes with high statistical power would require scaling the task bank to hundreds of curated tasks.
 
----
+### 6.3 Model and Provider Variation
+Our evaluation examined two frontier open-weights model families differing in scale and architecture: `openai/gpt-oss-120b` (hosted on Groq) and `qwen/qwen3.8-27b` (Alibaba). While API sampling parameters were strictly pinned (T=0.0 for deterministic refinement, T=0.7 for stochastic resampling, seed 42), commercial inference providers employ proprietary hardware scheduling, quantization kernels (e.g., LP8/FP8 serving on Groq LPUs), and KV-cache optimizations that may introduce subtle non-determinism across distinct execution windows. Furthermore, closed-source frontier reasoning models with internal chain-of-thought (e.g., OpenAI o1/o3, Anthropic Claude 3.5 Sonnet) may exhibit different invariant retention characteristics.
+
+### 6.4 Verifier Oracle Completeness
+Although our held-out suites achieved an 81.7% mutation kill score across 142 AST mutations, dynamic test execution remains an incomplete formal specification. Tests can establish the presence of invariant violations, but cannot formally prove their absence. Unexercised interleavings in concurrent primitives or untested boundary edge cases could theoretically allow a flawed candidate patch to pass both public and held-out verifiers.
 
 ## 7. Related Work
 
