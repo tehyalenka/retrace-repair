@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_connection_pool",
+  "task": "Implement connection pool with max_size bounds, acquisition timeout raising ConnectionPoolExhaustedError, and dead connection eviction/replacement.",
+  "repo_sha256": "03d0f83699f9290ce86a5498e44e82d68cc0fd7e8026ce26d1eabebda9ad7e6b",
+  "verifier_sha256": "8a4803f1eeee9be069c161fa86b764106ab302a3d1eef17a909fe09354910b56",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement connection pool with max_size bounds, acquisition timeout raising ConnectionPoolExhaustedError, and dead connection eviction/replacement.\n\nRepository map:\nconnection_pool.py | imports: time | symbols: __init__, is_alive, close, __init__, acquire, release, ConnectionPoolExhaustedError, MockConnection, ConnectionPool\ntests/test_public.py | imports: connection_pool, unittest | symbols: test_acquire_and_release, test_pool_exhaustion_raises_error, Public\n\nSelected source context:\n### connection_pool.py\nimport time\n\nclass ConnectionPoolExhaustedError(Exception):\n    pass\n\nclass MockConnection:\n    def __init__(self, conn_id):\n        self.conn_id = conn_id\n        self.alive = True\n\n    def is_alive(self):\n        return self.alive\n\n    def close(self):\n        self.alive = False\n\nclass ConnectionPool:\n    def __init__(self, max_size=3, timeout=0.5):\n        self.max_size = max_size\n        self.timeout = timeout\n        self.available = []\n        self._counter = 0\n\n    def acquire(self, timeout=None):\n        # Buggy repo: Unbounded allocation!\n        # If available list is empty, it blindly creates new connections indefinitely!\n        if self.available:\n            return self.available.pop()\n        \n        # Bug: ignores max_size!\n        self._counter += 1\n        return MockConnection(self._counter)\n\n    def release(self, conn):\n        self.available.append(conn)\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"connection_pool.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass ConnectionPoolExhaustedError(Exception):\\n    pass\\n\\nclass MockConnection:\\n    def __init__(self, conn_id):\\n        self.conn_id = conn_id\\n        self.alive = True\\n\\n    def is_alive(self):\\n        return self.alive\\n\\n    def close(self):\\n        self.alive = False\\n\\nclass ConnectionPool:\\n    def __init__(self, max_size=3, timeout=0.5):\\n        self.max_size = max_size\\n        self.timeout = timeout\\n        self.available = []\\n        self._counter = 0\\n\\n    def acquire(self, timeout=None):\\n        # Buggy repo: Unbounded allocation!\\n        # If available list is empty, it blindly creates new connections indefinitely!\\n        if self.available:\\n            return self.available.pop()\\n        \\n        # Bug: ignores max_size!\\n        self._counter += 1\\n        return MockConnection(self._counter)\\n\\n    def release(self, conn):\\n        self.available.append(conn)\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "connection_pool.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_acquire_and_release (test_public.Public.test_acquire_and_release) ... ok\ntest_pool_exhaustion_raises_error (test_public.Public.test_pool_exhaustion_raises_error) ... FAIL\n\n======================================================================\nFAIL: test_pool_exhaustion_raises_error (test_public.Public.test_pool_exhaustion_raises_error)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-mju0t82s/repo/tests/test_public.py\", line 20, in test_pool_exhaustion_raises_error\n    with self.assertRaises(ConnectionPoolExhaustedError):\nAssertionError: ConnectionPoolExhaustedError not raised\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.136
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

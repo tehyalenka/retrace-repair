@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_read_write_lock_fair",
+  "task": "Implement a fair Reader-Writer Lock (RWLock) preventing writer starvation by queuing new readers behind waiting writers, with context manager support.",
+  "repo_sha256": "dc3e10155dad9576bb483f841224dcae9ef90e7327de7b7a5ad4de2c5e56dc06",
+  "verifier_sha256": "18be61faebd69d78c8b8e6080d1301e5fd4fd34600acc8613c43bdc67876136d",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement a fair Reader-Writer Lock (RWLock) preventing writer starvation by queuing new readers behind waiting writers, with context manager support.\n\nRepository map:\nrwlock.py | imports: threading, time | symbols: __init__, acquire_read, release_read, acquire_write, release_write, FairReadWriteLock\ntests/test_public.py | imports: rwlock, threading, time, unittest | symbols: test_concurrent_readers, test_writer_starvation_prevention, writer_job, Public\n\nSelected source context:\n### rwlock.py\nimport threading\nimport time\n\nclass FairReadWriteLock:\n    def __init__(self):\n        self._cond = threading.Condition(threading.Lock())\n        self._readers = 0\n        self._writer = False\n        self._waiting_writers = 0\n\n    def acquire_read(self, timeout=None):\n        start = time.time()\n        with self._cond:\n            # Buggy repo: ignores self._waiting_writers!\n            # Allows readers to jump ahead of waiting writers, causing writer starvation.\n            while self._writer:\n                if timeout is not None:\n                    elapsed = time.time() - start\n                    rem = timeout - elapsed\n                    if rem <= 0:\n                        return False\n                    self._cond.wait(timeout=rem)\n                else:\n                    self._cond.wait(timeout=1.0)\n            self._readers += 1\n            return True\n\n    def release_read(self):\n        with self._cond:\n            if self._readers > 0:\n                self._readers -= 1\n            if self._readers == 0:\n                self._cond.notify_all()\n\n    def acquire_write(self, timeout=None):\n        start = time.time()\n        with self._cond:\n            self._waiting_writers += 1\n            try:\n                while self._writer or self._readers > 0:\n                    if timeout is not None:\n                        elapsed = time.time() - start\n                        rem = timeout - elapsed\n                        if rem <= 0:\n                            return False\n                        self._cond.wait(timeout=rem)\n                    else:\n                        self._cond.wait(timeout=1.0)\n                self._writer = True\n                return True\n            finally:\n                self._waiting_writers -= 1\n\n    def release_write(self):\n        with self._cond:\n            self._writer = False\n            self._cond.notify_all()\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"rwlock.py\", \"operation\": \"modify\", \"content\": \"import threading\\nimport time\\n\\nclass FairReadWriteLock:\\n    def __init__(self):\\n        self._cond = threading.Condition(threading.Lock())\\n        self._readers = 0\\n        self._writer = False\\n        self._waiting_writers = 0\\n\\n    def acquire_read(self, timeout=None):\\n        start = time.time()\\n        with self._cond:\\n            # Buggy repo: ignores self._waiting_writers!\\n            # Allows readers to jump ahead of waiting writers, causing writer starvation.\\n            while self._writer:\\n                if timeout is not None:\\n                    elapsed = time.time() - start\\n                    rem = timeout - elapsed\\n                    if rem <= 0:\\n                        return False\\n                    self._cond.wait(timeout=rem)\\n                else:\\n                    self._cond.wait(timeout=1.0)\\n            self._readers += 1\\n            return True\\n\\n    def release_read(self):\\n        with self._cond:\\n            if self._readers > 0:\\n                self._readers -= 1\\n            if self._readers == 0:\\n                self._cond.notify_all()\\n\\n    def acquire_write(self, timeout=None):\\n        start = time.time()\\n        with self._cond:\\n            self._waiting_writers += 1\\n            try:\\n                while self._writer or self._readers > 0:\\n                    if timeout is not None:\\n                        elapsed = time.time() - start\\n                        rem = timeout - elapsed\\n                        if rem <= 0:\\n                            return False\\n                        self._cond.wait(timeout=rem)\\n                    else:\\n                        self._cond.wait(timeout=1.0)\\n                self._writer = True\\n                return True\\n            finally:\\n                self._waiting_writers -= 1\\n\\n    def release_write(self):\\n        with self._cond:\\n            self._writer = False\\n            self._cond.notify_all()\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "rwlock.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_concurrent_readers (test_public.Public.test_concurrent_readers) ... ok\ntest_writer_starvation_prevention (test_public.Public.test_writer_starvation_prevention) ... FAIL\n\n======================================================================\nFAIL: test_writer_starvation_prevention (test_public.Public.test_writer_starvation_prevention)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-ugkpifn2/repo/tests/test_public.py\", line 36, in test_writer_starvation_prevention\n    self.assertFalse(new_reader_acquired, \"New reader jumped ahead of waiting writer!\")\nAssertionError: True is not false : New reader jumped ahead of waiting writer!\n\n----------------------------------------------------------------------\nRan 2 tests in 0.056s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.156
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

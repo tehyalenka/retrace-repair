@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_circuit_breaker",
+  "task": "Implement an enterprise state machine circuit breaker (CLOSED, OPEN, HALF_OPEN) with failure counting, recovery timeout, and probe call reset.",
+  "repo_sha256": "9400e60c8082b4bb6a5a7cf0623955dbc26f1e9739c7904ee636701c8a351681",
+  "verifier_sha256": "be4712fd87c5eb2d4adc5c53037021d186cefc5cfc6cca8d4acb4d0cb8df2aa3",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement an enterprise state machine circuit breaker (CLOSED, OPEN, HALF_OPEN) with failure counting, recovery timeout, and probe call reset.\n\nRepository map:\ncircuit.py | imports: sqlite3, storage, time | symbols: __init__, state, failure_count, call, CircuitBreakerOpenError, CircuitBreaker\nstorage.py | imports: sqlite3 | symbols: connect\ntests/test_public.py | imports: circuit, storage, unittest | symbols: test_successful_call, test_trips_to_open_after_threshold_failures, test_half_open_recovery_after_timeout, fail, fail, Public\n\nSelected source context:\n### circuit.py\nimport time\nimport sqlite3\nfrom storage import connect\n\nclass CircuitBreakerOpenError(RuntimeError):\n    pass\n\nclass CircuitBreaker:\n    def __init__(self, db, failure_threshold=3, recovery_timeout=5.0):\n        self.db = db\n        self.failure_threshold = failure_threshold\n        self.recovery_timeout = float(recovery_timeout)\n\n    def state(self, service, now=None):\n        return 'CLOSED'\n\n    def failure_count(self, service):\n        return 0\n\n    def call(self, service, func, *args, now=None, **kwargs):\n        # Buggy implementation: directly calls func without tracking state or tripping\n        return func(*args, **kwargs)\n\n\n### storage.py\nimport sqlite3\n\ndef connect():\n    d = sqlite3.connect(':memory:')\n    d.execute('''\n        CREATE TABLE circuit_states (\n            service TEXT PRIMARY KEY,\n            state TEXT NOT NULL,\n            failure_count INTEGER NOT NULL,\n            last_failure_time REAL,\n            tripped_at REAL\n        )\n    ''')\n    d.commit()\n    return d\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"circuit.py\", \"operation\": \"modify\", \"content\": \"import time\\nimport sqlite3\\nfrom storage import connect\\n\\nclass CircuitBreakerOpenError(RuntimeError):\\n    pass\\n\\nclass CircuitBreaker:\\n    def __init__(self, db, failure_threshold=3, recovery_timeout=5.0):\\n        self.db = db\\n        self.failure_threshold = failure_threshold\\n        self.recovery_timeout = float(recovery_timeout)\\n\\n    def state(self, service, now=None):\\n        return 'CLOSED'\\n\\n    def failure_count(self, service):\\n        return 0\\n\\n    def call(self, service, func, *args, now=None, **kwargs):\\n        # Buggy implementation: directly calls func without tracking state or tripping\\n        return func(*args, **kwargs)\\n\"}, {\"path\": \"storage.py\", \"operation\": \"modify\", \"content\": \"import sqlite3\\n\\ndef connect():\\n    d = sqlite3.connect(':memory:')\\n    d.execute('''\\n        CREATE TABLE circuit_states (\\n            service TEXT PRIMARY KEY,\\n            state TEXT NOT NULL,\\n            failure_count INTEGER NOT NULL,\\n            last_failure_time REAL,\\n            tripped_at REAL\\n        )\\n    ''')\\n    d.commit()\\n    return d\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "circuit.py",
+      "storage.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 3,
+    "output": "\ntest_half_open_recovery_after_timeout (test_public.Public.test_half_open_recovery_after_timeout) ... FAIL\ntest_successful_call (test_public.Public.test_successful_call) ... ok\ntest_trips_to_open_after_threshold_failures (test_public.Public.test_trips_to_open_after_threshold_failures) ... FAIL\n\n======================================================================\nFAIL: test_half_open_recovery_after_timeout (test_public.Public.test_half_open_recovery_after_timeout)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-eoxibfe5/repo/tests/test_public.py\", line 31, in test_half_open_recovery_after_timeout\n    self.assertEqual(cb.state('api', now=105.0), 'OPEN')\nAssertionError: 'CLOSED' != 'OPEN'\n- CLOSED\n+ OPEN\n\n\n======================================================================\nFAIL: test_trips_to_open_after_threshold_failures (test_public.Public.test_trips_to_open_after_threshold_failures)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-eoxibfe5/repo/tests/test_public.py\", line 21, in test_trips_to_open_after_threshold_failures\n    self.assertEqual(cb.state('api'), 'OPEN')\nAssertionError: 'CLOSED' != 'OPEN'\n- CLOSED\n+ OPEN\n\n\n----------------------------------------------------------------------\nRan 3 tests in 0.003s\n\nFAILED (failures=2)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 3,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.129
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_bulkhead_isolation",
+  "task": "Implement tenant bulkhead resource isolation with bounded concurrent execution and queue capacity, rejecting saturated tenants with BulkheadFullError without impacting other tenants.",
+  "repo_sha256": "5d3c65430ecf737554e811235a4c5bd6dc737e50ae84d1f8f6ad060f086f735e",
+  "verifier_sha256": "1f90fb3ae124ceda44e2b435f65f06ef2e50fe8e40c2e2ddef22498c836ee3e0",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement tenant bulkhead resource isolation with bounded concurrent execution and queue capacity, rejecting saturated tenants with BulkheadFullError without impacting other tenants.\n\nRepository map:\nbulkhead.py | imports: threading | symbols: __init__, execute, BulkheadFullError, TenantBulkhead\ntests/test_public.py | imports: bulkhead, threading, time, unittest | symbols: test_single_tenant_execution, test_tenant_isolation_noisy_neighbor, slow_worker, Public\n\nSelected source context:\n### bulkhead.py\nimport threading\n\nclass BulkheadFullError(Exception):\n    pass\n\nclass TenantBulkhead:\n    def __init__(self, max_concurrent=2, max_queue_size=2):\n        self.max_concurrent = max_concurrent\n        self.max_queue_size = max_queue_size\n        self.lock = threading.Lock()\n        \n        # Buggy repo: Global counters shared across ALL tenants!\n        # A single tenant saturates the bulkhead, starving all other tenants!\n        self.global_active = 0\n        self.global_queue = 0\n\n    def execute(self, tenant_id, func, *args, **kwargs):\n        with self.lock:\n            # Bug: ignores tenant_id, checks global limit\n            if self.global_active >= self.max_concurrent:\n                if self.global_queue >= self.max_queue_size:\n                    raise BulkheadFullError(\"Bulkhead capacity reached\")\n                self.global_queue += 1\n            else:\n                self.global_active += 1\n\n        try:\n            return func(*args, **kwargs)\n        finally:\n            with self.lock:\n                if self.global_active > 0:\n                    self.global_active -= 1\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"bulkhead.py\", \"operation\": \"modify\", \"content\": \"import threading\\n\\nclass BulkheadFullError(Exception):\\n    pass\\n\\nclass TenantBulkhead:\\n    def __init__(self, max_concurrent=2, max_queue_size=2):\\n        self.max_concurrent = max_concurrent\\n        self.max_queue_size = max_queue_size\\n        self.lock = threading.Lock()\\n        \\n        # Buggy repo: Global counters shared across ALL tenants!\\n        # A single tenant saturates the bulkhead, starving all other tenants!\\n        self.global_active = 0\\n        self.global_queue = 0\\n\\n    def execute(self, tenant_id, func, *args, **kwargs):\\n        with self.lock:\\n            # Bug: ignores tenant_id, checks global limit\\n            if self.global_active >= self.max_concurrent:\\n                if self.global_queue >= self.max_queue_size:\\n                    raise BulkheadFullError(\\\"Bulkhead capacity reached\\\")\\n                self.global_queue += 1\\n            else:\\n                self.global_active += 1\\n\\n        try:\\n            return func(*args, **kwargs)\\n        finally:\\n            with self.lock:\\n                if self.global_active > 0:\\n                    self.global_active -= 1\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "bulkhead.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_single_tenant_execution (test_public.Public.test_single_tenant_execution) ... ok\ntest_tenant_isolation_noisy_neighbor (test_public.Public.test_tenant_isolation_noisy_neighbor) ... ERROR\n\n======================================================================\nERROR: test_tenant_isolation_noisy_neighbor (test_public.Public.test_tenant_isolation_noisy_neighbor)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-_tdk3ow0/repo/tests/test_public.py\", line 33, in test_tenant_isolation_noisy_neighbor\n    res_b = bh.execute(\"tenant-B\", lambda: \"tenant-B-success\")\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-_tdk3ow0/repo/bulkhead.py\", line 22, in execute\n    raise BulkheadFullError(\"Bulkhead capacity reached\")\nbulkhead.BulkheadFullError: Bulkhead capacity reached\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (errors=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.096
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

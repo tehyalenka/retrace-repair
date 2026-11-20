@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_leader_epoch_election",
+  "task": "Implement leader election coordinator with monotonic epochs and split-brain fencing, rejecting stale epoch writes with StaleEpochError.",
+  "repo_sha256": "6c16bd37fb28a801749e488a20582d808d9011e69dcb6fa9d80d5d6e14afab7b",
+  "verifier_sha256": "d51ca1c381a0c9779b70d4a704422e421d5f6f95beed022f8a27d5bdee61e11c",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement leader election coordinator with monotonic epochs and split-brain fencing, rejecting stale epoch writes with StaleEpochError.\n\nRepository map:\nleader_election.py | imports:  | symbols: __init__, elect_leader, execute_write, StaleEpochError, NotLeaderError, LeaderEpochCoordinator\ntests/test_public.py | imports: leader_election, unittest | symbols: test_active_leader_write, test_stale_epoch_split_brain_rejected, Public\n\nSelected source context:\n### leader_election.py\nclass StaleEpochError(Exception):\n    pass\n\nclass NotLeaderError(Exception):\n    pass\n\nclass LeaderEpochCoordinator:\n    def __init__(self):\n        self.current_epoch = 0\n        self.current_leader = None\n        self.state = {}\n\n    def elect_leader(self, node_id):\n        self.current_epoch += 1\n        self.current_leader = node_id\n        return True, self.current_epoch\n\n    def execute_write(self, node_id, epoch, key, value):\n        # Buggy repo: split-brain vulnerability!\n        # Does NOT check whether epoch < self.current_epoch!\n        # Allows demoted zombie leaders to write to state with stale epochs!\n        if node_id != self.current_leader:\n            # Bug: if node_id was previous leader, repo might allow it or doesn't check epoch\n            pass\n\n        self.state[key] = value\n        return True\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"leader_election.py\", \"operation\": \"modify\", \"content\": \"class StaleEpochError(Exception):\\n    pass\\n\\nclass NotLeaderError(Exception):\\n    pass\\n\\nclass LeaderEpochCoordinator:\\n    def __init__(self):\\n        self.current_epoch = 0\\n        self.current_leader = None\\n        self.state = {}\\n\\n    def elect_leader(self, node_id):\\n        self.current_epoch += 1\\n        self.current_leader = node_id\\n        return True, self.current_epoch\\n\\n    def execute_write(self, node_id, epoch, key, value):\\n        # Buggy repo: split-brain vulnerability!\\n        # Does NOT check whether epoch < self.current_epoch!\\n        # Allows demoted zombie leaders to write to state with stale epochs!\\n        if node_id != self.current_leader:\\n            # Bug: if node_id was previous leader, repo might allow it or doesn't check epoch\\n            pass\\n\\n        self.state[key] = value\\n        return True\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "leader_election.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_active_leader_write (test_public.Public.test_active_leader_write) ... ok\ntest_stale_epoch_split_brain_rejected (test_public.Public.test_stale_epoch_split_brain_rejected) ... FAIL\n\n======================================================================\nFAIL: test_stale_epoch_split_brain_rejected (test_public.Public.test_stale_epoch_split_brain_rejected)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-_dx73h89/repo/tests/test_public.py\", line 24, in test_stale_epoch_split_brain_rejected\n    with self.assertRaises(StaleEpochError):\nAssertionError: StaleEpochError not raised\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.098
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

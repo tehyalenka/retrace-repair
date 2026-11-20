@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_dead_letter_retry",
+  "task": "Implement retry dispatching with exponential backoff, immediate dead-letter queue (DLQ) routing for NonRetryableError, and retry exhaustion routing with failure metadata.",
+  "repo_sha256": "b13efdfba02dbec6dcce27eeb0fe9b4ff0ed2b05db7d88ff259abde3375086f9",
+  "verifier_sha256": "c2c9c843d5a4b8381efcf9b55b19f0da16cfcbd8391df7420e3b02bcc74d4715",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement retry dispatching with exponential backoff, immediate dead-letter queue (DLQ) routing for NonRetryableError, and retry exhaustion routing with failure metadata.\n\nRepository map:\nretry_dlq.py | imports:  | symbols: __init__, send, __init__, calculate_backoff, execute, RetryableError, NonRetryableError, MockDLQSink, RetryDispatcher\ntests/test_public.py | imports: retry_dlq, unittest | symbols: test_transient_failure_retries_and_succeeds, test_non_retryable_error_routes_to_dlq_immediately, flaky_worker, fatal_worker, Public\n\nSelected source context:\n### retry_dlq.py\nclass RetryableError(Exception):\n    pass\n\nclass NonRetryableError(Exception):\n    pass\n\nclass MockDLQSink:\n    def __init__(self):\n        self.records = []\n\n    def send(self, payload, error, attempts):\n        self.records.append({\n            \"payload\": payload,\n            \"error\": str(error),\n            \"attempts\": attempts\n        })\n\nclass RetryDispatcher:\n    def __init__(self, max_attempts=3, base_delay=0.1, max_delay=1.0):\n        self.max_attempts = max_attempts\n        self.base_delay = base_delay\n        self.max_delay = max_delay\n\n    def calculate_backoff(self, attempt):\n        # Exponential backoff clamped to max_delay\n        delay = self.base_delay * (2 ** (attempt - 1))\n        return min(delay, self.max_delay)\n\n    def execute(self, func, payload, dlq_sink):\n        # Buggy repo:\n        # Retries ALL exceptions (including NonRetryableError), and does NOT send to DLQ on failure!\n        attempts = 0\n        last_err = None\n        while attempts < self.max_attempts:\n            attempts += 1\n            try:\n                return func(payload)\n            except Exception as e:\n                last_err = e\n                # Bug: No DLQ routing, no error classification\n        raise last_err\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"retry_dlq.py\", \"operation\": \"modify\", \"content\": \"class RetryableError(Exception):\\n    pass\\n\\nclass NonRetryableError(Exception):\\n    pass\\n\\nclass MockDLQSink:\\n    def __init__(self):\\n        self.records = []\\n\\n    def send(self, payload, error, attempts):\\n        self.records.append({\\n            \\\"payload\\\": payload,\\n            \\\"error\\\": str(error),\\n            \\\"attempts\\\": attempts\\n        })\\n\\nclass RetryDispatcher:\\n    def __init__(self, max_attempts=3, base_delay=0.1, max_delay=1.0):\\n        self.max_attempts = max_attempts\\n        self.base_delay = base_delay\\n        self.max_delay = max_delay\\n\\n    def calculate_backoff(self, attempt):\\n        # Exponential backoff clamped to max_delay\\n        delay = self.base_delay * (2 ** (attempt - 1))\\n        return min(delay, self.max_delay)\\n\\n    def execute(self, func, payload, dlq_sink):\\n        # Buggy repo:\\n        # Retries ALL exceptions (including NonRetryableError), and does NOT send to DLQ on failure!\\n        attempts = 0\\n        last_err = None\\n        while attempts < self.max_attempts:\\n            attempts += 1\\n            try:\\n                return func(payload)\\n            except Exception as e:\\n                last_err = e\\n                # Bug: No DLQ routing, no error classification\\n        raise last_err\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "retry_dlq.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_non_retryable_error_routes_to_dlq_immediately (test_public.Public.test_non_retryable_error_routes_to_dlq_immediately) ... FAIL\ntest_transient_failure_retries_and_succeeds (test_public.Public.test_transient_failure_retries_and_succeeds) ... ok\n\n======================================================================\nFAIL: test_non_retryable_error_routes_to_dlq_immediately (test_public.Public.test_non_retryable_error_routes_to_dlq_immediately)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-kdv5ck58/repo/tests/test_public.py\", line 34, in test_non_retryable_error_routes_to_dlq_immediately\n    self.assertEqual(calls[0], 1)\nAssertionError: 3 != 1\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.092
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

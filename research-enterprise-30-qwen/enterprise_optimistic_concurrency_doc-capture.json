@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "mode": "live",
+  "case": "enterprise_optimistic_concurrency_doc",
+  "task": "Implement an optimistic concurrency document store with ETag revision verification, rejecting patch updates with mismatched ETags via PreconditionFailedError without mutating state.",
+  "repo_sha256": "62c885a10b2bffefd326c094c39b9fdfc7a9233d9f76b6571e239659ab7dddb4",
+  "verifier_sha256": "d0f342aff838b957cc8ffa96cddd919860dc1cf08aa3eb1a08e7bce85616899e",
+  "calls": [
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+        },
+        {
+          "role": "user",
+          "content": "Task: Implement an optimistic concurrency document store with ETag revision verification, rejecting patch updates with mismatched ETags via PreconditionFailedError without mutating state.\n\nRepository map:\ndocument_store.py | imports: hashlib, json | symbols: __init__, _calc_etag, create, get, update, PreconditionFailedError, DocumentStore\ntests/test_public.py | imports: document_store, unittest | symbols: test_update_with_matching_etag, test_mismatched_etag_raises_precondition_failed_and_does_not_mutate, Public\n\nSelected source context:\n### document_store.py\nimport hashlib\nimport json\n\nclass PreconditionFailedError(Exception):\n    pass\n\nclass DocumentStore:\n    def __init__(self):\n        self.docs = {}\n\n    def _calc_etag(self, revision, data):\n        content = json.dumps({\"rev\": revision, \"data\": data}, sort_keys=True)\n        return hashlib.sha256(content.encode('utf-8')).hexdigest()[:16]\n\n    def create(self, doc_id, data):\n        revision = 1\n        etag = self._calc_etag(revision, data)\n        self.docs[doc_id] = {\"doc_id\": doc_id, \"data\": dict(data), \"revision\": revision, \"etag\": etag}\n        return dict(self.docs[doc_id])\n\n    def get(self, doc_id):\n        if doc_id not in self.docs:\n            raise KeyError(f\"Document {doc_id} not found\")\n        # Bug: returns internal reference instead of deep/independent copy\n        return self.docs[doc_id]\n\n    def update(self, doc_id, patch_data, if_match_etag):\n        if doc_id not in self.docs:\n            raise KeyError(f\"Document {doc_id} not found\")\n        \n        # Buggy repo: mutates data before verifying if_match_etag!\n        self.docs[doc_id][\"data\"].update(patch_data)\n        \n        if self.docs[doc_id][\"etag\"] != if_match_etag:\n            # Bug: already mutated! And doesn't rollback\n            raise PreconditionFailedError(\"ETag mismatch\")\n\n        self.docs[doc_id][\"revision\"] += 1\n        self.docs[doc_id][\"etag\"] = self._calc_etag(self.docs[doc_id][\"revision\"], self.docs[doc_id][\"data\"])\n        return self.docs[doc_id]\n"
+        }
+      ],
+      "options": {
+        "json_mode": null,
+        "temperature": null,
+        "seed": null
+      },
+      "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"document_store.py\", \"operation\": \"modify\", \"content\": \"import hashlib\\nimport json\\n\\nclass PreconditionFailedError(Exception):\\n    pass\\n\\nclass DocumentStore:\\n    def __init__(self):\\n        self.docs = {}\\n\\n    def _calc_etag(self, revision, data):\\n        content = json.dumps({\\\"rev\\\": revision, \\\"data\\\": data}, sort_keys=True)\\n        return hashlib.sha256(content.encode('utf-8')).hexdigest()[:16]\\n\\n    def create(self, doc_id, data):\\n        revision = 1\\n        etag = self._calc_etag(revision, data)\\n        self.docs[doc_id] = {\\\"doc_id\\\": doc_id, \\\"data\\\": dict(data), \\\"revision\\\": revision, \\\"etag\\\": etag}\\n        return dict(self.docs[doc_id])\\n\\n    def get(self, doc_id):\\n        if doc_id not in self.docs:\\n            raise KeyError(f\\\"Document {doc_id} not found\\\")\\n        # Bug: returns internal reference instead of deep/independent copy\\n        return self.docs[doc_id]\\n\\n    def update(self, doc_id, patch_data, if_match_etag):\\n        if doc_id not in self.docs:\\n            raise KeyError(f\\\"Document {doc_id} not found\\\")\\n        \\n        # Buggy repo: mutates data before verifying if_match_etag!\\n        self.docs[doc_id][\\\"data\\\"].update(patch_data)\\n        \\n        if self.docs[doc_id][\\\"etag\\\"] != if_match_etag:\\n            # Bug: already mutated! And doesn't rollback\\n            raise PreconditionFailedError(\\\"ETag mismatch\\\")\\n\\n        self.docs[doc_id][\\\"revision\\\"] += 1\\n        self.docs[doc_id][\\\"etag\\\"] = self._calc_etag(self.docs[doc_id][\\\"revision\\\"], self.docs[doc_id][\\\"data\\\"])\\n        return self.docs[doc_id]\\n\"}]}"
+    }
+  ],
+  "first_attempt": {
+    "attempt": 1,
+    "changed_files": [
+      "document_store.py"
+    ],
+    "reasoning_summary": "Replayed known failed implementation",
+    "passed": false,
+    "tests_run": 2,
+    "output": "\ntest_mismatched_etag_raises_precondition_failed_and_does_not_mutate (test_public.Public.test_mismatched_etag_raises_precondition_failed_and_does_not_mutate) ... FAIL\ntest_update_with_matching_etag (test_public.Public.test_update_with_matching_etag) ... ok\n\n======================================================================\nFAIL: test_mismatched_etag_raises_precondition_failed_and_does_not_mutate (test_public.Public.test_mismatched_etag_raises_precondition_failed_and_does_not_mutate)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-jajbsqln/repo/tests/test_public.py\", line 24, in test_mismatched_etag_raises_precondition_failed_and_does_not_mutate\n    self.assertEqual(current[\"data\"][\"role\"], \"engineer\")\nAssertionError: 'director' != 'engineer'\n- director\n+ engineer\n\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+    "smoke_tests_passed": false,
+    "smoke_tests_run": 2,
+    "failure_stage": "smoke_tests",
+    "failure_category": "test_failure",
+    "repair_attempt": false,
+    "format_retries_used": 0,
+    "format_repair_succeeded": false,
+    "elapsed_seconds": 0.142
+  },
+  "capture_success": false,
+  "notice": "Contains prompts and generated code; do not publish without reviewing."
+}

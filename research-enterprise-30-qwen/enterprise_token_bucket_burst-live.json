@@ -1,0 +1,490 @@
+{
+  "schema": 1,
+  "settings": {
+    "trace_sha256": "1ef6aa8120361cefbbce2d6bebc6aa5072438bd4225f1344df8b3188944a5f37",
+    "offline": false,
+    "repetitions": 1,
+    "attempts": 2,
+    "repo_sha256": "9ad539afd80239ac59738c6e2b86c1129d7f71c78effbdfec5f31d2f509241c0",
+    "verifier_sha256": "a71f2daf2c2c6c1b2f1d9f2b021cf151c4436825585515e31997395138faa651",
+    "counterfactual_policy": "counterfactual_replay",
+    "active_arms": [
+      [
+        "resample",
+        false,
+        "standard"
+      ],
+      [
+        "feedback",
+        true,
+        "standard"
+      ],
+      [
+        "counterfactual_replay",
+        true,
+        "counterfactual_replay"
+      ]
+    ],
+    "heldout_sha256": "203ec7e448bfe355b705a28e23e35512bc9f25e95fb4d3c92765afeaa30a3ae5",
+    "model_provenance": {
+      "execution": "live_provider",
+      "provider": "groq",
+      "model": "qwen/qwen3.8-27b",
+      "temperature": 0.0,
+      "json_mode": false,
+      "max_retries": 3,
+      "format_retries": 2,
+      "endpoint": "https://api.groq.com/openai/v1"
+    }
+  },
+  "rows": [
+    {
+      "key": "1:resample",
+      "repetition": 1,
+      "condition": "resample",
+      "success": true,
+      "history": [
+        {
+          "attempt": 1,
+          "changed_files": [
+            "burst_bucket.py"
+          ],
+          "reasoning_summary": "Replayed known failed implementation",
+          "passed": false,
+          "tests_run": 2,
+          "output": "\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... FAIL\n\n======================================================================\nFAIL: test_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-xr82tof5/repo/tests/test_public.py\", line 19, in test_fractional_subsecond_refill\n    self.assertTrue(allowed, \"Fractional subsecond refill failed!\")\nAssertionError: False is not true : Fractional subsecond refill failed!\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+          "smoke_tests_passed": false,
+          "smoke_tests_run": 2,
+          "failure_stage": "smoke_tests",
+          "failure_category": "test_failure",
+          "repair_attempt": false,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 0.155
+        },
+        {
+          "attempt": 2,
+          "changed_files": [
+            "burst_bucket.py"
+          ],
+          "reasoning_summary": "The bug is integer truncation of elapsed seconds in `consume()`, which prevents sub-second fractional refills. Fix: compute `elapsed = now - self.last_refill` as a float, clamp to >= 0, refill proportionally (tokens += elapsed * sustained_rate), clamp to burst_capacity, and update `last_refill`. Also reject boolean/invalid inputs for `count` and `now`, and validate constructor parameters. Preserve the public API (consume returns (bool, tokens) tuple, __init__ signature unchanged).",
+          "passed": true,
+          "tests_run": 2,
+          "output": "\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n",
+          "smoke_tests_passed": true,
+          "smoke_tests_run": 2,
+          "verification_passed": true,
+          "verification_output": "\ntest_burst_up_to_capacity (test_codepilot_verification.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_codepilot_verification.Public.test_fractional_subsecond_refill) ... ok\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK\n",
+          "failure_stage": null,
+          "failure_category": null,
+          "repair_attempt": true,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 47.945
+        }
+      ],
+      "heldout": {
+        "passed": true,
+        "tests_run": 5,
+        "output": "\ntest_burst_capacity_ceiling_clamp (test_codepilot_verification.Heldout.test_burst_capacity_ceiling_clamp) ... ok\ntest_consumption_exceeding_capacity_rejected (test_codepilot_verification.Heldout.test_consumption_exceeding_capacity_rejected) ... ok\ntest_invalid_parameters_raise_value_error (test_codepilot_verification.Heldout.test_invalid_parameters_raise_value_error) ... ok\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nOK\n"
+      },
+      "calls": [
+        {
+          "origin": "captured_initial",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Implement dual-capacity token bucket rate limiter with floating-point fractional sub-second refill and burst capacity clamping.\n\nRepository map:\nburst_bucket.py | imports: time | symbols: __init__, consume, BurstTokenBucket\ntests/test_public.py | imports: burst_bucket, unittest | symbols: test_burst_up_to_capacity, test_fractional_subsecond_refill, Public\n\nSelected source context:\n### burst_bucket.py\nimport time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        self.sustained_rate = sustained_rate\n        self.burst_capacity = burst_capacity\n        self.tokens = burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        now = time.time() if now is None else now\n        if self.last_refill is None:\n            self.last_refill = now\n\n        # Buggy repo: integer truncation bug!\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\n        elapsed_seconds = int(now - self.last_refill)\n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = now\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.7,
+              "seed": 142
+            }
+          },
+          "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"burst_bucket.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        self.sustained_rate = sustained_rate\\n        self.burst_capacity = burst_capacity\\n        self.tokens = burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        now = time.time() if now is None else now\\n        if self.last_refill is None:\\n            self.last_refill = now\\n\\n        # Buggy repo: integer truncation bug!\\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\\n        elapsed_seconds = int(now - self.last_refill)\\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = now\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}"
+        },
+        {
+          "origin": "live",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Implement dual-capacity token bucket rate limiter with floating-point fractional sub-second refill and burst capacity clamping.\n\nRepository map:\nburst_bucket.py | imports: time | symbols: __init__, consume, BurstTokenBucket\ntests/test_public.py | imports: burst_bucket, unittest | symbols: test_burst_up_to_capacity, test_fractional_subsecond_refill, Public\n\nSelected source context:\n### burst_bucket.py\nimport time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        self.sustained_rate = sustained_rate\n        self.burst_capacity = burst_capacity\n        self.tokens = burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        now = time.time() if now is None else now\n        if self.last_refill is None:\n            self.last_refill = now\n\n        # Buggy repo: integer truncation bug!\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\n        elapsed_seconds = int(now - self.last_refill)\n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = now\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.7,
+              "seed": 142
+            }
+          },
+          "response": "{\"reasoning_summary\":\"The bug is integer truncation of elapsed seconds in `consume()`, which prevents sub-second fractional refills. Fix: compute `elapsed = now - self.last_refill` as a float, clamp to >= 0, refill proportionally (tokens += elapsed * sustained_rate), clamp to burst_capacity, and update `last_refill`. Also reject boolean/invalid inputs for `count` and `now`, and validate constructor parameters. Preserve the public API (consume returns (bool, tokens) tuple, __init__ signature unchanged).\", \"edits\":[{\"path\":\"burst_bucket.py\",\"operation\":\"modify\",\"content\":\"import time\\n\\n\\nclass BurstTokenBucket:\\n    \\\"\\\"\\\"Dual-capacity token bucket rate limiter.\\n\\n    Supports a sustained refill rate (tokens/second) and a burst capacity\\n    ceiling.  Tokens refill in real time using floating-point arithmetic so\\n    that sub-second (fractional) intervals produce the correct fractional\\n    refill instead of being truncated to zero.\\n    \\\"\\\"\\\"\\n\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        # --- strict type / boundary validation ---\\n        if isinstance(sustained_rate, bool) or not isinstance(sustained_rate, (int, float)):\\n            raise ValueError(\\\"sustained_rate must be a number (int or float), not bool\\\")\\n        if isinstance(burst_capacity, bool) or not isinstance(burst_capacity, (int, float)):\\n            raise ValueError(\\\"burst_capacity must be a number (int or float), not bool\\\")\\n        if not (sustained_rate > 0):\\n            raise ValueError(\\\"sustained_rate must be > 0\\\")\\n        if not (burst_capacity > 0):\\n            raise ValueError(\\\"burst_capacity must be > 0\\\")\\n\\n        self.sustained_rate = float(sustained_rate)\\n        self.burst_capacity = float(burst_capacity)\\n        self.tokens = self.burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        \\\"\\\"\\\"Attempt to consume *count* tokens.\\n\\n        Returns ``(True, remaining_tokens)`` on success or\\n        ``(False, remaining_tokens)`` on failure.\\n        \\\"\\\"\\\"\\n        # --- validate count ---\\n        if isinstance(count, bool) or not isinstance(count, (int, float)):\\n            raise ValueError(\\\"count must be a number (int or float), not bool\\\")\\n        if count <= 0:\\n            raise ValueError(\\\"count must be > 0\\\")\\n\\n        if now is None:\\n            now = time.time()\\n        if isinstance(now, bool) or not isinstance(now, (int, float)):\\n            raise ValueError(\\\"now must be a number (int or float), not bool\\\")\\n\\n        # --- fractional (floating-point) refill ---\\n        if self.last_refill is None:\\n            self.last_refill = now\\n            elapsed = 0.0\\n        else:\\n            elapsed = float(now) - float(self.last_refill)\\n            if elapsed < 0.0:\\n                # Clock went backwards; do not refill but keep the earlier\\n                # timestamp so a future call can still account for the gap.\\n                elapsed = 0.0\\n\\n        if elapsed > 0.0:\\n            refill = elapsed * self.sustained_rate\\n            self.tokens = min(self.burst_capacity, self.tokens + refill)\\n            self.last_refill = now\\n\\n        # --- consume or reject ---\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}"
+        }
+      ],
+      "live_calls": 1,
+      "completion_origins": {
+        "captured_initial": 1,
+        "checkpoint_replay": 0,
+        "scripted": 0,
+        "live": 1
+      },
+      "request_accounting": {
+        "logical_calls": 1,
+        "http_requests": 2,
+        "http_failures": 1,
+        "prompt_tokens": 823,
+        "completion_tokens": 808,
+        "usage_reports": 1
+      }
+    },
+    {
+      "key": "1:feedback",
+      "repetition": 1,
+      "condition": "feedback",
+      "success": true,
+      "history": [
+        {
+          "attempt": 1,
+          "changed_files": [
+            "burst_bucket.py"
+          ],
+          "reasoning_summary": "Replayed known failed implementation",
+          "passed": false,
+          "tests_run": 2,
+          "output": "\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... FAIL\n\n======================================================================\nFAIL: test_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-z0fhs18m/repo/tests/test_public.py\", line 19, in test_fractional_subsecond_refill\n    self.assertTrue(allowed, \"Fractional subsecond refill failed!\")\nAssertionError: False is not true : Fractional subsecond refill failed!\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+          "smoke_tests_passed": false,
+          "smoke_tests_run": 2,
+          "failure_stage": "smoke_tests",
+          "failure_category": "test_failure",
+          "repair_attempt": false,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 0.106
+        },
+        {
+          "attempt": 2,
+          "changed_files": [
+            "burst_bucket.py"
+          ],
+          "reasoning_summary": "Fixed the integer truncation bug in the token bucket refill logic by using floating-point elapsed time. Added strict type validation to reject booleans and invalid numeric types for `sustained_rate`, `burst_capacity`, and `count`. Ensured atomic state updates and fail-closed behavior for invalid inputs.",
+          "passed": true,
+          "tests_run": 2,
+          "output": "\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n",
+          "smoke_tests_passed": true,
+          "smoke_tests_run": 2,
+          "verification_passed": true,
+          "verification_output": "\ntest_burst_up_to_capacity (test_codepilot_verification.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_codepilot_verification.Public.test_fractional_subsecond_refill) ... ok\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK\n",
+          "failure_stage": null,
+          "failure_category": null,
+          "repair_attempt": true,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 47.582
+        }
+      ],
+      "heldout": {
+        "passed": false,
+        "tests_run": 5,
+        "output": "\ntest_burst_capacity_ceiling_clamp (test_codepilot_verification.Heldout.test_burst_capacity_ceiling_clamp) ... ok\ntest_consumption_exceeding_capacity_rejected (test_codepilot_verification.Heldout.test_consumption_exceeding_capacity_rejected) ... ok\ntest_invalid_parameters_raise_value_error (test_codepilot_verification.Heldout.test_invalid_parameters_raise_value_error) ... FAIL\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\n\n======================================================================\nFAIL: test_invalid_parameters_raise_value_error (test_codepilot_verification.Heldout.test_invalid_parameters_raise_value_error)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-ry1naety/repo/tests/test_codepilot_verification.py\", line 20, in test_invalid_parameters_raise_value_error\n    with self.assertRaises(ValueError):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nFAILED (failures=1)\n"
+      },
+      "calls": [
+        {
+          "origin": "captured_initial",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Implement dual-capacity token bucket rate limiter with floating-point fractional sub-second refill and burst capacity clamping.\n\nRepository map:\nburst_bucket.py | imports: time | symbols: __init__, consume, BurstTokenBucket\ntests/test_public.py | imports: burst_bucket, unittest | symbols: test_burst_up_to_capacity, test_fractional_subsecond_refill, Public\n\nSelected source context:\n### burst_bucket.py\nimport time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        self.sustained_rate = sustained_rate\n        self.burst_capacity = burst_capacity\n        self.tokens = burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        now = time.time() if now is None else now\n        if self.last_refill is None:\n            self.last_refill = now\n\n        # Buggy repo: integer truncation bug!\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\n        elapsed_seconds = int(now - self.last_refill)\n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = now\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.0,
+              "seed": null
+            }
+          },
+          "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"burst_bucket.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        self.sustained_rate = sustained_rate\\n        self.burst_capacity = burst_capacity\\n        self.tokens = burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        now = time.time() if now is None else now\\n        if self.last_refill is None:\\n            self.last_refill = now\\n\\n        # Buggy repo: integer truncation bug!\\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\\n        elapsed_seconds = int(now - self.last_refill)\\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = now\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}"
+        },
+        {
+          "origin": "live",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Implement dual-capacity token bucket rate limiter with floating-point fractional sub-second refill and burst capacity clamping.\n\nRepository map:\nburst_bucket.py | imports: time | symbols: __init__, consume, BurstTokenBucket\ntests/test_public.py | imports: burst_bucket, unittest | symbols: test_burst_up_to_capacity, test_fractional_subsecond_refill, Public\n\nSelected source context:\n### burst_bucket.py\nimport time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        self.sustained_rate = sustained_rate\n        self.burst_capacity = burst_capacity\n        self.tokens = burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        now = time.time() if now is None else now\n        if self.last_refill is None:\n            self.last_refill = now\n\n        # Buggy repo: integer truncation bug!\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\n        elapsed_seconds = int(now - self.last_refill)\n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = now\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+              },
+              {
+                "role": "assistant",
+                "content": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"burst_bucket.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        self.sustained_rate = sustained_rate\\n        self.burst_capacity = burst_capacity\\n        self.tokens = burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        now = time.time() if now is None else now\\n        if self.last_refill is None:\\n            self.last_refill = now\\n\\n        # Buggy repo: integer truncation bug!\\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\\n        elapsed_seconds = int(now - self.last_refill)\\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = now\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}"
+              },
+              {
+                "role": "user",
+                "content": "Tests/validation failed:\nFailure stage: smoke_tests\nFailure category: test_failure\nFiles changed: burst_bucket.py\nFailure details (truncated):\n\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... FAIL\n\n======================================================================\nFAIL: test_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-z0fhs18m/repo/tests/test_public.py\", line 19, in test_fractional_subsecond_refill\n    self.assertTrue(allowed, \"Fractional subsecond refill failed!\")\nAssertionError: False is not true : Fractional subsecond refill failed!\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n\nIMPORTANT: Each retry starts from the ORIGINAL repository snapshot, not the previous attempt. Files created in a previous attempt do not exist now. Return a COMPLETE replacement edit batch: use operation=create for newly introduced files (even if created in the prior failed attempt), and operation=modify for files originally present. Enforce all defensive invariants: strictly validate parameter types (reject `bool` for numeric parameters), wrap state mutations in atomic transactions with full rollback on any failure, reject conflicting idempotency keys with ValueError, and fail-closed on tenant isolation. Include every file needed for the working feature, not just the file that failed. Return valid JSON only, with complete file contents."
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.0,
+              "seed": null
+            }
+          },
+          "response": "```json\n{\"reasoning_summary\":\"Fixed the integer truncation bug in the token bucket refill logic by using floating-point elapsed time. Added strict type validation to reject booleans and invalid numeric types for `sustained_rate`, `burst_capacity`, and `count`. Ensured atomic state updates and fail-closed behavior for invalid inputs.\", \"edits\":[{\"path\":\"burst_bucket.py\",\"operation\":\"modify\",\"content\":\"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        # Validate sustained_rate\\n        if isinstance(sustained_rate, bool) or not isinstance(sustained_rate, (int, float)):\\n            raise ValueError(\\\"sustained_rate must be a number\\\")\\n        if sustained_rate < 0:\\n            raise ValueError(\\\"sustained_rate must be non-negative\\\")\\n            \\n        # Validate burst_capacity\\n        if isinstance(burst_capacity, bool) or not isinstance(burst_capacity, (int, float)):\\n            raise ValueError(\\\"burst_capacity must be a number\\\")\\n        if burst_capacity < 0:\\n            raise ValueError(\\\"burst_capacity must be non-negative\\\")\\n\\n        self.sustained_rate = float(sustained_rate)\\n        self.burst_capacity = float(burst_capacity)\\n        self.tokens = self.burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        # Validate count\\n        if isinstance(count, bool) or not isinstance(count, (int, float)):\\n            raise ValueError(\\\"count must be a number\\\")\\n        if count < 0:\\n            raise ValueError(\\\"count must be non-negative\\\")\\n            \\n        # Validate now\\n        if now is not None:\\n            if isinstance(now, bool) or not isinstance(now, (int, float)):\\n                raise ValueError(\\\"now must be a number\\\")\\n\\n        now = time.time() if now is None else float(now)\\n        \\n        if self.last_refill is None:\\n            self.last_refill = now\\n\\n        # Fixed: Use floating-point elapsed time to support sub-second refills\\n        elapsed_seconds = now - self.last_refill\\n        if elapsed_seconds > 0:\\n            # Refill tokens based on elapsed time and sustained rate\\n            refill_amount = elapsed_seconds * self.sustained_rate\\n            self.tokens = min(self.burst_capacity, self.tokens + refill_amount)\\n            self.last_refill = now\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}\n```"
+        }
+      ],
+      "live_calls": 1,
+      "completion_origins": {
+        "captured_initial": 1,
+        "checkpoint_replay": 0,
+        "scripted": 0,
+        "live": 1
+      },
+      "request_accounting": {
+        "logical_calls": 1,
+        "http_requests": 4,
+        "http_failures": 3,
+        "prompt_tokens": 1474,
+        "completion_tokens": 576,
+        "usage_reports": 1
+      }
+    },
+    {
+      "key": "1:counterfactual_replay",
+      "repetition": 1,
+      "condition": "counterfactual_replay",
+      "success": true,
+      "history": [
+        {
+          "attempt": 1,
+          "changed_files": [
+            "burst_bucket.py"
+          ],
+          "reasoning_summary": "Replayed known failed implementation",
+          "passed": false,
+          "tests_run": 2,
+          "output": "\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... FAIL\n\n======================================================================\nFAIL: test_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-6vouism6/repo/tests/test_public.py\", line 19, in test_fractional_subsecond_refill\n    self.assertTrue(allowed, \"Fractional subsecond refill failed!\")\nAssertionError: False is not true : Fractional subsecond refill failed!\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n",
+          "smoke_tests_passed": false,
+          "smoke_tests_run": 2,
+          "failure_stage": "smoke_tests",
+          "failure_category": "test_failure",
+          "repair_attempt": false,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 0.114
+        },
+        {
+          "attempt": 2,
+          "changed_files": [
+            "burst_bucket.py"
+          ],
+          "reasoning_summary": "Selected through executable replay",
+          "passed": true,
+          "tests_run": 2,
+          "output": "\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n",
+          "smoke_tests_passed": true,
+          "smoke_tests_run": 2,
+          "verification_passed": true,
+          "verification_output": "\ntest_burst_up_to_capacity (test_codepilot_verification.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_codepilot_verification.Public.test_fractional_subsecond_refill) ... ok\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.001s\n\nOK\n",
+          "replay": {
+            "selected_index": 0,
+            "selected_edits": [
+              {
+                "path": "burst_bucket.py",
+                "operation": "modify",
+                "content": "import time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        if isinstance(sustained_rate, bool) or not isinstance(sustained_rate, (int, float)):\n            raise ValueError(\"sustained_rate must be a number, not bool\")\n        if isinstance(burst_capacity, bool) or not isinstance(burst_capacity, (int, float)):\n            raise ValueError(\"burst_capacity must be a number, not bool\")\n        \n        self.sustained_rate = float(sustained_rate)\n        self.burst_capacity = float(burst_capacity)\n        self.tokens = self.burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        if isinstance(count, bool) or not isinstance(count, (int, float)):\n            raise ValueError(\"count must be a number, not bool\")\n        \n        # Handle None for now explicitly to avoid type ambiguity if user passes weird stuff\n        if now is not None:\n            if isinstance(now, bool) or not isinstance(now, (int, float)):\n                 raise ValueError(\"now must be a number, not bool\")\n            current_time = float(now)\n        else:\n            current_time = time.time()\n\n        if self.last_refill is None:\n            self.last_refill = current_time\n\n        # FIX: Use float elapsed time to support fractional sub-second refills\n        elapsed_seconds = current_time - self.last_refill\n        \n        # Refill tokens based on elapsed time\n        # We update last_refill only if we actually added significant time or to keep it simple:\n        # Standard token bucket: tokens += rate * elapsed. last_refill = now.\n        # However, if elapsed is very small, we still update last_refill to current_time to avoid accumulating tiny errors, \n        # but usually we just calculate the delta.\n        \n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = current_time\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+              }
+            ],
+            "candidates": [
+              [
+                {
+                  "path": "burst_bucket.py",
+                  "operation": "modify",
+                  "content": "import time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        if isinstance(sustained_rate, bool) or not isinstance(sustained_rate, (int, float)):\n            raise ValueError(\"sustained_rate must be a number, not bool\")\n        if isinstance(burst_capacity, bool) or not isinstance(burst_capacity, (int, float)):\n            raise ValueError(\"burst_capacity must be a number, not bool\")\n        \n        self.sustained_rate = float(sustained_rate)\n        self.burst_capacity = float(burst_capacity)\n        self.tokens = self.burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        if isinstance(count, bool) or not isinstance(count, (int, float)):\n            raise ValueError(\"count must be a number, not bool\")\n        \n        # Handle None for now explicitly to avoid type ambiguity if user passes weird stuff\n        if now is not None:\n            if isinstance(now, bool) or not isinstance(now, (int, float)):\n                 raise ValueError(\"now must be a number, not bool\")\n            current_time = float(now)\n        else:\n            current_time = time.time()\n\n        if self.last_refill is None:\n            self.last_refill = current_time\n\n        # FIX: Use float elapsed time to support fractional sub-second refills\n        elapsed_seconds = current_time - self.last_refill\n        \n        # Refill tokens based on elapsed time\n        # We update last_refill only if we actually added significant time or to keep it simple:\n        # Standard token bucket: tokens += rate * elapsed. last_refill = now.\n        # However, if elapsed is very small, we still update last_refill to current_time to avoid accumulating tiny errors, \n        # but usually we just calculate the delta.\n        \n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = current_time\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+                }
+              ],
+              [
+                {
+                  "path": "burst_bucket.py",
+                  "operation": "modify",
+                  "content": "import time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        if isinstance(sustained_rate, bool) or not isinstance(sustained_rate, (int, float)):\n            raise ValueError(\"sustained_rate must be a non-boolean numeric type\")\n        if isinstance(burst_capacity, bool) or not isinstance(burst_capacity, (int, float)):\n            raise ValueError(\"burst_capacity must be a non-boolean numeric type\")\n        if sustained_rate <= 0:\n            raise ValueError(\"sustained_rate must be positive\")\n        if burst_capacity <= 0:\n            raise ValueError(\"burst_capacity must be positive\")\n\n        self.sustained_rate = float(sustained_rate)\n        self.burst_capacity = float(burst_capacity)\n        self.tokens = self.burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        if isinstance(count, bool) or not isinstance(count, (int, float)):\n            raise ValueError(\"count must be a non-boolean numeric type\")\n        if count <= 0:\n            raise ValueError(\"count must be positive\")\n\n        now = time.time() if now is None else now\n        if isinstance(now, bool) or not isinstance(now, (int, float)):\n            raise ValueError(\"now must be a non-boolean numeric type\")\n\n        if self.last_refill is None:\n            self.last_refill = now\n\n        # Fixed: use floating-point elapsed seconds to avoid integer truncation\n        elapsed_seconds = now - self.last_refill\n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = now\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+                }
+              ]
+            ],
+            "generation_records": [
+              {
+                "candidate_index": 0,
+                "raw_answer": "{\"reasoning_summary\": \"The previous attempt failed because it included the buggy code instead of fixing it. The bug is the truncation of elapsed time to an integer (`int(now - self.last_refill)`), which results in 0.0 for sub-second intervals, preventing fractional refills. The fix is to use the raw float value for `elapsed_seconds`. I also added defensive checks to reject `bool` types for numeric parameters as per the prompt's requirements, although the core issue is the float math.\", \"edits\": [{\"path\": \"burst_bucket.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        if isinstance(sustained_rate, bool) or not isinstance(sustained_rate, (int, float)):\\n            raise ValueError(\\\"sustained_rate must be a number, not bool\\\")\\n        if isinstance(burst_capacity, bool) or not isinstance(burst_capacity, (int, float)):\\n            raise ValueError(\\\"burst_capacity must be a number, not bool\\\")\\n        \\n        self.sustained_rate = float(sustained_rate)\\n        self.burst_capacity = float(burst_capacity)\\n        self.tokens = self.burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        if isinstance(count, bool) or not isinstance(count, (int, float)):\\n            raise ValueError(\\\"count must be a number, not bool\\\")\\n        \\n        # Handle None for now explicitly to avoid type ambiguity if user passes weird stuff\\n        if now is not None:\\n            if isinstance(now, bool) or not isinstance(now, (int, float)):\\n                 raise ValueError(\\\"now must be a number, not bool\\\")\\n            current_time = float(now)\\n        else:\\n            current_time = time.time()\\n\\n        if self.last_refill is None:\\n            self.last_refill = current_time\\n\\n        # FIX: Use float elapsed time to support fractional sub-second refills\\n        elapsed_seconds = current_time - self.last_refill\\n        \\n        # Refill tokens based on elapsed time\\n        # We update last_refill only if we actually added significant time or to keep it simple:\\n        # Standard token bucket: tokens += rate * elapsed. last_refill = now.\\n        # However, if elapsed is very small, we still update last_refill to current_time to avoid accumulating tiny errors, \\n        # but usually we just calculate the delta.\\n        \\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = current_time\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}",
+                "reasoning_summary": "The previous attempt failed because it included the buggy code instead of fixing it. The bug is the truncation of elapsed time to an integer (`int(now - self.last_refill)`), which results in 0.0 for sub-second intervals, preventing fractional refills. The fix is to use the raw float value for `elapsed_seconds`. I also added defensive checks to reject `bool` types for numeric parameters as per the prompt's requirements, although the core issue is the float math.",
+                "format_retries_used": 0
+              },
+              {
+                "candidate_index": 1,
+                "raw_answer": "```json\n{\n  \"reasoning_summary\": \"Fixed integer truncation bug in token refill calculation to support fractional sub-second refills, added strict type validation to reject booleans and invalid values with ValueError, and maintained atomic state mutation semantics.\",\n  \"edits\": [\n    {\n      \"path\": \"burst_bucket.py\",\n      \"operation\": \"modify\",\n      \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        if isinstance(sustained_rate, bool) or not isinstance(sustained_rate, (int, float)):\\n            raise ValueError(\\\"sustained_rate must be a non-boolean numeric type\\\")\\n        if isinstance(burst_capacity, bool) or not isinstance(burst_capacity, (int, float)):\\n            raise ValueError(\\\"burst_capacity must be a non-boolean numeric type\\\")\\n        if sustained_rate <= 0:\\n            raise ValueError(\\\"sustained_rate must be positive\\\")\\n        if burst_capacity <= 0:\\n            raise ValueError(\\\"burst_capacity must be positive\\\")\\n\\n        self.sustained_rate = float(sustained_rate)\\n        self.burst_capacity = float(burst_capacity)\\n        self.tokens = self.burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        if isinstance(count, bool) or not isinstance(count, (int, float)):\\n            raise ValueError(\\\"count must be a non-boolean numeric type\\\")\\n        if count <= 0:\\n            raise ValueError(\\\"count must be positive\\\")\\n\\n        now = time.time() if now is None else now\\n        if isinstance(now, bool) or not isinstance(now, (int, float)):\\n            raise ValueError(\\\"now must be a non-boolean numeric type\\\")\\n\\n        if self.last_refill is None:\\n            self.last_refill = now\\n\\n        # Fixed: use floating-point elapsed seconds to avoid integer truncation\\n        elapsed_seconds = now - self.last_refill\\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = now\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"\n    }\n  ]\n}\n```",
+                "reasoning_summary": "Fixed integer truncation bug in token refill calculation to support fractional sub-second refills, added strict type validation to reject booleans and invalid values with ValueError, and maintained atomic state mutation semantics.",
+                "format_retries_used": 0
+              }
+            ],
+            "replay_results": [
+              {
+                "candidate_index": 0,
+                "passed": true,
+                "changed_files": [
+                  "burst_bucket.py"
+                ],
+                "failure_stage": null,
+                "tests_run": 4,
+                "output": "\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\ntest_burst_up_to_capacity (test_retrace_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_retrace_public.Public.test_fractional_subsecond_refill) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK\n"
+              },
+              {
+                "candidate_index": 1,
+                "passed": true,
+                "changed_files": [
+                  "burst_bucket.py"
+                ],
+                "failure_stage": null,
+                "tests_run": 4,
+                "output": "\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\ntest_burst_up_to_capacity (test_retrace_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_retrace_public.Public.test_fractional_subsecond_refill) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK\n"
+              }
+            ],
+            "selection": {
+              "selected_index": 0,
+              "passing_indices": [
+                0,
+                1
+              ],
+              "candidates_evaluated": 2,
+              "selection_reason": "first_public_test_passing_candidate"
+            },
+            "model_requests": 2,
+            "test_executions": 2
+          },
+          "failure_stage": null,
+          "failure_category": null,
+          "repair_attempt": true,
+          "format_retries_used": 0,
+          "format_repair_succeeded": false,
+          "elapsed_seconds": 75.33
+        }
+      ],
+      "heldout": {
+        "passed": false,
+        "tests_run": 5,
+        "output": "\ntest_burst_capacity_ceiling_clamp (test_codepilot_verification.Heldout.test_burst_capacity_ceiling_clamp) ... ok\ntest_consumption_exceeding_capacity_rejected (test_codepilot_verification.Heldout.test_consumption_exceeding_capacity_rejected) ... ok\ntest_invalid_parameters_raise_value_error (test_codepilot_verification.Heldout.test_invalid_parameters_raise_value_error) ... FAIL\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... ok\n\n======================================================================\nFAIL: test_invalid_parameters_raise_value_error (test_codepilot_verification.Heldout.test_invalid_parameters_raise_value_error)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-heldout-q8vu72q9/repo/tests/test_codepilot_verification.py\", line 20, in test_invalid_parameters_raise_value_error\n    with self.assertRaises(ValueError):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nFAILED (failures=1)\n"
+      },
+      "calls": [
+        {
+          "origin": "captured_initial",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Implement dual-capacity token bucket rate limiter with floating-point fractional sub-second refill and burst capacity clamping.\n\nRepository map:\nburst_bucket.py | imports: time | symbols: __init__, consume, BurstTokenBucket\ntests/test_public.py | imports: burst_bucket, unittest | symbols: test_burst_up_to_capacity, test_fractional_subsecond_refill, Public\n\nSelected source context:\n### burst_bucket.py\nimport time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        self.sustained_rate = sustained_rate\n        self.burst_capacity = burst_capacity\n        self.tokens = burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        now = time.time() if now is None else now\n        if self.last_refill is None:\n            self.last_refill = now\n\n        # Buggy repo: integer truncation bug!\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\n        elapsed_seconds = int(now - self.last_refill)\n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = now\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.0,
+              "seed": null
+            }
+          },
+          "response": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"burst_bucket.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        self.sustained_rate = sustained_rate\\n        self.burst_capacity = burst_capacity\\n        self.tokens = burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        now = time.time() if now is None else now\\n        if self.last_refill is None:\\n            self.last_refill = now\\n\\n        # Buggy repo: integer truncation bug!\\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\\n        elapsed_seconds = int(now - self.last_refill)\\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = now\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}"
+        },
+        {
+          "origin": "live",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Implement dual-capacity token bucket rate limiter with floating-point fractional sub-second refill and burst capacity clamping.\n\nRepository map:\nburst_bucket.py | imports: time | symbols: __init__, consume, BurstTokenBucket\ntests/test_public.py | imports: burst_bucket, unittest | symbols: test_burst_up_to_capacity, test_fractional_subsecond_refill, Public\n\nSelected source context:\n### burst_bucket.py\nimport time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        self.sustained_rate = sustained_rate\n        self.burst_capacity = burst_capacity\n        self.tokens = burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        now = time.time() if now is None else now\n        if self.last_refill is None:\n            self.last_refill = now\n\n        # Buggy repo: integer truncation bug!\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\n        elapsed_seconds = int(now - self.last_refill)\n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = now\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+              },
+              {
+                "role": "assistant",
+                "content": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"burst_bucket.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        self.sustained_rate = sustained_rate\\n        self.burst_capacity = burst_capacity\\n        self.tokens = burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        now = time.time() if now is None else now\\n        if self.last_refill is None:\\n            self.last_refill = now\\n\\n        # Buggy repo: integer truncation bug!\\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\\n        elapsed_seconds = int(now - self.last_refill)\\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = now\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}"
+              },
+              {
+                "role": "user",
+                "content": "Tests/validation failed:\nFailure stage: smoke_tests\nFailure category: test_failure\nFiles changed: burst_bucket.py\nFailure details (truncated):\n\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... FAIL\n\n======================================================================\nFAIL: test_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-6vouism6/repo/tests/test_public.py\", line 19, in test_fractional_subsecond_refill\n    self.assertTrue(allowed, \"Fractional subsecond refill failed!\")\nAssertionError: False is not true : Fractional subsecond refill failed!\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n\nIMPORTANT: Each retry starts from the ORIGINAL repository snapshot, not the previous attempt. Files created in a previous attempt do not exist now. Return a COMPLETE replacement edit batch: use operation=create for newly introduced files (even if created in the prior failed attempt), and operation=modify for files originally present. Enforce all defensive invariants: strictly validate parameter types (reject `bool` for numeric parameters), wrap state mutations in atomic transactions with full rollback on any failure, reject conflicting idempotency keys with ValueError, and fail-closed on tenant isolation. Include every file needed for the working feature, not just the file that failed. Return valid JSON only, with complete file contents.\n\nGenerate repair candidate 1 of 2. Produce one complete, independently applicable edit batch. Ensure rigorous enterprise contract safety: strict type checks (explicitly reject booleans where numbers/integers are expected), full rollback on write failures or trigger aborts, idempotency conflict verification, and fail-closed tenant boundaries. Consider alternative implementation choices while satisfying the original task and test requirements. Return only the required JSON response."
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.7
+            }
+          },
+          "response": "{\"reasoning_summary\": \"The previous attempt failed because it included the buggy code instead of fixing it. The bug is the truncation of elapsed time to an integer (`int(now - self.last_refill)`), which results in 0.0 for sub-second intervals, preventing fractional refills. The fix is to use the raw float value for `elapsed_seconds`. I also added defensive checks to reject `bool` types for numeric parameters as per the prompt's requirements, although the core issue is the float math.\", \"edits\": [{\"path\": \"burst_bucket.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        if isinstance(sustained_rate, bool) or not isinstance(sustained_rate, (int, float)):\\n            raise ValueError(\\\"sustained_rate must be a number, not bool\\\")\\n        if isinstance(burst_capacity, bool) or not isinstance(burst_capacity, (int, float)):\\n            raise ValueError(\\\"burst_capacity must be a number, not bool\\\")\\n        \\n        self.sustained_rate = float(sustained_rate)\\n        self.burst_capacity = float(burst_capacity)\\n        self.tokens = self.burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        if isinstance(count, bool) or not isinstance(count, (int, float)):\\n            raise ValueError(\\\"count must be a number, not bool\\\")\\n        \\n        # Handle None for now explicitly to avoid type ambiguity if user passes weird stuff\\n        if now is not None:\\n            if isinstance(now, bool) or not isinstance(now, (int, float)):\\n                 raise ValueError(\\\"now must be a number, not bool\\\")\\n            current_time = float(now)\\n        else:\\n            current_time = time.time()\\n\\n        if self.last_refill is None:\\n            self.last_refill = current_time\\n\\n        # FIX: Use float elapsed time to support fractional sub-second refills\\n        elapsed_seconds = current_time - self.last_refill\\n        \\n        # Refill tokens based on elapsed time\\n        # We update last_refill only if we actually added significant time or to keep it simple:\\n        # Standard token bucket: tokens += rate * elapsed. last_refill = now.\\n        # However, if elapsed is very small, we still update last_refill to current_time to avoid accumulating tiny errors, \\n        # but usually we just calculate the delta.\\n        \\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = current_time\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}"
+        },
+        {
+          "origin": "live",
+          "request": {
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a rigorous, production-grade Python software engineer working in a disposable repository copy.\nReturn ONLY valid JSON of this shape:\n{\"reasoning_summary\":\"brief explanation\", \"edits\":[{\"path\":\"relative/path.py\", \"operation\":\"modify|create|delete\", \"content\":\"COMPLETE file contents for create/modify\"}]}\nFor existing Python files, use operation=modify. For a new Python file use operation=create.\nUse operation=delete only when essential; omit content for delete. Never issue shell commands.\nCoordinate changes across modules, update imports and callers, and preserve unrelated behavior.\nYou may modify or delete existing Python files and create new Python files under existing directories.\nDo not edit test files unless the task specifically requires tests. Do not modify secrets or dependencies.\nUse the repository map to understand relationships; context may omit files, so avoid assumptions.\nDo not use markdown fences.\n\nCRITICAL PRODUCTION & DEFENSIVE PROGRAMMING REQUIREMENTS:\n1. Strict Type & Boundary Validation:\n   - Python gotcha: `bool` is a subclass of `int` (`isinstance(True, int)` is True). Always explicitly reject booleans where integers or numbers are required (`if type(val) is not int:` or `if isinstance(val, bool) or not isinstance(val, (int, float)): raise ValueError(...)`).\n   - Validate all parameter types, bounds, and preconditions before performing state mutations. Reject zero/negative amounts, floats where integers are expected, invalid types, empty strings, and non-callables with `ValueError`.\n2. Transactional Atomicity & Rollback:\n   - Database and state mutations must be strictly atomic. Wrap multi-table operations or dependent operations in transactions/savepoints.\n   - If any secondary write, trigger, or operation fails, roll back completely so that zero partial records or orphaned rows survive.\n3. Strict Idempotency & Conflict Detection:\n   - If an idempotency or request key is reused, verify that the incoming payload exactly matches the stored record. Reusing an existing key with conflicting parameters must raise `ValueError` without mutating state.\n4. Tenant Isolation & Fail-Closed Security:\n   - Enforce strict tenant isolation. Empty or invalid tenant identifiers must fail closed (`raise ValueError` or return False/access-denied). Never allow cross-tenant data leakage.\n"
+              },
+              {
+                "role": "user",
+                "content": "Task: Implement dual-capacity token bucket rate limiter with floating-point fractional sub-second refill and burst capacity clamping.\n\nRepository map:\nburst_bucket.py | imports: time | symbols: __init__, consume, BurstTokenBucket\ntests/test_public.py | imports: burst_bucket, unittest | symbols: test_burst_up_to_capacity, test_fractional_subsecond_refill, Public\n\nSelected source context:\n### burst_bucket.py\nimport time\n\nclass BurstTokenBucket:\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\n        self.sustained_rate = sustained_rate\n        self.burst_capacity = burst_capacity\n        self.tokens = burst_capacity\n        self.last_refill = None\n\n    def consume(self, count=1, now=None):\n        now = time.time() if now is None else now\n        if self.last_refill is None:\n            self.last_refill = now\n\n        # Buggy repo: integer truncation bug!\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\n        elapsed_seconds = int(now - self.last_refill)\n        if elapsed_seconds > 0:\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\n            self.last_refill = now\n\n        if self.tokens >= count:\n            self.tokens -= count\n            return True, self.tokens\n        return False, self.tokens\n"
+              },
+              {
+                "role": "assistant",
+                "content": "{\"reasoning_summary\": \"Replayed known failed implementation\", \"edits\": [{\"path\": \"burst_bucket.py\", \"operation\": \"modify\", \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        self.sustained_rate = sustained_rate\\n        self.burst_capacity = burst_capacity\\n        self.tokens = burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        now = time.time() if now is None else now\\n        if self.last_refill is None:\\n            self.last_refill = now\\n\\n        # Buggy repo: integer truncation bug!\\n        # Truncates elapsed seconds to integer, so sub-second intervals (0.5s) yield 0 refill!\\n        elapsed_seconds = int(now - self.last_refill)\\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = now\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"}]}"
+              },
+              {
+                "role": "user",
+                "content": "Tests/validation failed:\nFailure stage: smoke_tests\nFailure category: test_failure\nFiles changed: burst_bucket.py\nFailure details (truncated):\n\ntest_burst_up_to_capacity (test_public.Public.test_burst_up_to_capacity) ... ok\ntest_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill) ... FAIL\n\n======================================================================\nFAIL: test_fractional_subsecond_refill (test_public.Public.test_fractional_subsecond_refill)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/l7/qmq74jrs6tv4z2tyr4hmb3780000gn/T/codepilot-6vouism6/repo/tests/test_public.py\", line 19, in test_fractional_subsecond_refill\n    self.assertTrue(allowed, \"Fractional subsecond refill failed!\")\nAssertionError: False is not true : Fractional subsecond refill failed!\n\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nFAILED (failures=1)\n\nIMPORTANT: Each retry starts from the ORIGINAL repository snapshot, not the previous attempt. Files created in a previous attempt do not exist now. Return a COMPLETE replacement edit batch: use operation=create for newly introduced files (even if created in the prior failed attempt), and operation=modify for files originally present. Enforce all defensive invariants: strictly validate parameter types (reject `bool` for numeric parameters), wrap state mutations in atomic transactions with full rollback on any failure, reject conflicting idempotency keys with ValueError, and fail-closed on tenant isolation. Include every file needed for the working feature, not just the file that failed. Return valid JSON only, with complete file contents.\n\nGenerate repair candidate 2 of 2. Produce one complete, independently applicable edit batch. Ensure rigorous enterprise contract safety: strict type checks (explicitly reject booleans where numbers/integers are expected), full rollback on write failures or trigger aborts, idempotency conflict verification, and fail-closed tenant boundaries. Consider alternative implementation choices while satisfying the original task and test requirements. Return only the required JSON response."
+              }
+            ],
+            "options": {
+              "json_mode": null,
+              "temperature": 0.7
+            }
+          },
+          "response": "```json\n{\n  \"reasoning_summary\": \"Fixed integer truncation bug in token refill calculation to support fractional sub-second refills, added strict type validation to reject booleans and invalid values with ValueError, and maintained atomic state mutation semantics.\",\n  \"edits\": [\n    {\n      \"path\": \"burst_bucket.py\",\n      \"operation\": \"modify\",\n      \"content\": \"import time\\n\\nclass BurstTokenBucket:\\n    def __init__(self, sustained_rate=10.0, burst_capacity=20.0):\\n        if isinstance(sustained_rate, bool) or not isinstance(sustained_rate, (int, float)):\\n            raise ValueError(\\\"sustained_rate must be a non-boolean numeric type\\\")\\n        if isinstance(burst_capacity, bool) or not isinstance(burst_capacity, (int, float)):\\n            raise ValueError(\\\"burst_capacity must be a non-boolean numeric type\\\")\\n        if sustained_rate <= 0:\\n            raise ValueError(\\\"sustained_rate must be positive\\\")\\n        if burst_capacity <= 0:\\n            raise ValueError(\\\"burst_capacity must be positive\\\")\\n\\n        self.sustained_rate = float(sustained_rate)\\n        self.burst_capacity = float(burst_capacity)\\n        self.tokens = self.burst_capacity\\n        self.last_refill = None\\n\\n    def consume(self, count=1, now=None):\\n        if isinstance(count, bool) or not isinstance(count, (int, float)):\\n            raise ValueError(\\\"count must be a non-boolean numeric type\\\")\\n        if count <= 0:\\n            raise ValueError(\\\"count must be positive\\\")\\n\\n        now = time.time() if now is None else now\\n        if isinstance(now, bool) or not isinstance(now, (int, float)):\\n            raise ValueError(\\\"now must be a non-boolean numeric type\\\")\\n\\n        if self.last_refill is None:\\n            self.last_refill = now\\n\\n        # Fixed: use floating-point elapsed seconds to avoid integer truncation\\n        elapsed_seconds = now - self.last_refill\\n        if elapsed_seconds > 0:\\n            self.tokens = min(self.burst_capacity, self.tokens + elapsed_seconds * self.sustained_rate)\\n            self.last_refill = now\\n\\n        if self.tokens >= count:\\n            self.tokens -= count\\n            return True, self.tokens\\n        return False, self.tokens\\n\"\n    }\n  ]\n}\n```"
+        }
+      ],
+      "live_calls": 2,
+      "completion_origins": {
+        "captured_initial": 1,
+        "checkpoint_replay": 0,
+        "scripted": 0,
+        "live": 2
+      },
+      "request_accounting": {
+        "logical_calls": 2,
+        "http_requests": 5,
+        "http_failures": 3,
+        "prompt_tokens": 3114,
+        "completion_tokens": 1170,
+        "usage_reports": 2
+      }
+    }
+  ],
+  "pending": {},
+  "notice": "Contains prompts and model-generated code; review before sharing."
+}
