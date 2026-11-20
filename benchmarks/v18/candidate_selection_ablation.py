@@ -132,67 +132,64 @@ def select_ast_ranked(pool: CandidatePool) -> Optional[int]:
 def diagnose_selection(pool: CandidatePool, selected_index: Optional[int]) -> Dict[str, Any]:
     """Evaluate candidate selection against held-out ground truth invariants.
 
-    Rules:
+    Records two orthogonal dimensions:
+    1. selection_eligibility: ELIGIBLE_CANDIDATES_AVAILABLE vs. NO_ELIGIBLE_CANDIDATES
+    2. pool_heldout_correctness: CORRECT_ELIGIBLE_EXISTS vs. CORRECT_INELIGIBLE_ONLY vs. NO_CORRECT_IN_POOL
+
+    Then derives the causal verdict:
     - SUCCESSFUL_SELECTION: The selected candidate satisfies held-out tests.
-    - SELECTION_FAILURE: At least one eligible candidate satisfies held-out tests,
-      but the selected candidate fails (or an ineligible/no candidate was selected).
-    - NO_ELIGIBLE_CANDIDATE: At least one candidate in the pool satisfies held-out tests,
-      but failed visible public smoke tests and was therefore ineligible for selection.
-    - NO_VALID_CANDIDATE: Neither candidate in the pool satisfies held-out tests (generation failure).
+    - SELECTION_FAILURE: An eligible candidate satisfies held-out tests, but the selector chose an incorrect patch.
+    - NO_ELIGIBLE_CANDIDATE: All candidates failed visible verification smoke tests (0 eligible).
+    - NO_VALID_CANDIDATE: Eligible candidates existed, but none satisfied held-out tests (generation failure).
     """
     eligible = [c for c in pool.candidates if c.get("public_passed")]
     has_valid_eligible = any(c.get("heldout_passed") for c in eligible)
     has_any_heldout_pass = any(c.get("heldout_passed") for c in pool.candidates)
 
+    eligibility_dim = "ELIGIBLE_CANDIDATES_AVAILABLE" if eligible else "NO_ELIGIBLE_CANDIDATES"
+    if has_valid_eligible:
+        heldout_correctness_dim = "CORRECT_ELIGIBLE_EXISTS"
+    elif has_any_heldout_pass:
+        heldout_correctness_dim = "CORRECT_INELIGIBLE_ONLY"
+    else:
+        heldout_correctness_dim = "NO_CORRECT_IN_POOL"
+
+    selected_candidate = None
     if selected_index is not None:
         selected_candidate = next(
             (c for c in pool.candidates if c["candidate_index"] == selected_index),
             None,
         )
-        if selected_candidate and selected_candidate.get("heldout_passed"):
-            return {
-                "verdict": SUCCESSFUL_SELECTION,
-                "selected_index": selected_index,
-                "selected_heldout": True,
-                "explanation": "Selected candidate satisfies held-out invariant contract.",
-            }
 
-    # If no eligible candidate existed in the pool:
-    if not eligible:
-        if has_any_heldout_pass:
-            return {
-                "verdict": NO_ELIGIBLE_CANDIDATE,
-                "selected_index": None,
-                "selected_heldout": False,
-                "explanation": (
-                    "A candidate in the pool satisfied held-out invariants, but failed visible verification "
-                    "smoke tests and was therefore ineligible for selection."
-                ),
-            }
-        return {
-            "verdict": NO_VALID_CANDIDATE,
-            "selected_index": None,
-            "selected_heldout": False,
-            "explanation": "No candidate in the pool passed visible smoke tests or held-out tests.",
-        }
+    selected_heldout = bool(selected_candidate and selected_candidate.get("heldout_passed"))
 
-    # If selected candidate failed or None was selected, but an eligible passing candidate existed:
-    if has_valid_eligible:
-        return {
-            "verdict": SELECTION_FAILURE,
-            "selected_index": selected_index,
-            "selected_heldout": False,
-            "explanation": (
-                "An eligible, invariant-correct candidate existed in the pool, "
-                "but the selection policy chose an incorrect alternative or none."
-            ),
-        }
+    # Derive verdict
+    if selected_heldout:
+        verdict = SUCCESSFUL_SELECTION
+        explanation = "Selected candidate satisfies held-out invariant contract."
+    elif not eligible:
+        verdict = NO_ELIGIBLE_CANDIDATE
+        explanation = (
+            "No candidate in the pool passed visible smoke tests to achieve eligibility for selection."
+        )
+    elif has_valid_eligible:
+        verdict = SELECTION_FAILURE
+        explanation = (
+            "An eligible, invariant-correct candidate existed in the pool, "
+            "but the selection policy chose an incorrect alternative or none."
+        )
+    else:
+        verdict = NO_VALID_CANDIDATE
+        explanation = "Eligible candidates existed, but none satisfied held-out tests (generation failure)."
 
     return {
-        "verdict": NO_VALID_CANDIDATE,
+        "verdict": verdict,
         "selected_index": selected_index,
-        "selected_heldout": False,
-        "explanation": "No eligible candidate in the pool satisfied held-out tests (generation failure).",
+        "selected_heldout": selected_heldout,
+        "selection_eligibility": eligibility_dim,
+        "pool_heldout_correctness": heldout_correctness_dim,
+        "eligible_candidate_count": len(eligible),
+        "explanation": explanation,
     }
 
 

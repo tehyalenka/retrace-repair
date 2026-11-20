@@ -12,6 +12,7 @@ def evaluate_replay_strategy(
     json_mode=None,
     public_verifier=None,
     temperature=None,
+    prompt_condition=None,
 ):
     """Generate, execute, and select alternative repair candidates.
 
@@ -23,6 +24,7 @@ def evaluate_replay_strategy(
         candidate_count=candidate_count,
         json_mode=json_mode,
         temperature=temperature,
+        prompt_condition=prompt_condition,
     )
 
     replay = replay_alternatives(
