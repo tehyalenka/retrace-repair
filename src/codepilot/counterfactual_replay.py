@@ -3,6 +3,7 @@
 This module is not a security sandbox. Only replay trusted code.
 """
 
+import ast
 import shutil
 import tempfile
 from pathlib import Path
@@ -17,6 +18,63 @@ from codepilot.agent import (
 IGNORED = shutil.ignore_patterns(
     ".git", ".venv", "__pycache__", "node_modules", ".env"
 )
+
+
+def score_candidate_defense(edits):
+    """Compute a defensive structural quality score for candidate edits.
+
+    Rewards:
+    - Explicit parameter validation guards (isinstance, raise ValueError, raise TypeError).
+    - Transactional rollback / exception re-raise (except ...: rollback(); raise).
+    - Clean boundary checks (if statements).
+
+    Penalties:
+    - Swallowed exceptions (except ...: pass).
+    - Empty returns on exceptions without logging or re-raise.
+    - Gratuitous code bloat (Occam's AST penalty).
+    """
+    if not edits or not isinstance(edits, list):
+        return 0.0
+
+    score = 0.0
+    for edit in edits:
+        if not isinstance(edit, dict):
+            continue
+        content = edit.get("content")
+        if not content or not isinstance(content, str):
+            continue
+        try:
+            tree = ast.parse(content)
+        except Exception:
+            score -= 100.0
+            continue
+
+        node_count = 0
+        for node in ast.walk(tree):
+            node_count += 1
+            # 1. Detect swallowed exceptions (severe penalty for specification gaming)
+            if isinstance(node, ast.ExceptHandler):
+                if len(node.body) == 1 and isinstance(node.body[0], ast.Pass):
+                    score -= 50.0
+                elif len(node.body) == 1 and isinstance(node.body[0], ast.Return) and node.body[0].value is None:
+                    score -= 30.0
+
+            # 2. Reward explicit exception raising (parameter validation or re-raising)
+            if isinstance(node, ast.Raise):
+                score += 15.0
+
+            # 3. Reward explicit condition checks (guards, isinstance)
+            if isinstance(node, ast.If):
+                score += 5.0
+
+            # 4. Reward try/finally or rollback cleanup
+            if isinstance(node, ast.Try) and node.finalbody:
+                score += 15.0
+
+        # Occam penalty for bloated AST churn
+        score -= round(node_count * 0.02, 2)
+
+    return round(score, 2)
 
 
 def replay_candidate(repo_path, edits, test_timeout=30, public_verifier=None):
@@ -85,9 +143,10 @@ def replay_candidate(repo_path, edits, test_timeout=30, public_verifier=None):
 
 
 def compare_candidates(results):
-    """Select a public-test-passing candidate, without using held-out tests.
+    """Select a public-test-passing candidate using defensive AST scoring.
 
-    Ties are resolved by input order, not an unsupported quality claim.
+    Public-test passing candidates are ranked by their defensive structural quality score.
+    Ties are resolved by input order. Held-out tests are never used.
     """
     if not results:
         raise ValueError("At least one candidate result is required")
@@ -101,14 +160,24 @@ def compare_candidates(results):
         if result["passed"]
     ]
 
-    selected = passing[0] if passing else None
+    selected = None
+    scores = {}
+    if passing:
+        for idx in passing:
+            res = results[idx]
+            edits = res.get("edits")
+            scores[idx] = score_candidate_defense(edits) if edits else 0.0
+        # Sort passing candidates by defensive score descending, then candidate index ascending
+        sorted_passing = sorted(passing, key=lambda i: (scores[i], -i), reverse=True)
+        selected = sorted_passing[0]
 
     return {
         "selected_index": selected,
         "passing_indices": passing,
         "candidates_evaluated": len(results),
+        "defensive_scores": scores,
         "selection_reason": (
-            "first_public_test_passing_candidate"
+            "highest_defensive_scoring_public_passing_candidate"
             if selected is not None
             else "no_candidate_passed"
         ),
@@ -141,6 +210,7 @@ def replay_alternatives(
 
         results.append({
             "candidate_index": index,
+            "edits": edits,
             **result,
         })
 

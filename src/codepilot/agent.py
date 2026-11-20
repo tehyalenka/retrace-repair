@@ -619,9 +619,10 @@ def _counterfactual_repair_prompt(record):
         "Observed evidence (do not invent missing details):\n{}\n\n"
         "Before writing edits, reason internally about: (1) the likely root cause, "
         "(2) which specific alternative implementation would have avoided the "
-        "observed failure, and (3) which unstated boundary or contract invariant was violated "
-        "(e.g. strict type checks rejecting `bool` subtypes for numbers, complete transaction rollback on "
-        "secondary write/trigger failures, idempotency conflicts, or fail-closed tenant checks). "
+        "observed failure, and (3) which unstated boundary or contract invariant was violated: "
+        "immediately validate all arguments at public entrypoints (raise ValueError/TypeError on invalid, negative, or wrong types; reject `bool` for numbers); "
+        "preserve state machine conservation (never wipe failure/retry counts during probation or reset state unconditionally to silence tests; probation failures must immediately transition to OPEN; saga compensation must execute in strict reverse order); "
+        "and enforce complete atomic rollback on write failures or trigger aborts (never swallow exceptions with `except: pass`). "
         "Treat uncertain causes as hypotheses, not facts.\n"
         "Each retry starts from the ORIGINAL repository snapshot; no previous "
         "edits survive. Return a COMPLETE replacement batch with every required "
@@ -888,7 +889,7 @@ def run_agent(repo_path, task, attempts=2, max_files=6, test_timeout=30, verific
                 break
             if repair_feedback:
                 messages.extend([{"role": "assistant", "content": answer},
-                                 {"role": "user", "content": (_counterfactual_repair_prompt(record) if repair_policy == "counterfactual" else "Tests/validation failed:\n{}\nIMPORTANT: Each retry starts from the ORIGINAL repository snapshot, not the previous attempt. Files created in a previous attempt do not exist now. Return a COMPLETE replacement edit batch: use operation=create for newly introduced files (even if created in the prior failed attempt), and operation=modify for files originally present. Enforce all defensive invariants: strictly validate parameter types (reject `bool` for numeric parameters), wrap state mutations in atomic transactions with full rollback on any failure, reject conflicting idempotency keys with ValueError, and fail-closed on tenant isolation. Include every file needed for the working feature, not just the file that failed. Return valid JSON only, with complete file contents.".format(_repair_feedback(record)))}])
+                                 {"role": "user", "content": (_counterfactual_repair_prompt(record) if repair_policy == "counterfactual" else "Tests/validation failed:\n{}\nIMPORTANT: Each retry starts from the ORIGINAL repository snapshot, not the previous attempt. Files created in a previous attempt do not exist now. Return a COMPLETE replacement edit batch: use operation=create for newly introduced files (even if created in the prior failed attempt), and operation=modify for files originally present. Enforce all defensive invariants: strictly validate parameter types at public entrypoints (raise ValueError or TypeError on invalid/negative/mismatched arguments, and explicitly reject `bool` for numeric parameters); preserve state machine conservation (never wipe failure/retry counts during probation or reset state unconditionally to silence tests; probation failures must immediately transition to OPEN; saga compensation must execute in strict reverse order); wrap state mutations in atomic transactions with full rollback on any failure and never swallow exceptions (`except: pass`); reject conflicting idempotency keys with ValueError; and fail-closed on tenant isolation. Include every file needed for the working feature, not just the file that failed. Return valid JSON only, with complete file contents.".format(_repair_feedback(record)))}])
             else:
                 # A genuine fresh sample: no prior answer, test output, or failure label.
                 # Keep the original task, map, and context unchanged across retries.

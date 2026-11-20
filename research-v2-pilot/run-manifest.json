@@ -1,0 +1,142 @@
+{
+  "manifest_schema": 3,
+  "lifecycle_stage": "pre_run_snapshot",
+  "run_id": "83e5e4e9-3c24-400f-b0f9-b761d22f3b26",
+  "created_at": "2026-11-20T09:46:49.761191+00:00",
+  "git_provenance": {
+    "commit_sha": "2f0ff399fb17907a075d913595acd1f0ad711b35",
+    "working_tree_dirty": true,
+    "resolution_method": "git_cli",
+    "publication_grade": false
+  },
+  "environment": {
+    "python_version": "3.11.9",
+    "python_implementation": "CPython",
+    "platform": "macOS-12.7.6-x86_64-i386-64bit",
+    "system": "Darwin",
+    "architecture": "x86_64"
+  },
+  "effective_configuration": {
+    "primary_provider": "groq",
+    "model_id": "openai/gpt-oss-120b",
+    "temperature_resample": 0.7,
+    "temperature_repair": 0.0,
+    "seed_base": 42,
+    "format_retries": 2,
+    "max_retries": 3,
+    "output_dir": "research-v2-pilot",
+    "category": null,
+    "tasks": "enterprise_circuit_breaker,enterprise_saga_coordinator,enterprise_dead_letter_retry,enterprise_cache_stampede_mutex,enterprise_bulkhead_isolation,enterprise_outbox_publisher",
+    "repetitions": 1,
+    "attempts": 2,
+    "delay_seconds": 2.0,
+    "retry_interval_seconds": 240,
+    "max_hours": 24.0,
+    "counterfactual_policy": "counterfactual_replay",
+    "required_policies": [
+      "resample",
+      "feedback",
+      "counterfactual_replay"
+    ]
+  },
+  "benchmark_metadata": {
+    "suite_version": "v1.8",
+    "total_tasks": 6,
+    "task_inputs": {
+      "enterprise_circuit_breaker": {
+        "category": "enterprise",
+        "task_prompt_sha256": "ac3996fc1e20bb111e90b19b8c4ba265510feba73c672b5843aa5a7617d8f60e",
+        "public_verifier_sha256": "be4712fd87c5eb2d4adc5c53037021d186cefc5cfc6cca8d4acb4d0cb8df2aa3",
+        "heldout_verifier_sha256": "2b294d8b4a578d4cfb262d9ef63f5b598971d2d20ad21ec414d93b9a92b67d10",
+        "seed_repo_files_sha256": {
+          "circuit.py": "9d55c288d6ff8260846e4eb6231b701facd205be71668415f265b509a7b68d62",
+          "storage.py": "6f787cb319c139c0a1e160900d0ee60328f47e509fa27bed45eccf1161c7b0c8"
+        },
+        "reference_solution_files_sha256": {
+          "__pycache__/circuit.cpython-311.pyc": "996cd7e7fe76712e55f81362aa7ecddd42352076a611af6c0231290e2e57c454",
+          "__pycache__/storage.cpython-311.pyc": "f02771292c74629cdc566b49e21f71c6e04e1929a32cd9d6cda1233bcfef39be",
+          "circuit.py": "ced79dcabdcb5c81c1657599cd1a6949a6dd04a63542e6dcf303470b566fefa5",
+          "storage.py": "6f787cb319c139c0a1e160900d0ee60328f47e509fa27bed45eccf1161c7b0c8"
+        }
+      },
+      "enterprise_saga_coordinator": {
+        "category": "enterprise",
+        "task_prompt_sha256": "4a06f2dd9d8b3b311c19caf58595224c2ef1b70d407cfe4a552662917d872112",
+        "public_verifier_sha256": "3c9cdc84890964ea59f07679b0c0728994ee029fe50170552a129f6349870b97",
+        "heldout_verifier_sha256": "8eb1efbfc02c6a0b5377b9df7546cb299a41c13c1d77c18294248cb86d536376",
+        "seed_repo_files_sha256": {
+          "saga.py": "3b25723c886a9156d7328d439693d51973d844f230496b8a0c78189759ad33b8",
+          "services.py": "806dc2c5080f1b9befa4eccc067ac23a652b7473400d64c91b7737c844c485b9"
+        },
+        "reference_solution_files_sha256": {
+          "__pycache__/saga.cpython-311.pyc": "1fe1be6236dd18fa13e4ab1614ed48f681662a3d11242a9b127fa90a82b271de",
+          "__pycache__/services.cpython-311.pyc": "229e585bfd37acf9538151908e1bfc3bc764f57bc556de10a5fdaf7ee60b89a1",
+          "saga.py": "2f119141e3c50bcf03ab0f8e07aca21f74322a57b5585896d97a16475ae27e35",
+          "services.py": "806dc2c5080f1b9befa4eccc067ac23a652b7473400d64c91b7737c844c485b9"
+        }
+      },
+      "enterprise_dead_letter_retry": {
+        "category": "enterprise",
+        "task_prompt_sha256": "4a0c46b3da0c3d13f10527b4a395092839a6601d7545fd61ca0968735299cd43",
+        "public_verifier_sha256": "c2c9c843d5a4b8381efcf9b55b19f0da16cfcbd8391df7420e3b02bcc74d4715",
+        "heldout_verifier_sha256": "cdcba0a5cddbf598dd61d70e85cbd4bad5c517dc5b162f80baa6a0de02c8ef9a",
+        "seed_repo_files_sha256": {
+          "retry_dlq.py": "47e542b4fd097a6f62d4c67ea0ef2587886beb2c238e91fcf9712298b1d73937"
+        },
+        "reference_solution_files_sha256": {
+          "__pycache__/retry_dlq.cpython-311.pyc": "36c6040753fc9c197bb653b5d49c25a178e3321b43abf53b84d2981d227f7891",
+          "retry_dlq.py": "8a0f93df2792f9ed968d134f9b3248e52240ed980886337ad28dd9201a62d106"
+        }
+      },
+      "enterprise_cache_stampede_mutex": {
+        "category": "enterprise",
+        "task_prompt_sha256": "2e2764455cbb9d9ac44a077a97008d01f12b20178ec6253d21a0d85612226f0c",
+        "public_verifier_sha256": "26fb1f1748103321dc4d34fb51f2c651417b1dbcc4435a74ef63851c27fd7a1e",
+        "heldout_verifier_sha256": "33f61f0f4a6f1374b809f8317f398a18ce043c61e88450738245a4a4bf6f3e41",
+        "seed_repo_files_sha256": {
+          "stampede_cache.py": "aaed6af2fd3b76ab8980e7d00ae84e79d6493b664c2aad22ea5979a1f5372913"
+        },
+        "reference_solution_files_sha256": {
+          "__pycache__/stampede_cache.cpython-311.pyc": "6806e7e9fdf92080e728b6aebbb09514fa5a01cffa40f78b18e0ba85f30759c1",
+          "stampede_cache.py": "9f43ed52d4713243da436844f7bde0be166bb519b364a1326aa6fb0f923064dd"
+        }
+      },
+      "enterprise_bulkhead_isolation": {
+        "category": "enterprise",
+        "task_prompt_sha256": "24a2de067e285c9557b15f3b199c8328cfd3031fe4d70dc989e286ec537c36e8",
+        "public_verifier_sha256": "1f90fb3ae124ceda44e2b435f65f06ef2e50fe8e40c2e2ddef22498c836ee3e0",
+        "heldout_verifier_sha256": "0475b2a211a395e1c8d53b2ef869b2fbefddb4c2bac36ffb64b47be2b470b556",
+        "seed_repo_files_sha256": {
+          "bulkhead.py": "3f584b154f7af2d7d5faee51fb98a95b89cf317cced1b7085d749d8df0ac47bc"
+        },
+        "reference_solution_files_sha256": {
+          "__pycache__/bulkhead.cpython-311.pyc": "d4b8e544995b7758de80554c686f9ecfc56e05640a44a4fab1d32990e71f3d19",
+          "bulkhead.py": "ee623d7b0a93bad942c3c13c90256ecfb5323caf0175604125aa443b4fe3e36d"
+        }
+      },
+      "enterprise_outbox_publisher": {
+        "category": "enterprise",
+        "task_prompt_sha256": "3491e78ac5bc558fd45ca7d1194fd5b98764836313141d3cc018e1647644a158",
+        "public_verifier_sha256": "19acf51e8c25eee6edf181696f3536e8e7734c719990dc9c3b596cdfa0c86607",
+        "heldout_verifier_sha256": "4f262d446c265e7401df2a6e0562cb0c989b39867cb176be5b7cebc8950cd665",
+        "seed_repo_files_sha256": {
+          "outbox_publisher.py": "988da2919ab4489d678dc3017088faaf4e2d2f026c2f3ceb141564bbbbf271d3",
+          "storage.py": "88f5459e87147613cb003c0c508822c62ca293193e817149a411c89cc941af54"
+        },
+        "reference_solution_files_sha256": {
+          "__pycache__/outbox_publisher.cpython-311.pyc": "139c2aadc06895e0456d9ebfa7c037942acc2ed7f4c52d17fa031c7d4578bdc6",
+          "__pycache__/storage.cpython-311.pyc": "c0c1a7b64653863a3d4fa187eb24de702a83275559bb1ac576b49cd7c0e458d1",
+          "outbox_publisher.py": "66aaa676379d632e1960a1a0821cebff5f9eed86f5581dba12edc7e3e616a4df",
+          "storage.py": "88f5459e87147613cb003c0c508822c62ca293193e817149a411c89cc941af54"
+        }
+      }
+    }
+  },
+  "provenance_definitions": {
+    "controlled_reproducible_failure": "The initial attempt is replayed from a deterministic known failed edit so that all arms evaluate on an identical, leakage-free failure snapshot.",
+    "live_recovery_attempts": "Subsequent repair attempts make fresh live model completions through the provider API.",
+    "counterfactual_replay_policy": "Executable multi-candidate patch generation evaluated against local test suites and ranked deterministically without leakage to held-out tests.",
+    "security_execution_boundary": "Workspace edit containment and atomic rollback safety. Replay evaluations use offline test fixtures in disposable working directories. Network isolation is not enforced at the operating-system level, and untrusted code execution requires additional sandboxing."
+  },
+  "run_manifest_sha256": "c2efb7257918577700060c9ffb4af885d1a101ab7630deb4193fae9b7e4e815d"
+}

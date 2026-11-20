@@ -1,0 +1,88 @@
+{
+  "audit_type": "offline_evidence_integrity",
+  "reports": [
+    {
+      "task": "enterprise_bulkhead_isolation",
+      "integrity_pass": false,
+      "integrity_errors": [
+        "1:counterfactual_replay: public-only success"
+      ],
+      "completed_rows": 3,
+      "verified_successes": 1,
+      "first_completion_origin": "unverified_from_artifacts",
+      "natural_model_failure_proven": false,
+      "comparative_superiority_proven": false,
+      "warning": "A live capture mode does not prove a natural first failure; task_suite_runner scripts its initial completion."
+    },
+    {
+      "task": "enterprise_cache_stampede_mutex",
+      "integrity_pass": false,
+      "integrity_errors": [
+        "1:resample: public-only success"
+      ],
+      "completed_rows": 3,
+      "verified_successes": 1,
+      "first_completion_origin": "unverified_from_artifacts",
+      "natural_model_failure_proven": false,
+      "comparative_superiority_proven": false,
+      "warning": "A live capture mode does not prove a natural first failure; task_suite_runner scripts its initial completion."
+    },
+    {
+      "task": "enterprise_circuit_breaker",
+      "integrity_pass": false,
+      "integrity_errors": [
+        "1:counterfactual_replay: public-only success"
+      ],
+      "completed_rows": 3,
+      "verified_successes": 1,
+      "first_completion_origin": "unverified_from_artifacts",
+      "natural_model_failure_proven": false,
+      "comparative_superiority_proven": false,
+      "warning": "A live capture mode does not prove a natural first failure; task_suite_runner scripts its initial completion."
+    },
+    {
+      "task": "enterprise_dead_letter_retry",
+      "integrity_pass": false,
+      "integrity_errors": [
+        "1:resample: public-only success",
+        "1:feedback: public-only success",
+        "1:counterfactual_replay: public-only success"
+      ],
+      "completed_rows": 3,
+      "verified_successes": 0,
+      "first_completion_origin": "unverified_from_artifacts",
+      "natural_model_failure_proven": false,
+      "comparative_superiority_proven": false,
+      "warning": "A live capture mode does not prove a natural first failure; task_suite_runner scripts its initial completion."
+    },
+    {
+      "task": "enterprise_outbox_publisher",
+      "integrity_pass": false,
+      "integrity_errors": [
+        "1:feedback: public-only success",
+        "1:counterfactual_replay: public-only success"
+      ],
+      "completed_rows": 3,
+      "verified_successes": 1,
+      "first_completion_origin": "unverified_from_artifacts",
+      "natural_model_failure_proven": false,
+      "comparative_superiority_proven": false,
+      "warning": "A live capture mode does not prove a natural first failure; task_suite_runner scripts its initial completion."
+    },
+    {
+      "task": "enterprise_saga_coordinator",
+      "integrity_pass": false,
+      "integrity_errors": [
+        "1:resample: public-only success",
+        "1:feedback: public-only success",
+        "1:counterfactual_replay: public-only success"
+      ],
+      "completed_rows": 3,
+      "verified_successes": 0,
+      "first_completion_origin": "unverified_from_artifacts",
+      "natural_model_failure_proven": false,
+      "comparative_superiority_proven": false,
+      "warning": "A live capture mode does not prove a natural first failure; task_suite_runner scripts its initial completion."
+    }
+  ]
+}

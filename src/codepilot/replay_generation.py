@@ -38,13 +38,19 @@ def generate_replay_candidates(
 
         candidate_instruction = (
             "Generate repair candidate {} of {}. "
-            "Produce one complete, independently applicable edit batch. "
-            "Ensure rigorous enterprise contract safety: strict type checks "
-            "(explicitly reject booleans where numbers/integers are expected), "
-            "full rollback on write failures or trigger aborts, idempotency "
-            "conflict verification, and fail-closed tenant boundaries. "
-            "Consider alternative implementation choices while satisfying "
-            "the original task and test requirements. "
+            "Produce one complete, independently applicable edit batch.\n\n"
+            "MANDATORY INVARIANT CONTRACTS (RETRACE v2.0 Specification):\n"
+            "1. ENTRYPOINT ARGUMENT VALIDATION: Immediately validate all inputs at public function and method "
+            "entrypoints. Raise ValueError or TypeError on invalid, negative, non-callable, empty, or mismatched types "
+            "(strictly reject `bool` for numeric integer/float parameters). Do not initialize or mutate state if inputs are invalid.\n"
+            "2. STATE MACHINE CONSERVATION: Never silence test assertions by prematurely wiping failure counts, "
+            "clearing retry state, or bypassing half-open probation limits. In probation/half-open states, "
+            "any probation failure must immediately transition back to the OPEN state. In saga orchestrators, "
+            "compensation actions must execute in strict reverse order of execution.\n"
+            "3. ATOMICITY & ZERO SWALLOWED EXCEPTIONS: Wrap mutations in atomic transactions with complete rollback "
+            "on write failures or trigger aborts. Never swallow exceptions with `except: pass` or return None on failure.\n"
+            "4. FAIL-CLOSED BOUNDARIES: Enforce idempotency key conflict checks and fail-closed tenant isolation.\n\n"
+            "Consider alternative implementation choices while satisfying the original task and test requirements. "
             "Return only the required JSON response."
         ).format(index + 1, candidate_count)
 

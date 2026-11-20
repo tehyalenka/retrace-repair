@@ -1,0 +1,253 @@
+{
+  "schema": 1,
+  "evidence_type": "retrace_benchmark_proof",
+  "generated_at_utc": "2026-11-20T10:27:59Z",
+  "tasks_evaluated_count": 6,
+  "total_benchmark_tasks": 45,
+  "tasks": [
+    {
+      "task": "enterprise_circuit_breaker",
+      "category": "enterprise",
+      "repo_sha256": "9400e60c8082b4bb6a5a7cf0623955dbc26f1e9739c7904ee636701c8a351681",
+      "verifier_sha256": "be4712fd87c5eb2d4adc5c53037021d186cefc5cfc6cca8d4acb4d0cb8df2aa3",
+      "heldout_sha256": "2b294d8b4a578d4cfb262d9ef63f5b598971d2d20ad21ec414d93b9a92b67d10",
+      "trace_sha256": "c50606ce1f94bf336f981c3be4574bc9ac8a43c87277f2575bc8bc135a6e02f4",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": false,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual_replay",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 2
+        }
+      ]
+    },
+    {
+      "task": "enterprise_saga_coordinator",
+      "category": "enterprise",
+      "repo_sha256": "5e285e025ea47b8fd3cab524636fc430a8cb74bb14818c70fffd834d449d8dbd",
+      "verifier_sha256": "3c9cdc84890964ea59f07679b0c0728994ee029fe50170552a129f6349870b97",
+      "heldout_sha256": "8eb1efbfc02c6a0b5377b9df7546cb299a41c13c1d77c18294248cb86d536376",
+      "trace_sha256": "21dbf46f657e71ffbd4aae1140f021d51af55691c6df68510626825875e705a0",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual_replay",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 2
+        }
+      ]
+    },
+    {
+      "task": "enterprise_dead_letter_retry",
+      "category": "enterprise",
+      "repo_sha256": "b13efdfba02dbec6dcce27eeb0fe9b4ff0ed2b05db7d88ff259abde3375086f9",
+      "verifier_sha256": "c2c9c843d5a4b8381efcf9b55b19f0da16cfcbd8391df7420e3b02bcc74d4715",
+      "heldout_sha256": "cdcba0a5cddbf598dd61d70e85cbd4bad5c517dc5b162f80baa6a0de02c8ef9a",
+      "trace_sha256": "42e58cb3e6db9fd5850760e9da7d8bb8718566e09576e7e455233f3de1bde653",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual_replay",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 2
+        }
+      ]
+    },
+    {
+      "task": "enterprise_cache_stampede_mutex",
+      "category": "enterprise",
+      "repo_sha256": "f2b3dfd314978294c9481d358ac1ba57f9d77c01e5f1dbbf49911d1dafdbc5c4",
+      "verifier_sha256": "26fb1f1748103321dc4d34fb51f2c651417b1dbcc4435a74ef63851c27fd7a1e",
+      "heldout_sha256": "33f61f0f4a6f1374b809f8317f398a18ce043c61e88450738245a4a4bf6f3e41",
+      "trace_sha256": "d5b1e013fbd5814245244462145e6f9bdc2e8f2d3a09848088ea90d8afe19b4d",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": false,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual_replay",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 2
+        }
+      ]
+    },
+    {
+      "task": "enterprise_bulkhead_isolation",
+      "category": "enterprise",
+      "repo_sha256": "5d3c65430ecf737554e811235a4c5bd6dc737e50ae84d1f8f6ad060f086f735e",
+      "verifier_sha256": "1f90fb3ae124ceda44e2b435f65f06ef2e50fe8e40c2e2ddef22498c836ee3e0",
+      "heldout_sha256": "0475b2a211a395e1c8d53b2ef869b2fbefddb4c2bac36ffb64b47be2b470b556",
+      "trace_sha256": "8179fa9283a769b501cc352d2a63f0f579b6a96b86a2cf18c0a1ac13120e741f",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": false,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual_replay",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 2
+        }
+      ]
+    },
+    {
+      "task": "enterprise_outbox_publisher",
+      "category": "enterprise",
+      "repo_sha256": "bcfc40108c35231c64c03cded32ca9c7ba1264b9b602d9a284d85a100d6aafe8",
+      "verifier_sha256": "19acf51e8c25eee6edf181696f3536e8e7734c719990dc9c3b596cdfa0c86607",
+      "heldout_sha256": "4f262d446c265e7401df2a6e0562cb0c989b39867cb176be5b7cebc8950cd665",
+      "trace_sha256": "1f755df04f887de26151691c92a7794122cea2f7d5fe16ee620a8bc50cf7e821",
+      "completed_arms": [
+        {
+          "condition": "resample",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": true,
+          "combined_pass": true,
+          "live_calls": 1
+        },
+        {
+          "condition": "feedback",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 1
+        },
+        {
+          "condition": "counterfactual_replay",
+          "repetition": 1,
+          "public_pass": true,
+          "heldout_pass": false,
+          "combined_pass": false,
+          "live_calls": 2
+        }
+      ]
+    }
+  ],
+  "suite_totals": {
+    "resample": {
+      "completed": 6,
+      "provider_blocked": 0,
+      "pending": 0,
+      "combined_pass": 3,
+      "public_pass": 6,
+      "heldout_pass": 3,
+      "live_calls": 6
+    },
+    "feedback": {
+      "completed": 6,
+      "provider_blocked": 0,
+      "pending": 0,
+      "combined_pass": 0,
+      "public_pass": 3,
+      "heldout_pass": 0,
+      "live_calls": 6
+    },
+    "counterfactual": {
+      "completed": 0,
+      "provider_blocked": 0,
+      "pending": 0,
+      "combined_pass": 0,
+      "public_pass": 0,
+      "heldout_pass": 0,
+      "live_calls": 0
+    },
+    "counterfactual_replay": {
+      "completed": 6,
+      "provider_blocked": 0,
+      "pending": 0,
+      "combined_pass": 1,
+      "public_pass": 6,
+      "heldout_pass": 1,
+      "live_calls": 12
+    }
+  },
+  "proof_sha256": "5b842fb3318ec43f12f172d7e701632e26f03992a88eafa83970ce3fac32d313",
+  "all_heldout_verified": false
+}
