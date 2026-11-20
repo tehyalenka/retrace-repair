@@ -224,9 +224,7 @@ To avoid confounding paired within-task transitions with independent binomial sa
 
 In Configuration 4 (Invariant Prompt + AST Selection), the AST selector chose $C'_1$ on `bulkhead_isolation` (AST 179.20 vs 165.58) and $C'_1$ on `outbox_publisher` (AST 199.28 vs 180.20). In both instances, the selected patch passed held-out tests. In the remaining four tasks, the AST selector chose the exact same candidate as the greedy selector.
 
-The regression observed in the pilot (where Replay held-out dropped from 2/6 to 1/6) was driven by:
-1. The exception drift on `enterprise_circuit_breaker`, which was caused purely by candidate generation under the invariant prompt, not by AST scoring.
-2. The feedback strategy's public test regressions in the pilot, which stemmed from multi-turn feedback prompt drift in the adaptive runner.
+The controlled ablation found no AST-induced changes in held-out correctness across the six evaluated tasks. Instead, task-level evidence identified prompt-conditioned candidate generation as an important source of correctness variation, including improvements in concurrency handling and regressions in exception-contract compliance. While these mechanisms illustrate how prompt changes influence candidate viability, they should be understood as distinct findings from the original exploratory pilot, which evaluated end-to-end adaptive repair behavior under different runtime constraints.
 
 ---
 
