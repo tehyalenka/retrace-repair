@@ -6,7 +6,7 @@
 [![Regression Suite](https://img.shields.io/badge/Tests-279%20Passing-brightgreen?style=flat-square)](#quickstart)
 [![Research Status](https://img.shields.io/badge/Status-Independent%20Research%20Manuscript-orange?style=flat-square)](#research-links)
 
-> **Research Status:** Independent, unpublished research project prepared by Tehya Lenka for Virginia Tech MS CS graduate admissions review.
+> **Research Status:** Independent, unpublished empirical research project investigating reliability and invariant generalization in LLM-based autonomous program repair.
 
 ---
 
@@ -17,7 +17,7 @@
 RETRACE introduces **physical dual-suite oracle isolation**, **disposable counterfactual replay**, and **cryptographic evidence sealing** to empirically evaluate whether LLM-synthesized patches restore underlying software invariants or merely overfit visible unit tests.
 
 ### **Headline Findings (180 Controlled Evaluations across 2 Model Families)**
-Across 180 controlled evaluations on 30 enterprise distributed systems tasks evaluated on Groq `openai/gpt-oss-120b` and Alibaba `qwen/qwen3.8-27b`, **public test pass rates (83.3%–86.7%) severely overestimated held-out invariant correctness (20.0%–46.7%)**. In **40.0 percentage points** of tasks on the 120B model (12/30) and **63.3 percentage points** on the 27B model (19/30), agent-generated patches passed all visible tests while silently violating critical production invariants (2PC atomicity, lease fencing, tenant isolation). Paired exact McNemar tests show **no statistically significant difference between iterative feedback and counterfactual replay ($p = 1.000$)**, while replay incurs an **80.5% token premium**.
+Across 180 controlled evaluations on 30 synthetic enterprise distributed systems tasks evaluated on Groq `openai/gpt-oss-120b` and Alibaba `qwen/qwen3.8-27b`, **public test pass rates for iterative feedback and counterfactual replay (83.3%–86.7%) severely overestimated held-out invariant correctness (20.0%–46.7%)**. In **40.0 percentage points** of tasks on the 120B model (12/30) and **63.3 percentage points** on the 27B model (19/30), agent-generated patches passed all visible tests while silently violating critical production invariants (2PC atomicity, lease fencing, tenant isolation). Paired exact McNemar tests show **no statistically significant difference between iterative feedback and counterfactual replay ($p = 1.000$)**, while replay incurs an **80.5% token premium**.
 
 <p align="center">
   <img src="docs/retrace_results_chart.png" alt="Public vs. Held-Out Repair Success: 30-Task Enterprise Benchmark" width="100%">
@@ -58,7 +58,7 @@ Evaluated across two frontier model families under strict three-arm pairing: sto
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | **Replay vs. Feedback** | GPT-OSS-120B | 10 | 13 | 4 (`Replay`) | 3 (`Feedback`) | 4 / 3 | **$p = 1.000$** | No statistically significant difference |
 | **Replay vs. Feedback** | Qwen-27B | 4 | 21 | 2 (`Replay`) | 3 (`Feedback`) | 2 / 3 | **$p = 1.000$** | No statistically significant difference |
-| **Feedback vs. Resample**| Qwen-27B | 5 | 19 | 2 (`Feedback`) | 4 (`Resample`) | 2 / 4 | **$p = 0.688$** | Feedback underperforms Resample (traceback hyper-fixation) |
+| **Feedback vs. Resample**| Qwen-27B | 5 | 19 | 2 (`Feedback`) | 4 (`Resample`) | 2 / 4 | **$p = 0.688$** | No statistically significant difference ($p = 0.688$, descriptive difference: 7 vs. 9 tasks) |
 
 > **Critical Methodological Note:** A non-significant McNemar test ($p = 1.000$) **does not prove that Replay and Feedback are equivalent**. Rather, it demonstrates that at $N = 30$, statistical power is bounded, and the observed differences are indistinguishable from random sampling variance.
 
@@ -190,7 +190,7 @@ To investigate why structural AST ranking and invariant contract prompting in v2
 
 * **Report:** [paper/retrace_controlled_ablation_report.md](paper/retrace_controlled_ablation_report.md)
 * **Results Figure:** [docs/retrace_final_ablation_results.png](docs/retrace_final_ablation_results.png)
-* **Key Finding:** The AST structural scorer caused **zero selection failures (`SELECTION_FAILURE = 0`)** across 12 candidate pools. Task-level divergence was driven by candidate generation under prompt conditioning (e.g., unlocking single-flight mutexes on `cache_stampede` while encountering exception convention mismatch on `circuit_breaker`). All four factorial arms achieved an identical 50.0% (3/6) held-out pass rate.
+* **Key Finding:** In this six-task controlled ablation, AST ranking changed selected patches in 4 of 12 candidate pools without changing held-out correctness (zero selection failures, $\Delta = 0.0\text{ pp}$). Prompt conditioning produced task-specific differences in candidate correctness, including improvements in concurrency handling and regressions in exception-contract compliance. All four configurations achieved an identical 50.0% (3/6) held-out pass rate.
 
 ---
 
